@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OPEN AUDITOR</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/api/config/theme.css">
+  <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
 </head>
 <body>
 <nav class="topnav">
@@ -24,22 +26,30 @@
   <div id="scheduledAlert" class="scheduled-alert hidden"></div>
   <div class="page-header">
     <h1>Mis Plantillas</h1>
-    <div class="ml-auto">
-      <button class="btn btn-primary" id="btnNew">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        Nueva Plantilla
-      </button>
+    <div class="ml-auto dropdown-container">
+      <button class="btn btn-primary" id="btnNewDropdown" onclick="toggleDropdown('newTplDropdown')" aria-haspopup="true" aria-expanded="false" title="Crear nueva plantilla">+ Nueva Plantilla ▼</button>
+      <div id="newTplDropdown" class="dropdown-menu hidden">
+        <a href="#" onclick="createNew(); return false;" class="dropdown-item" title="Crear plantilla en blanco">📄 Plantilla en blanco</a>
+        <a href="#" onclick="document.getElementById('importInput').click(); return false;" class="dropdown-item" title="Importar plantilla JSON">📥 Importar desde archivo JSON</a>
+        <a href="#" onclick="showImportUrlModal(); return false;" class="dropdown-item" title="Importar plantilla desde URL">🔗 Importar desde URL</a>
+        <a href="#" onclick="document.getElementById('packImport').click(); return false;" class="dropdown-item" title="Importar paquete .oapack">📦 Importar paquete .oapack</a>
+      </div>
+      <input type="file" id="packImport" class="hidden" accept=".oapack" aria-label="Importar paquete .oapack">
     </div>
   </div>
 
   <div class="filter-bar">
+    <label for="searchName" class="visually-hidden">Buscar por nombre</label>
     <input type="text" class="input" id="searchName" placeholder="Buscar por nombre..." title="Buscar por nombre">
+    <label for="filterStatus" class="visually-hidden">Filtrar por estado</label>
     <select class="input w-160" id="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
       <option value="all">Todos los estados</option>
       <option value="draft">Borrador</option>
       <option value="published">Publicada</option>
     </select>
+    <label for="filterTag" class="visually-hidden">Filtrar por etiqueta</label>
     <input type="text" class="input w-160" id="filterTag" placeholder="Filtrar por etiqueta..." title="Filtrar por etiqueta">
+    <label for="sortOrder" class="visually-hidden">Ordenar por</label>
     <select class="input w-160" id="sortOrder" title="Ordenar por" aria-label="Ordenar por">
       <option value="desc">Más recientes</option>
       <option value="asc">Más antiguos</option>
@@ -49,12 +59,12 @@
 
   <div class="card" id="templateCard">
     <div id="emptyState" class="empty-state hidden">
-      <div class="empty-state-icon">📄</div>
+      <div class="empty-state-icon" aria-hidden="true">📄</div>
       <h3>No hay plantillas</h3>
       <p class="empty-state-text">Crea tu primera plantilla o ajusta los filtros.</p>
-      <button class="btn btn-primary" id="btnNewEmpty">+ Nueva Plantilla</button>
+      <button class="btn btn-primary" id="btnNewEmpty" title="Crear nueva plantilla" aria-label="Crear nueva plantilla">+ Nueva Plantilla</button>
     </div>
-    <table class="template-table" id="templateTable">
+    <table class="template-table" id="templateTable" aria-label="Tabla de plantillas">
       <thead>
         <tr>
           <th>Nombre</th>
@@ -74,7 +84,7 @@
     <h1>Inspecciones Recientes</h1>
   </div>
   <div class="card">
-    <table class="template-table" id="inspectionsTable">
+    <table class="template-table" id="inspectionsTable" aria-label="Tabla de inspecciones">
       <thead>
         <tr>
           <th>Plantilla</th>
@@ -90,24 +100,48 @@
 </main>
 
 <div class="toast-container" id="toastContainer"></div>
+<label for="importInput" class="visually-hidden">Importar plantilla JSON</label>
+<label for="importInput" class="visually-hidden">Importar plantilla JSON</label>
 <input type="file" id="importInput" class="hidden" accept=".json" title="Importar plantilla JSON" aria-label="Importar plantilla JSON">
+
+<!-- Modal Import URL -->
+<div id="modalImportUrl" class="modal-overlay hidden">
+    <div class="modal modal-max-500">
+      <div class="modal-header">
+        <h2>🔗 Importar plantilla desde URL</h2>
+        <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('modalImportUrl').classList.add('hidden')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-muted mb-2">Pegá la URL directa al archivo JSON:</p>
+        <input type="text" id="importUrlInput" class="input w-full" placeholder="https://raw.githubusercontent.com/...">
+        <div class="import-url-hint">
+          💡 Funciona con GitHub, GitLab y Gist.<br>
+          La plantilla se importará como borrador.
+        </div>
+      </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('modalImportUrl').classList.add('hidden')">Cancelar</button>
+      <button class="btn btn-primary" id="btnImportUrlSubmit">Importar plantilla →</button>
+    </div>
+  </div>
+</div>
 
 <!-- Config Modal -->
 <div class="modal-overlay hidden" id="configModal">
   <div class="modal">
     <div class="modal-header">
       <h2>Configuración</h2>
-      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="document.getElementById('configModal').classList.add('hidden')">✕</button>
+      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="document.getElementById('configModal').classList.add('hidden')" title="Cerrar configuración" aria-label="Cerrar configuración">✕</button>
     </div>
     <div class="modal-body">
       <div class="report-field">
-        <label>Directorio de datos personalizado (opcional)</label>
-        <input type="text" class="input" id="dataPathInput" placeholder="/ruta/absoluta/a/tus/datos">
+        <label for="dataPathInput">Directorio de datos personalizado (opcional)</label>
+        <input type="text" class="input" id="dataPathInput" placeholder="/ruta/absoluta/a/tus/datos" title="Directorio de datos personalizado" aria-label="Directorio de datos personalizado">
         <p class="text-xs text-muted mt-4">Deja en blanco para usar la ruta por defecto del SO. Requiere reiniciar el servidor.</p>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" onclick="saveConfig()">Guardar</button>
+      <button class="btn btn-primary" onclick="saveConfig()" title="Guardar configuración" aria-label="Guardar configuración">Guardar</button>
     </div>
   </div>
 </div>
@@ -115,22 +149,26 @@
 <script src="/app.js"></script>
 <script>
 
+
 let templates = [];
 let inspections = [];
 
 async function loadData() {
-  templates = await api.get('/api/templates');
-  inspections = await api.get('/api/inspections');
-  renderTemplates();
-  renderInspections();
-  renderScheduledAlert();
+  try {
+    templates = await api.get('/api/templates');
+    inspections = await api.get('/api/inspections');
+    renderTemplates();
+    renderInspections();
+    renderScheduledAlert();
+  } catch (e) {
+    console.error('Error cargando datos:', e);
+    toast('Error cargando datos. Intenta recargar la página.', 'error');
+  }
 }
 
-// Recargar el tablero automáticamente al volver desde el editor
-window.addEventListener('pageshow', function(event) {
-  if (event.persisted || document.referrer.includes('/editor/')) {
-    loadData();
-  }
+// Siempre recargar datos al cargar o restaurar la página
+window.addEventListener('pageshow', function() {
+  loadData();
 });
 
 function renderTemplates() {
@@ -179,7 +217,7 @@ function renderTemplates() {
             ${isPub ? '<button class="btn btn-ghost btn-sm" onclick="showQR(\'' + t.id + '\')">📱 QR</button>' : ''}
             <a class="btn btn-ghost btn-sm" href="/editor/${t.id}">Editar</a>
             <button class="btn btn-ghost btn-sm" onclick="duplicateTemplate('${t.id}')">Duplicar</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteTemplate('${t.id}')">Eliminar</button>
+            <button class="btn btn-ghost btn-sm text-red" onclick="deleteTemplate('${t.id}')">Eliminar</button>
           </div>
         </td>
       `;
@@ -225,11 +263,24 @@ function renderInspections() {
         <div class="actions-cell">
           <a class="btn btn-primary btn-sm" href="/inspector/${i.id}">${isCompleted ? 'Ver Reporte' : 'Continuar'}</a>
           ${isCompleted ? `<a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf">PDF</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf-findings">Hallazgos</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/xlsx">Excel</a>` : ''}
+          <button class="btn btn-ghost btn-sm text-red" onclick="deleteInspection('${i.id}')" title="Eliminar inspección" aria-label="Eliminar inspección">Eliminar</button>
         </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
+// Eliminar inspección
+async function deleteInspection(id) {
+  if (!confirm('¿Eliminar esta inspección de forma permanente?')) return;
+  try {
+    await api.del('/api/inspections/' + id);
+    toast('Inspección eliminada', 'success');
+    loadData();
+  } catch (e) {
+    toast('Error eliminando inspección', 'error');
+    console.error(e);
+  }
+}
 }
 
 document.getElementById('searchName').addEventListener('input', renderTemplates);
@@ -237,12 +288,25 @@ document.getElementById('filterTag').addEventListener('input', renderTemplates);
 document.getElementById('filterStatus').addEventListener('change', renderTemplates);
 document.getElementById('sortOrder').addEventListener('change', renderTemplates);
 
-document.getElementById('btnNew').onclick = createNew;
+window.toggleDropdown = function(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden');
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#btnNewDropdown') && !e.target.closest('#newTplDropdown')) {
+    const dd = document.getElementById('newTplDropdown');
+    if (dd) dd.classList.add('hidden');
+  }
+});
+
 document.getElementById('btnNewEmpty').onclick = createNew;
 
 async function createNew() {
-  const t = await api.post('/api/templates', { name: 'Nueva Plantilla' });
-  window.location.href = '/editor/' + t.id;
+  try {
+    const t = await api.post('/api/templates', { name: 'Nueva Plantilla' });
+    window.location.href = '/editor/' + t.id;
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 async function startInspection(tid) {
@@ -282,6 +346,48 @@ document.getElementById('importInput').addEventListener('change', async (e) => {
     toast('Error importando: ' + err.message, 'error');
   }
   e.target.value = '';
+});
+
+document.getElementById('packImport')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const fd = new FormData();
+    fd.append('pack', file);
+    const res = await fetch('/api/templates/import-pack', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    toast('✅ Plantilla importada exitosamente', 'success');
+    setTimeout(() => window.location.href = '/editor/' + data.template.id, 1000);
+  } catch(err) { toast('Error importando paquete: ' + err.message, 'error'); }
+  e.target.value = '';
+});
+
+window.showImportUrlModal = function() {
+  const m = document.getElementById('modalImportUrl');
+  if (m) {
+    m.classList.remove('hidden');
+    document.getElementById('importUrlInput').value = '';
+    document.getElementById('importUrlInput').focus();
+  }
+};
+
+document.getElementById('btnImportUrlSubmit')?.addEventListener('click', async () => {
+  const url = document.getElementById('importUrlInput').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('btnImportUrlSubmit');
+  btn.disabled = true;
+  btn.textContent = 'Descargando...';
+  try {
+    const res = await api.post('/api/templates/import-url', { url });
+    document.getElementById('modalImportUrl').classList.add('hidden');
+    toast('✅ Plantilla importada. Revisá el contenido antes de publicarla.', 'success');
+    setTimeout(() => window.location.href = '/editor/' + res.template.id, 1500);
+  } catch(err) {
+    toast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Importar plantilla →';
+  }
 });
 
 async function openConfig() {

@@ -1,3 +1,17 @@
+// Eliminar inspección por ID
+app.delete('/api/inspections/:id', (req, res) => {
+  try {
+    let ins = readJson(INSPECTIONS_FILE);
+    const idx = ins.findIndex(x => x.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    ins.splice(idx, 1);
+    writeJson(INSPECTIONS_FILE, ins);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error eliminando inspección:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -5,6 +19,8 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const puppeteer = require('puppeteer');
 const buildPdfHtml = require('./pdf_report');
+const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 
 let dataDir;
 let TEMPLATES_FILE;
@@ -87,6 +103,53 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Webhook helper
+async function dispatchWebhook(event, payload) {
+  const config = readJson(CONFIG_FILE);
+  const hooks = (config.webhooks || []).filter(h => h.enabled && h.events.includes(event));
+  
+  for (const hook of hooks) {
+    const body = JSON.stringify({
+      event,
+      timestamp: new Date().toISOString(),
+      source: 'open-auditor',
+      payload
+    });
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(hook.headers || {})
+    };
+
+    if (hook.secret) {
+      const crypto = require('crypto');
+      const sig = crypto.createHmac('sha256', hook.secret).update(body).digest('hex');
+      headers['X-OA-Signature'] = `sha256=${sig}`;
+    }
+
+    try {
+      const res = await fetch(hook.url, { method: 'POST', headers, body, signal: AbortSignal.timeout(5000) });
+      updateWebhookStatus(hook.id, res.status, res.ok);
+    } catch (err) {
+      updateWebhookStatus(hook.id, null, false, err.message);
+      if (hook.retryOnFailure) {
+        setTimeout(() => dispatchWebhook(event, payload), 30000);
+      }
+    }
+  }
+}
+
+function updateWebhookStatus(hookId, status, ok, error) {
+  const config = readJson(CONFIG_FILE);
+  const hook = config.webhooks?.find(h => h.id === hookId);
+  if (hook) {
+    hook.lastTriggeredAt = new Date().toISOString();
+    hook.lastStatus = ok ? 'success' : `error${status ? ` (${status})` : ''}`;
+    if (error) hook.lastError = error;
+    writeJson(CONFIG_FILE, config);
+  }
+}
+
 // Helper functions
 function readJson(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
@@ -102,7 +165,13 @@ function defaultTemplate(name) {
   return {
     id: uuid(), name: name || 'Nueva Plantilla', description: '',
     status: 'draft', publishedAt: null, publishedVersions: [], tags: [], schedule: null,
-    createdAt: t, updatedAt: t,
+    createdAt: t, updatedAt: t, lockedBy: null, lockedAt: null,
+    severityLevels: [
+      { id: uuid(), key: 'critical', label: 'Crítico', color: '#dc2626', icon: '🔴', order: 1 },
+      { id: uuid(), key: 'major', label: 'Mayor', color: '#d97706', icon: '🟡', order: 2 },
+      { id: uuid(), key: 'minor', label: 'Menor', color: '#2563eb', icon: '🔵', order: 3 },
+      { id: uuid(), key: 'observation', label: 'Observación', color: '#16a34a', icon: '🟢', order: 4 }
+    ],
     settings: { defaultNotes: true, defaultMedia: true, defaultActions: true, defaultRequired: false },
     report: { pageSize: 'A4', showCover: true, showTOC: true, showScore: true, showFlaggedItems: true },
     questionLibrary: [],
@@ -119,6 +188,14 @@ function defaultTemplate(name) {
       }]
     }]
   };
+}
+
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function deepCloneWithNewIds(template) {
+  return regenerateIds(deepClone(template));
 }
 
 function regenerateIds(template) {
@@ -144,10 +221,30 @@ var LIBRARY_FILE;
 function migrateData() {
   LIBRARY_FILE = path.join(dataDir, 'library.json');
   if (!fs.existsSync(LIBRARY_FILE)) fs.writeFileSync(LIBRARY_FILE, '[]', 'utf8');
-  // Migrate templates for repeatable sections
+  
+  // Migrate templates for repeatable sections, pessimistic lock, severity, etc.
   var ts = readJson(TEMPLATES_FILE);
   var tChanged = false;
   ts.forEach(function(t) {
+    if (t.lockedBy === undefined) { t.lockedBy = null; tChanged = true; }
+    if (t.lockedAt === undefined) { t.lockedAt = null; tChanged = true; }
+    if (!t.severityLevels) {
+      t.severityLevels = [
+        { id: uuid(), key: 'critical', label: 'Crítico', color: '#dc2626', icon: '🔴', order: 1 },
+        { id: uuid(), key: 'major', label: 'Mayor', color: '#d97706', icon: '🟡', order: 2 },
+        { id: uuid(), key: 'minor', label: 'Menor', color: '#2563eb', icon: '🔵', order: 3 },
+        { id: uuid(), key: 'observation', label: 'Observación', color: '#16a34a', icon: '🟢', order: 4 }
+      ];
+      tChanged = true;
+    }
+    if (t.publishedVersions) {
+      t.publishedVersions.forEach((v, i) => {
+        if (!v.versionNumber) { v.versionNumber = i + 1; tChanged = true; }
+        if (v.changeMessage === undefined) { v.changeMessage = ''; tChanged = true; }
+        if (v.publishedBy === undefined) { v.publishedBy = ''; tChanged = true; }
+      });
+    }
+    
     if (t.pages) {
       t.pages.forEach(function(p) {
         if (p.sections) {
@@ -163,12 +260,20 @@ function migrateData() {
   });
   if (tChanged) writeJson(TEMPLATES_FILE, ts);
 
-  // Migrate inspections: ensure activityLog array exists and repeatableAnswers
+  // Migrate inspections: ensure activityLog array exists and repeatableAnswers, optimistic locking fields, and answer location/severity
   var ins = readJson(INSPECTIONS_FILE);
   var changed = false;
   ins.forEach(function(i) {
+    if (i.lockedBy === undefined) { i.lockedBy = null; changed = true; }
+    if (i.lockedAt === undefined) { i.lockedAt = null; changed = true; }
     if (!i.activityLog) { i.activityLog = []; changed = true; }
     if (!i.repeatableAnswers) { i.repeatableAnswers = {}; changed = true; }
+    if (i.answers) {
+      Object.values(i.answers).forEach(ans => {
+        if (ans && ans.severity === undefined) { ans.severity = null; changed = true; }
+        if (ans && ans.location === undefined) { ans.location = null; changed = true; }
+      });
+    }
     if (i.snapshot && i.snapshot.pages) {
       i.snapshot.pages.forEach(p => p.sections.forEach(s => {
         if (s.repeatable === undefined) { s.repeatable = false; s.minInstances = 1; s.maxInstances = null; s.addButtonLabel = ""; changed = true; }
@@ -176,6 +281,27 @@ function migrateData() {
     }
   });
   if (changed) writeJson(INSPECTIONS_FILE, ins);
+
+  // Migrate Config: branding and webhooks
+  let config = { dataPath: '' };
+  try { config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch {}
+  let configChanged = false;
+  if (!config.branding) {
+    config.branding = {
+      appName: 'OPEN AUDITOR',
+      primaryColor: '#4f46e5',
+      primaryColorHover: '#4338ca',
+      logoPath: null, faviconPath: null, pdfLogoPath: null,
+      footerText: 'Generado con OPEN AUDITOR'
+    };
+    configChanged = true;
+  }
+  if (!config.webhooks) {
+    config.webhooks = [];
+    configChanged = true;
+  }
+  if (configChanged) writeJson(CONFIG_FILE, config);
+
   console.log('  Migrations: OK');
 }
 
@@ -213,9 +339,124 @@ app.get('/api/config', (req, res) => {
 app.put('/api/config', (req, res) => {
   let cfg = { dataPath: '' };
   try { cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch {}
-  cfg.dataPath = req.body.dataPath || '';
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+  cfg.dataPath = req.body.dataPath !== undefined ? req.body.dataPath : cfg.dataPath;
+  if (req.body.branding !== undefined) cfg.branding = req.body.branding;
+  writeJson(CONFIG_FILE, cfg);
   res.json(cfg);
+});
+
+function hexToRgba(hex, alpha) {
+  let r = 0, g = 0, b = 0;
+  if (hex.length === 4) {
+    r = parseInt(hex[1]+hex[1], 16); g = parseInt(hex[2]+hex[2], 16); b = parseInt(hex[3]+hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.substring(1,3), 16); g = parseInt(hex.substring(3,5), 16); b = parseInt(hex.substring(5,7), 16);
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function darkenColor(hex, amount) {
+  let color = hex.replace('#', '');
+  if (color.length === 3) color = color[0]+color[0]+color[1]+color[1]+color[2]+color[2];
+  const num = parseInt(color, 16);
+  let r = (num >> 16) - Math.round(255 * (amount / 100));
+  let g = ((num >> 8) & 0x00FF) - Math.round(255 * (amount / 100));
+  let b = (num & 0x0000FF) - Math.round(255 * (amount / 100));
+  r = r < 0 ? 0 : r; g = g < 0 ? 0 : g; b = b < 0 ? 0 : b;
+  return `#${(g | (b << 8) | (r << 16)).toString(16).padStart(6, '0')}`;
+}
+
+app.get('/api/config/theme.css', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  const b = config.branding || {};
+  const primary = b.primaryColor || '#4f46e5';
+  const hover = b.primaryColorHover || darkenColor(primary, 10);
+  const light = b.primaryColorLight || hexToRgba(primary, 0.08);
+
+  const css = `
+:root {
+  --accent: ${primary};
+  --accent-hover: ${hover};
+  --accent-light: ${light};
+  --accent-border: ${hexToRgba(primary, 0.3)};
+  --app-name: "${b.appName || 'OPEN AUDITOR'}";
+}
+  `.trim();
+
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(css);
+});
+
+app.get('/api/config/logo', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  if (config.branding && config.branding.logoPath) {
+    res.sendFile(path.join(dataDir, config.branding.logoPath));
+  } else {
+    res.status(404).send('No logo');
+  }
+});
+
+app.get('/api/config/favicon', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  if (config.branding && config.branding.faviconPath) {
+    res.sendFile(path.join(dataDir, config.branding.faviconPath));
+  } else {
+    res.status(404).send('No favicon');
+  }
+});
+
+app.post('/api/config/logo', upload.single('logo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const config = readJson(CONFIG_FILE);
+  if (!config.branding) config.branding = {};
+  config.branding.logoPath = 'uploads/' + req.file.filename;
+  writeJson(CONFIG_FILE, config);
+  res.json({ path: config.branding.logoPath });
+});
+
+app.post('/api/config/favicon', upload.single('favicon'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const config = readJson(CONFIG_FILE);
+  if (!config.branding) config.branding = {};
+  config.branding.faviconPath = 'uploads/' + req.file.filename;
+  writeJson(CONFIG_FILE, config);
+  res.json({ path: config.branding.faviconPath });
+});
+
+// Webhooks API
+app.get('/api/webhooks', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  res.json(config.webhooks || []);
+});
+app.post('/api/webhooks', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  if (!config.webhooks) config.webhooks = [];
+  const hook = { id: uuidv4(), ...req.body, lastTriggeredAt: null, lastStatus: null };
+  config.webhooks.push(hook);
+  writeJson(CONFIG_FILE, config);
+  res.json(hook);
+});
+app.put('/api/webhooks/:id', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  const idx = (config.webhooks || []).findIndex(h => h.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  config.webhooks[idx] = { ...config.webhooks[idx], ...req.body, id: config.webhooks[idx].id };
+  writeJson(CONFIG_FILE, config);
+  res.json(config.webhooks[idx]);
+});
+app.delete('/api/webhooks/:id', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  config.webhooks = (config.webhooks || []).filter(h => h.id !== req.params.id);
+  writeJson(CONFIG_FILE, config);
+  res.json({ ok: true });
+});
+app.post('/api/webhooks/:id/test', async (req, res) => {
+  await dispatchWebhook('inspection.completed', {
+    inspection: { id: 'test-' + Date.now(), code: 'TEST-001', templateName: 'Plantilla de prueba', score: 85, completedAt: new Date().toISOString() },
+    _test: true
+  });
+  res.json({ message: 'Webhook de prueba enviado' });
 });
 
 // ---- TEMPLATES ROUTES ----
@@ -261,9 +502,40 @@ app.put('/api/templates/:id', (req, res) => {
   const idx = ts.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   const existing = ts[idx];
-  ts[idx] = { ...existing, ...req.body, id: existing.id, createdAt: existing.createdAt, updatedAt: now() };
+  
+  const clientUpdatedAt = req.body._updatedAt;
+  if (clientUpdatedAt && existing.updatedAt && new Date(clientUpdatedAt) < new Date(existing.updatedAt)) {
+    return res.status(409).json({
+      error: 'CONFLICT',
+      message: 'Esta plantilla fue modificada por otro usuario mientras trabajabas.',
+      serverUpdatedAt: existing.updatedAt,
+      serverVersion: existing
+    });
+  }
+
+  ts[idx] = { ...existing, ...req.body, id: existing.id, createdAt: existing.createdAt, updatedAt: now(), _updatedAt: undefined };
   writeJson(TEMPLATES_FILE, ts);
   res.json(ts[idx]);
+});
+
+app.post('/api/templates/:id/lock', (req, res) => {
+  const ts = readJson(TEMPLATES_FILE);
+  const t = ts.find(x => x.id === req.params.id);
+  if (!t) return res.status(404).json({ error: 'Not found' });
+  t.lockedBy = req.body.lockedBy || null;
+  t.lockedAt = t.lockedBy ? now() : null;
+  writeJson(TEMPLATES_FILE, ts);
+  res.json({ ok: true, lockedBy: t.lockedBy });
+});
+
+app.post('/api/templates/:id/unlock', (req, res) => {
+  const ts = readJson(TEMPLATES_FILE);
+  const t = ts.find(x => x.id === req.params.id);
+  if (!t) return res.status(404).json({ error: 'Not found' });
+  t.lockedBy = null;
+  t.lockedAt = null;
+  writeJson(TEMPLATES_FILE, ts);
+  res.json({ ok: true });
 });
 
 app.delete('/api/templates/:id', (req, res) => {
@@ -292,7 +564,7 @@ app.post('/api/templates/:id/duplicate', (req, res) => {
   res.status(201).json(copy);
 });
 
-app.post('/api/templates/:id/publish', (req, res) => {
+app.post('/api/templates/:id/publish', async (req, res) => {
   const ts = readJson(TEMPLATES_FILE);
   const idx = ts.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
@@ -300,11 +572,26 @@ app.post('/api/templates/:id/publish', (req, res) => {
   const snap = JSON.parse(JSON.stringify(t));
   snap.publishedVersions = undefined;
   if (!t.publishedVersions) t.publishedVersions = [];
-  t.publishedVersions.push({ publishedAt: now(), snapshot: snap });
+  
+  const versionNumber = t.publishedVersions.length + 1;
+  const { changeMessage, publishedBy } = req.body || {};
+  
+  t.publishedVersions.unshift({
+    publishedAt: now(),
+    changeMessage: changeMessage || '',
+    publishedBy: publishedBy || '',
+    versionNumber,
+    snapshot: snap
+  });
   t.status = 'published';
   t.publishedAt = now();
   t.updatedAt = now();
   writeJson(TEMPLATES_FILE, ts);
+  
+  dispatchWebhook('template.published', {
+    template: { id: t.id, name: t.name, versionNumber, changeMessage }
+  });
+  
   res.json(t);
 });
 
@@ -337,7 +624,7 @@ app.post('/api/templates/import', upload.single('file'), (req, res) => {
     const raw = fs.readFileSync(req.file.path, 'utf8');
     const parsed = JSON.parse(raw);
     const ts = readJson(TEMPLATES_FILE);
-    const newT = regenerateIds(parsed);
+    const newT = deepCloneWithNewIds(parsed);
     const t = now();
     newT.createdAt = t;
     newT.updatedAt = t;
@@ -350,6 +637,180 @@ app.post('/api/templates/import', upload.single('file'), (req, res) => {
     res.json(newT);
   } catch (e) {
     res.status(400).json({ error: 'Invalid JSON file' });
+  }
+});
+
+app.post('/api/templates/import-url', async (req, res) => {
+  const { url } = req.body;
+  if (!url || !url.startsWith('http')) {
+    return res.status(400).json({ error: 'URL inválida' });
+  }
+
+  const trustedDomains = [
+    'raw.githubusercontent.com',
+    'gitlab.com',
+    'raw.gitlab.com',
+    'gist.githubusercontent.com'
+  ];
+  const urlObj = new URL(url);
+  const isTrusted = trustedDomains.some(d => urlObj.hostname.endsWith(d));
+
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(10000),
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('json') && !contentType.includes('text')) {
+      throw new Error('La URL no devuelve JSON válido');
+    }
+
+    const data = await response.json();
+
+    if (!data.pages || !data.name) {
+      throw new Error('El archivo no parece ser una plantilla de OPEN AUDITOR válida');
+    }
+
+    const imported = deepCloneWithNewIds(data);
+    imported.name = `${data.name} (importada)`;
+    imported.status = 'draft';
+    imported.importedFrom = url;
+    imported.importedAt = new Date().toISOString();
+    imported.publishedVersions = [];
+    imported.createdAt = new Date().toISOString();
+    imported.updatedAt = new Date().toISOString();
+
+    const templates = readJson(TEMPLATES_FILE);
+    templates.push(imported);
+    writeJson(TEMPLATES_FILE, templates);
+
+    res.json({
+      success: true,
+      template: imported,
+      trusted: isTrusted,
+      warning: isTrusted ? null : 'Esta plantilla proviene de una fuente no verificada. Revisá el contenido antes de publicarla.'
+    });
+  } catch (err) {
+    res.status(400).json({
+      error: 'IMPORT_FAILED',
+      message: err.message
+    });
+  }
+});
+
+function collectReferencedFiles(template) {
+  const files = new Set();
+  const extractFilename = (url) => {
+    if (!url) return null;
+    if (url.startsWith('data:')) return null;
+    if (url.includes('/uploads/')) {
+      return url.split('/uploads/').pop().split('?')[0];
+    }
+    return null;
+  };
+  
+  if (template.pages) {
+    template.pages.forEach(p => {
+      if (p.sections) {
+        p.sections.forEach(s => {
+          if (s.questions) {
+            s.questions.forEach(q => {
+              const fn = extractFilename(q.helpImage || q.helpMedia);
+              if (fn) files.add(fn);
+            });
+          }
+        });
+      }
+    });
+  }
+  return Array.from(files);
+}
+
+app.get('/api/templates/:id/export/pack', (req, res) => {
+  const templates = readJson(TEMPLATES_FILE);
+  const template = templates.find(t => t.id === req.params.id);
+  if (!template) return res.status(404).json({ error: 'No encontrada' });
+
+  const safeName = template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeName}.oapack"`);
+
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  archive.pipe(res);
+
+  archive.append(JSON.stringify(template, null, 2), { name: 'plantilla.json' });
+
+  const manifest = {
+    version: '1.0',
+    appVersion: '1.2.0',
+    exportedAt: new Date().toISOString(),
+    template: {
+      id: template.id,
+      name: template.name,
+      description: template.description
+    }
+  };
+  
+  const referencedFiles = collectReferencedFiles(template);
+  manifest.fileCount = referencedFiles.length;
+  manifest.files = referencedFiles.map(f => `uploads/${f}`);
+
+  archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
+
+  if (template.description) {
+    archive.append(`# ${template.name}\n\n${template.description}\n`, { name: 'README.md' });
+  }
+
+  for (const filename of referencedFiles) {
+    const filePath = path.join(dataDir, 'uploads', filename);
+    if (fs.existsSync(filePath)) {
+      archive.file(filePath, { name: `uploads/${filename}` });
+    }
+  }
+
+  archive.finalize();
+});
+
+app.post('/api/templates/import-pack', multer({ storage: multer.memoryStorage() }).single('pack'), (req, res) => {
+  try {
+    if (!req.file) throw new Error('No file uploaded');
+    const zip = new AdmZip(req.file.buffer);
+
+    const manifestEntry = zip.getEntry('manifest.json');
+    if (!manifestEntry) throw new Error('Archivo .oapack inválido: falta manifest.json');
+    const manifest = JSON.parse(manifestEntry.getData().toString());
+
+    const templateEntry = zip.getEntry('plantilla.json');
+    if (!templateEntry) throw new Error('Archivo .oapack inválido: falta plantilla.json');
+    const template = JSON.parse(templateEntry.getData().toString());
+
+    const imported = deepCloneWithNewIds(template);
+    imported.name = `${template.name} (importada)`;
+    imported.status = 'draft';
+    imported.importedFromPack = manifest;
+    imported.importedAt = new Date().toISOString();
+    imported.publishedVersions = [];
+    imported.createdAt = new Date().toISOString();
+    imported.updatedAt = new Date().toISOString();
+
+    const entries = zip.getEntries().filter(e => e.entryName.startsWith('uploads/') && !e.isDirectory);
+    for (const entry of entries) {
+      const filename = path.basename(entry.entryName);
+      const dest = path.join(uploadsDir, filename);
+      if (!fs.existsSync(dest)) {
+        zip.extractEntryTo(entry, uploadsDir, false, false);
+      }
+    }
+
+    const templates = readJson(TEMPLATES_FILE);
+    templates.push(imported);
+    writeJson(TEMPLATES_FILE, templates);
+
+    res.json({ success: true, template: imported, filesImported: entries.length });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -399,7 +860,7 @@ app.post('/api/inspections', (req, res) => {
     templateId: t.id,
     templateName: t.name,
     code: code,
-    snapshot: t.publishedVersions[t.publishedVersions.length - 1].snapshot,
+    snapshot: t.publishedVersions[0].snapshot, // we unshift versions, so 0 is latest
     status: 'in_progress',
     startedAt: now(),
     completedAt: null,
@@ -410,6 +871,9 @@ app.post('/api/inspections', (req, res) => {
   };
   ins.push(newIns);
   writeJson(INSPECTIONS_FILE, ins);
+  dispatchWebhook('inspection.created', {
+    inspection: { id: newIns.id, templateId, templateName: t.name, code }
+  });
   res.status(201).json(newIns);
 });
 
@@ -417,16 +881,63 @@ app.put('/api/inspections/:id', (req, res) => {
   const ins = readJson(INSPECTIONS_FILE);
   const idx = ins.findIndex(i => i.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  ins[idx].answers = req.body.answers || ins[idx].answers;
-  ins[idx].repeatableAnswers = req.body.repeatableAnswers || ins[idx].repeatableAnswers || {};
+  
+  const current = ins[idx];
+  const clientUpdatedAt = req.body._updatedAt;
+  
+  if (clientUpdatedAt && current.updatedAt && new Date(clientUpdatedAt) < new Date(current.updatedAt)) {
+    return res.status(409).json({
+      error: 'CONFLICT',
+      message: 'Esta inspección fue modificada por otro usuario mientras trabajabas.',
+      serverUpdatedAt: current.updatedAt,
+      serverVersion: current
+    });
+  }
+
+  current.answers = req.body.answers || current.answers;
+  current.repeatableAnswers = req.body.repeatableAnswers || current.repeatableAnswers || {};
   // Feature 9: append activity log entries
   if (req.body.activityLog && Array.isArray(req.body.activityLog)) {
-    if (!ins[idx].activityLog) ins[idx].activityLog = [];
-    ins[idx].activityLog = ins[idx].activityLog.concat(req.body.activityLog);
-    if (ins[idx].activityLog.length > 1000) ins[idx].activityLog = ins[idx].activityLog.slice(-1000);
+    if (!current.activityLog) current.activityLog = [];
+    current.activityLog = current.activityLog.concat(req.body.activityLog);
+    if (current.activityLog.length > 1000) current.activityLog = current.activityLog.slice(-1000);
   }
+  
+  current.updatedAt = now();
   writeJson(INSPECTIONS_FILE, ins);
-  res.json(ins[idx]);
+  dispatchWebhook('inspection.autosaved', {
+    inspection: { id: current.id, code: current.code }
+  });
+  res.json(current);
+});
+
+
+app.post('/api/inspections/:id/lock', (req, res) => {
+  try {
+    const ins = readJson(INSPECTIONS_FILE);
+    const i = ins.find(x => x.id === req.params.id);
+    if (!i) {
+      console.warn('Intento de lock sobre inspección inexistente:', req.params.id);
+      return res.status(404).json({ error: 'Not found' });
+    }
+    i.lockedBy = req.body.lockedBy || null;
+    i.lockedAt = i.lockedBy ? now() : null;
+    writeJson(INSPECTIONS_FILE, ins);
+    res.json({ ok: true, lockedBy: i.lockedBy });
+  } catch (err) {
+    console.error('Error en /api/inspections/:id/lock:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/inspections/:id/unlock', (req, res) => {
+  const ins = readJson(INSPECTIONS_FILE);
+  const i = ins.find(x => x.id === req.params.id);
+  if (!i) return res.status(404).json({ error: 'Not found' });
+  i.lockedBy = null;
+  i.lockedAt = null;
+  writeJson(INSPECTIONS_FILE, ins);
+  res.json({ ok: true });
 });
 
 app.post('/api/inspections/:id/upload', upload.single('file'), (req, res) => {
@@ -442,7 +953,55 @@ app.post('/api/inspections/:id/complete', (req, res) => {
   inspection.answers = req.body.answers || inspection.answers;
   inspection.repeatableAnswers = req.body.repeatableAnswers || inspection.repeatableAnswers || {};
   
-  // Scoring logic
+  const templateSnapshot = inspection.snapshot;
+  
+  // Media validation (Layer 1.2)
+  const warnings = [];
+  for (const page of templateSnapshot.pages) {
+    for (const section of page.sections) {
+      if (section.repeatable) {
+        const instances = inspection.repeatableAnswers[section.id] || [];
+        instances.forEach((inst, instIdx) => {
+          for (const q of section.questions) {
+            if (q.requireMedia) {
+              const ans = inst[q.id] || {};
+              const count = (ans.mediaFiles || []).length;
+              if (count < (q.minMediaCount || 1)) {
+                warnings.push({
+                  questionId: q.id,
+                  questionText: q.text,
+                  message: q.mediaValidationMessage || `Requiere al menos ${q.minMediaCount || 1} foto(s) en instancia ${instIdx + 1}`
+                });
+              }
+            }
+          }
+        });
+      } else {
+        for (const q of section.questions) {
+          if (q.requireMedia) {
+            const ans = inspection.answers[q.id] || {};
+            const count = (ans.mediaFiles || []).length;
+            if (count < (q.minMediaCount || 1)) {
+              warnings.push({
+                questionId: q.id,
+                questionText: q.text,
+                message: q.mediaValidationMessage || `Requiere al menos ${q.minMediaCount || 1} foto(s)`
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (warnings.length > 0) {
+    return res.status(422).json({
+      error: 'MEDIA_REQUIRED',
+      warnings,
+      message: `${warnings.length} pregunta(s) requieren evidencia fotográfica`
+    });
+  }
+
   // Scoring logic
   let totalScore = 0;
   let maxScore = 0;
@@ -501,6 +1060,10 @@ app.post('/api/inspections/:id/complete', (req, res) => {
   inspection.status = 'completed';
   inspection.completedAt = now();
   writeJson(INSPECTIONS_FILE, ins);
+  
+  dispatchWebhook('inspection.completed', {
+    inspection: { id: inspection.id, code: inspection.code, templateName: inspection.templateName, score: totalScore, completedAt: inspection.completedAt }
+  });
   res.json(inspection);
 });
 
@@ -658,6 +1221,10 @@ app.put('/api/actions/:inspectionId/:questionId', function(req, res) {
   if (req.body.assignedTo !== undefined) ans.action.assignedTo = req.body.assignedTo;
   if (req.body.description !== undefined) ans.action.description = req.body.description;
   writeJson(INSPECTIONS_FILE, ins);
+  
+  dispatchWebhook('action.status_changed', {
+    inspectionId: req.params.inspectionId, questionId: req.params.questionId, newStatus: ans.action.status, assignedTo: ans.action.assignedTo
+  });
   res.json(ans);
 });
 // ---- SIGNATURE ----
