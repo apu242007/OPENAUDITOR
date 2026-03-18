@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR - Configuración</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/api/config/theme.css">
+  <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Configuración</span>
+</nav>
+
+<main class="index-main">
+  <div class="page-header">
+    <h1>⚙️ Configuración</h1>
+  </div>
+
+  <div class="settings-layout">
+    
+    <div class="settings-column">
+      
+      <!-- 1. Apariencia / Branding -->
+      <div class="card card-padding">
+        <h2 class="section-title">1. Apariencia / Branding</h2>
+        
+        <div class="report-field">
+          <label for="appName">Nombre de la aplicación</label>
+          <input type="text" id="appName" class="input w-full" placeholder="OPEN AUDITOR" title="Nombre de la aplicación" aria-label="Nombre de la aplicación">
+        </div>
+
+        <div class="report-field">
+          <label for="primaryColor">Color primario</label>
+          <div class="color-input-group">
+            <input type="color" id="primaryColor" class="color-input" title="Color primario" aria-label="Color primario">
+            <input type="text" id="primaryColorHex" class="input w-120" placeholder="#4f46e5" title="Código hexadecimal del color" aria-label="Código hexadecimal del color">
+          </div>
+        </div>
+
+        <div class="report-field">
+          <label for="logoFile">Logo de la aplicación (PNG, SVG, max 2MB)</label>
+          <div class="file-input-group">
+            <img id="logoPreview" src="/api/config/logo" class="logo-preview" alt="Logo actual" onerror="this.style.display='none'">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('logoFile').click()" title="Seleccionar logo" aria-label="Seleccionar logo">Examinar...</button>
+            <input type="file" id="logoFile" class="hidden" accept="image/png,image/svg+xml" onchange="uploadBrandingFile('logo')" aria-label="Logo de la aplicación">
+          </div>
+        </div>
+        
+        <div class="report-field">
+          <label for="pdfLogoPath">Logo para PDFs (puede ser diferente al de la app)</label>
+          <div class="file-input-group">
+            <span id="pdfLogoPath" class="text-sm text-muted" title="Ruta del logo PDF" aria-label="Ruta del logo PDF"></span>
+          </div>
+        </div>
+
+        <div class="report-field">
+          <label for="footerText">Pie de página en PDFs</label>
+          <input type="text" id="footerText" class="input w-full" placeholder="Generado con OPEN AUDITOR" title="Pie de página PDF" aria-label="Pie de página PDF">
+        </div>
+
+        <div class="report-field">
+          <label for="faviconFile">Favicon (ICO, PNG 32x32)</label>
+          <div class="file-input-group">
+            <img id="faviconPreview" src="/api/config/favicon" class="favicon-preview" alt="Favicon actual" onerror="this.style.display='none'">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('faviconFile').click()" title="Seleccionar favicon" aria-label="Seleccionar favicon">Examinar...</button>
+            <input type="file" id="faviconFile" class="hidden" accept="image/x-icon,image/png" onchange="uploadBrandingFile('favicon')" aria-label="Favicon de la aplicación">
+          </div>
+        </div>
+        
+        <div class="save-group">
+          <button class="btn btn-primary" onclick="saveBranding()" title="Guardar apariencia" aria-label="Guardar apariencia">Guardar apariencia</button>
+        </div>
+      </div>
+      
+      <!-- 2. Datos y Almacenamiento -->
+      <div class="card card-padding">
+        <h2 class="section-title">2. Datos y Almacenamiento</h2>
+        <div class="report-field">
+          <label for="dataPath">Directorio de datos actual (o personalizado)</label>
+          <input type="text" id="dataPath" class="input w-full" placeholder="Ruta por defecto del SO..." title="Directorio de datos" aria-label="Directorio de datos actual">
+          <p class="text-xs text-muted mt-6">Requiere reiniciar el servidor si lo cambiás.</p>
+        </div>
+        <div class="save-group">
+          <button class="btn btn-outline" onclick="saveDataPath()" title="Cambiar directorio" aria-label="Cambiar directorio">Cambiar directorio</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="settings-column">
+
+      <!-- 3. Webhooks -->
+      <div class="card card-padding">
+        <h2 class="webhook-header">
+          ⚡ Webhooks de salida
+          <button class="btn btn-primary btn-sm" onclick="openWebhookModal()">+ Agregar webhook</button>
+        </h2>
+        <div id="webhooksList" class="webhook-list"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Webhook Modal -->
+<div id="webhookModal" class="modal-overlay hidden webhook-modal-overlay">
+  <div class="modal webhook-modal">
+    <div class="modal-header webhook-modal-header">
+      <h2 class="m-0" id="whModalTitle">Nuevo Webhook</h2>
+      <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('webhookModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="modal-body webhook-modal-body">
+      <input type="hidden" id="whId" class="hidden">
+      <div class="report-field">
+        <label>Nombre</label>
+        <input type="text" id="whName" class="input w-full" placeholder="Ej: Mi sistema ERP">
+      </div>
+      <div class="report-field">
+        <label>URL</label>
+        <input type="url" id="whUrl" class="input w-full" placeholder="http://localhost:8080/...">
+      </div>
+      <div class="report-field">
+        <label>Secret (para firma HMAC SHA256)</label>
+        <div class="flex gap-2">
+          <input type="password" id="whSecret" class="input w-full" placeholder="mi_token_secreto">
+          <button class="btn btn-outline btn-sm" onclick="togglePassword('whSecret')">👁</button>
+        </div>
+      </div>
+      
+      <div class="report-field mt-20">
+        <label class="mb-12">Eventos</label>
+        <div class="webhook-events-container">
+          <label><input type="checkbox" class="wh-event-cb" value="inspection.created"> Nueva inspección iniciada</label>
+          <label><input type="checkbox" class="wh-event-cb" value="inspection.completed"> Inspección finalizada</label>
+          <label><input type="checkbox" class="wh-event-cb" value="inspection.autosaved"> Guardado automático</label>
+          <label><input type="checkbox" class="wh-event-cb" value="action.status_changed"> Estado de acción actualizado</label>
+          <label><input type="checkbox" class="wh-event-cb" value="template.published"> Plantilla publicada</label>
+        </div>
+      </div>
+
+      <div class="report-field mt-20">
+        <label>Headers adicionales (JSON válido)</label>
+        <textarea id="whHeaders" class="input w-full font-mono min-h-80" placeholder='{"X-Sistema": "ERP-Local"}'></textarea>
+      </div>
+
+      <div class="report-field mt-16">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="whRetry"> Reintentar si falla (30s)
+        </label>
+      </div>
+      
+      <div class="report-field mt-16">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="whEnabled" checked> Habilitado
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer webhook-modal-footer">
+      <button class="btn btn-outline mr-auto" id="whTestBtn" onclick="testWebhook()">Enviar prueba</button>
+      <button class="btn btn-outline" onclick="document.getElementById('webhookModal').classList.add('hidden')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveWebhook()">Guardar webhook</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+<script>
+let currentConfig = {};
+let webhooks = [];
+
+async function loadSettings() {
+  currentConfig = await api.get('/api/config');
+  const b = currentConfig.branding || {};
+  
+  document.getElementById('dataPath').value = currentConfig.dataPath || '';
+  
+  document.getElementById('appName').value = b.appName || 'OPEN AUDITOR';
+  document.getElementById('primaryColor').value = b.primaryColor || '#4f46e5';
+  document.getElementById('primaryColorHex').value = b.primaryColor || '#4f46e5';
+  document.getElementById('footerText').value = b.footerText || 'Generado con OPEN AUDITOR';
+  document.getElementById('pdfLogoPath').textContent = b.pdfLogoPath || '(Igual al logo de la app)';
+
+  document.getElementById('primaryColor').addEventListener('input', e => {
+    document.getElementById('primaryColorHex').value = e.target.value;
+  });
+  document.getElementById('primaryColorHex').addEventListener('input', e => {
+    document.getElementById('primaryColor').value = e.target.value;
+  });
+  
+  await loadWebhooks();
+}
+
+async function uploadBrandingFile(type) {
+  const input = document.getElementById(type + 'File');
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const fd = new FormData();
+    fd.append(type, file);
+    const res = await fetch(`/api/config/${type}`, { method: 'POST', body: fd });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    document.getElementById(type + 'Preview').src = `/${data.path}?t=${Date.now()}`;
+    document.getElementById(type + 'Preview').style.display = 'block';
+    toast('✅ Imagen actualizada', 'success');
+  } catch(e) {
+    toast('Error subiendo imagen', 'error');
+  }
+  input.value = '';
+}
+
+async function saveBranding() {
+  const branding = {
+    appName: document.getElementById('appName').value.trim() || 'OPEN AUDITOR',
+    primaryColor: document.getElementById('primaryColorHex').value || '#4f46e5',
+    footerText: document.getElementById('footerText').value.trim() || 'Generado con OPEN AUDITOR',
+    logoPath: currentConfig.branding?.logoPath,
+    faviconPath: currentConfig.branding?.faviconPath,
+    pdfLogoPath: currentConfig.branding?.pdfLogoPath
+  };
+  
+  try {
+    await api.put('/api/config', { branding });
+    toast('✅ Apariencia guardada. Recargá la página para ver los cambios.', 'success');
+  } catch(e) { toast('Error guardando', 'error'); }
+}
+
+async function saveDataPath() {
+  const dataPath = document.getElementById('dataPath').value.trim();
+  try {
+    await api.put('/api/config', { dataPath });
+    toast('✅ Ruta guardada. Por favor reiniciá el servidor de OPEN AUDITOR para aplicar.', 'success');
+  } catch(e) { toast('Error guardando', 'error'); }
+}
+
+async function loadWebhooks() {
+  webhooks = await api.get('/api/webhooks');
+  const list = document.getElementById('webhooksList');
+  if (webhooks.length === 0) {
+    list.innerHTML = '<div class="text-muted text-sm">No hay webhooks configurados.</div>';
+    return;
+  }
+  
+  list.innerHTML = webhooks.map(wh => {
+    let lastText = 'Nunca';
+    if (wh.lastTriggeredAt) {
+      const d = new Date(wh.lastTriggeredAt).toLocaleString('es-ES');
+      const isErr = wh.lastStatus && wh.lastStatus.includes('error');
+      const icon = isErr ? '❌' : '✅';
+      lastText = `Último: hace un momento · ${icon} ${wh.lastStatus}`;
+    }
+    
+    return `
+      <div class="webhook-item ${wh.enabled ? 'webhook-enabled' : 'webhook-disabled'}">
+        <div class="webhook-item-header">
+          <div>
+            <span class="webhook-item-title">
+              <div class="webhook-status-dot" style="background:${wh.enabled?'var(--success)':'var(--gray-400)'};"></div>
+              ${esc(wh.name)}
+            </span>
+            <div class="webhook-item-url">${esc(wh.url)}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="editWebhook('${wh.id}')">✏️ Editar</button>
+            <button class="btn btn-ghost btn-sm text-red" onclick="deleteWebhook('${wh.id}')">✕</button>
+          </div>
+        </div>
+        <div class="webhook-item-events">
+          <b>Eventos:</b> ${(wh.events||[]).join(', ')}
+        </div>
+        <div class="webhook-item-last">
+          ${lastText}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openWebhookModal(id = null) {
+  const m = document.getElementById('webhookModal');
+  document.getElementById('whId').value = '';
+  document.getElementById('whName').value = '';
+  document.getElementById('whUrl').value = '';
+  document.getElementById('whSecret').value = '';
+  document.getElementById('whHeaders').value = '';
+  document.getElementById('whRetry').checked = true;
+  document.getElementById('whEnabled').checked = true;
+  document.querySelectorAll('.wh-event-cb').forEach(cb => cb.checked = false);
+  
+  if (id) {
+    document.getElementById('whModalTitle').textContent = 'Editar Webhook';
+    document.getElementById('whTestBtn').style.display = 'block';
+    const wh = webhooks.find(w => w.id === id);
+    if (wh) {
+      document.getElementById('whId').value = wh.id;
+      document.getElementById('whName').value = wh.name || '';
+      document.getElementById('whUrl').value = wh.url || '';
+      document.getElementById('whSecret').value = wh.secret || '';
+      document.getElementById('whHeaders').value = wh.headers ? JSON.stringify(wh.headers, null, 2) : '';
+      document.getElementById('whRetry').checked = !!wh.retryOnFailure;
+      document.getElementById('whEnabled').checked = !!wh.enabled;
+      (wh.events || []).forEach(e => {
+        const cb = document.querySelector(`.wh-event-cb[value="${e}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
+  } else {
+    document.getElementById('whModalTitle').textContent = 'Nuevo Webhook';
+    document.getElementById('whTestBtn').style.display = 'none';
+  }
+  
+  m.classList.remove('hidden');
+}
+
+window.editWebhook = openWebhookModal;
+
+window.deleteWebhook = async function(id) {
+  if (!confirm('¿Eliminar este webhook?')) return;
+  try {
+    await api.del(`/api/webhooks/${id}`);
+    toast('✅ Webhook eliminado', 'success');
+    loadWebhooks();
+  } catch(e) { toast('Error al eliminar', 'error'); }
+};
+
+window.saveWebhook = async function() {
+  const id = document.getElementById('whId').value;
+  const events = Array.from(document.querySelectorAll('.wh-event-cb:checked')).map(cb => cb.value);
+  
+  if (events.length === 0) return toast('Seleccioná al menos un evento', 'error');
+  if (!document.getElementById('whUrl').value) return toast('Ingresá una URL', 'error');
+  
+  let headersObj = {};
+  const hText = document.getElementById('whHeaders').value.trim();
+  if (hText) {
+    try { headersObj = JSON.parse(hText); }
+    catch(e) { return toast('Los headers deben ser un JSON válido', 'error'); }
+  }
+
+  const payload = {
+    name: document.getElementById('whName').value.trim(),
+    url: document.getElementById('whUrl').value.trim(),
+    secret: document.getElementById('whSecret').value.trim(),
+    events,
+    headers: headersObj,
+    retryOnFailure: document.getElementById('whRetry').checked,
+    enabled: document.getElementById('whEnabled').checked
+  };
+
+  try {
+    if (id) {
+      await api.put(`/api/webhooks/${id}`, payload);
+    } else {
+      await api.post(`/api/webhooks`, payload);
+    }
+    toast('✅ Webhook guardado', 'success');
+    document.getElementById('webhookModal').classList.add('hidden');
+    loadWebhooks();
+  } catch(e) { toast('Error guardando webhook', 'error'); }
+};
+
+window.testWebhook = async function() {
+  const id = document.getElementById('whId').value;
+  if (!id) return;
+  try {
+    await api.post(`/api/webhooks/${id}/test`, {});
+    toast('📡 Ping de prueba enviado', 'info');
+    setTimeout(loadWebhooks, 2000);
+  } catch(e) { toast('Error enviando ping', 'error'); }
+};
+
+window.togglePassword = function(id) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') el.type = 'text';
+  else el.type = 'password';
+};
+
+loadSettings();
+</script>
+</body>
+</html>
