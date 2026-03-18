@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR - Comparar Inspecciones</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Comparar Inspecciones</span>
+</nav>
+<main class="index-main">
+  <div class="page-header"><h1>Comparar Inspecciones</h1></div>
+  <div class="filter-bar">
+    <select class="input" id="selA"><option value="">Inspeccion A...</option></select>
+    <select class="input" id="selB"><option value="">Inspeccion B...</option></select>
+    <button class="btn btn-primary" onclick="compare()">Comparar</button>
+  </div>
+  <div id="compareResult"></div>
+</main>
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+<script>
+async function loadInspections() {
+  var ins = await api.get("/api/inspections");
+  var a = document.getElementById("selA");
+  var b = document.getElementById("selB");
+  ins.forEach(function(i) {
+    var opt1 = document.createElement("option"); opt1.value = i.id; opt1.textContent = i.templateName + " - " + formatDate(i.startedAt); a.appendChild(opt1);
+    var opt2 = document.createElement("option"); opt2.value = i.id; opt2.textContent = i.templateName + " - " + formatDate(i.startedAt); b.appendChild(opt2);
+  });
+}
+async function compare() {
+  var aId = document.getElementById("selA").value;
+  var bId = document.getElementById("selB").value;
+  if (!aId || !bId) { toast("Selecciona dos inspecciones", "error"); return; }
+  try {
+    var r = await api.get("/api/inspections/compare?a=" + aId + "&b=" + bId);
+    var html = "<div class=\"card\" style=\"margin-top:16px\">";
+    html += "<div style=\"display:flex;gap:24px;padding:16px;background:#f9fafb\">";
+    html += "<div><strong>A:</strong> " + esc(r.a.name) + " (" + formatDate(r.a.date) + ")" + (r.a.maxScore > 0 ? " | " + r.a.score + "/" + r.a.maxScore : "") + "</div>";
+    html += "<div><strong>B:</strong> " + esc(r.b.name) + " (" + formatDate(r.b.date) + ")" + (r.b.maxScore > 0 ? " | " + r.b.score + "/" + r.b.maxScore : "") + "</div>";
+    html += "</div>";
+    html += "<table class=\"template-table\"><thead><tr><th>Pregunta</th><th>Pagina</th><th>A</th><th>B</th><th>Diferencia</th></tr></thead><tbody>";
+    r.questions.forEach(function(q) {
+      var rowStyle = q.diff ? "background:#fff3cd" : "";
+      html += "<tr style=\"" + rowStyle + "\"><td>" + esc(q.text) + "</td><td class=\"text-sm text-muted\">" + esc(q.page) + "</td><td>" + esc(String(q.aValue || "-")) + "</td><td>" + esc(String(q.bValue || "-")) + "</td><td>" + (q.diff ? "<span style=\"color:var(--red)\">Diferente</span>" : "<span style=\"color:green\">Igual</span>") + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+    document.getElementById("compareResult").innerHTML = html;
+  } catch(e) { toast("Error: " + e.message, "error"); }
+}
+loadInspections();
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR - Acciones Correctivas</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Acciones Correctivas</span>
+</nav>
+
+<main class="index-main">
+  <div class="page-header">
+    <h1>Acciones Correctivas</h1>
+  </div>
+
+  <div class="filter-bar">
+    <select class="input w-160" id="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
+      <option value="all">Todos los estados</option>
+      <option value="open">Abierta</option>
+      <option value="in_progress">En progreso</option>
+      <option value="resolved">Resuelta</option>
+    </select>
+    <input type="text" class="input" id="searchAction" placeholder="Buscar por pregunta o inspeccion...">
+    <input type="text" class="input w-160" id="filterAssignedTo" placeholder="Filtrar por asignado...">
+  </div>
+
+  <div class="card">
+    <table class="template-table" id="actionsTable">
+      <thead>
+        <tr>
+          <th>Inspeccion</th>
+          <th>Pregunta</th>
+          <th>Accion Correctiva</th>
+          <th>Asignado a</th>
+          <th>Estado</th>
+          <th>Fecha Limite</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="actionsBody"></tbody>
+    </table>
+    <div id="emptyActions" class="empty-state hidden">
+      <div class="empty-state-icon">OK</div>
+      <h3>No hay acciones correctivas</h3>
+      <p class="empty-state-text">Las acciones correctivas registradas en inspecciones apareceran aqui.</p>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+<script>
+var actions = [];
+
+async function loadActions() {
+  actions = await api.get('/api/actions');
+  renderActions();
+}
+
+function renderActions() {
+  var tbody = document.getElementById('actionsBody');
+  var emptyEl = document.getElementById('emptyActions');
+  var table = document.getElementById('actionsTable');
+  var statusFilter = document.getElementById('filterStatus').value;
+  var search = document.getElementById('searchAction').value.toLowerCase();
+
+  var filtered = actions.filter(function(a) {
+    if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+    if (search && !a.questionText.toLowerCase().includes(search) && !a.inspectionName.toLowerCase().includes(search) && !(a.assignedTo||"").toLowerCase().includes(search)) return false;
+    var assignedFilter = document.getElementById("filterAssignedTo").value.toLowerCase();
+    if (assignedFilter && !(a.assignedTo||"").toLowerCase().includes(assignedFilter)) return false;
+    return true;
+  });
+
+  tbody.innerHTML = '';
+  if (!filtered.length) {
+    emptyEl.classList.remove('hidden');
+    table.classList.add('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  table.classList.remove('hidden');
+
+  filtered.forEach(function(a) {
+    var tr = document.createElement('tr');
+    var statusClass = a.status === 'resolved' ? 'badge-published' : (a.status === 'in_progress' ? 'badge-in_progress' : 'badge-draft');
+    var statusLabel = a.status === 'resolved' ? 'Resuelta' : (a.status === 'in_progress' ? 'En Progreso' : 'Abierta');
+    tr.innerHTML = '<td><a href="/inspector/' + a.inspectionId + '">' + esc(a.inspectionName) + '</a>' + (a.flagged ? ' <span style="color:var(--red)">&#x1F6A9;</span>' : '') + '</td>' +
+      '<td class="text-sm">' + esc(a.questionText) + '</td>' +
+      '<td class="text-sm">' + esc(a.action) + '</td>' +
+      '<td class="text-sm">' + esc(a.assignedTo || '-') + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td class="text-sm">' + (a.deadline || '-') + '</td>' +
+      '<td><div class="actions-cell">' +
+        '<select class="input input-sm" onchange="updateStatus(\'' + a.inspectionId + '\',\'' + a.questionId + '\',this.value)">' +
+          '<option value="open"' + (a.status === 'open' ? ' selected' : '') + '>Abierta</option>' +
+          '<option value="in_progress"' + (a.status === 'in_progress' ? ' selected' : '') + '>En Progreso</option>' +
+          '<option value="resolved"' + (a.status === 'resolved' ? ' selected' : '') + '>Resuelta</option>' +
+        '</select>' +
+        '<input type="date" class="input input-sm" value="' + (a.deadline || '') + '" onchange="updateDeadline(\'' + a.inspectionId + '\',\'' + a.questionId + '\',this.value)">' +
+      '</div></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+async function updateStatus(inspId, qId, status) {
+  try {
+    await api.put('/api/actions/' + inspId + '/' + qId, { status: status });
+    await async function updateAssignedTo(inspId, qId, assignedTo) {
+  try {
+    await api.put('/api/actions/' + inspId + '/' + qId, { assignedTo: assignedTo });
+    toast('Asignacion guardada', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+loadActions();
+    toast('Estado actualizado', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function updateDeadline(inspId, qId, deadline) {
+  try {
+    await api.put('/api/actions/' + inspId + '/' + qId, { deadline: deadline });
+    toast('Fecha limite guardada', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+document.getElementById('filterStatus').addEventListener('change', renderActions);
+document.getElementById('searchAction').addEventListener('input', renderActions);
+document.getElementById('filterAssignedTo').addEventListener('input', renderActions);
+
+loadActions();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>

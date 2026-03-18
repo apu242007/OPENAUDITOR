@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Búsqueda Global - OPEN AUDITOR</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .search-container { max-width: 640px; margin: 0 auto; padding: 20px; }
+    .search-input { width: 100%; font-size: 1.2rem; padding: 12px; margin-bottom: 20px; border: 1px solid var(--gray-300); border-radius: 6px; }
+    .search-filters { display: flex; gap: 10px; margin-bottom: 20px; }
+    .search-filter { padding: 6px 12px; border-radius: 16px; border: 1px solid var(--gray-300); background: #fff; cursor: pointer; font-size: 0.9rem; }
+    .search-filter.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .search-results { display: flex; flex-direction: column; gap: 10px; }
+    .search-result { padding: 12px; border: 1px solid var(--gray-200); border-radius: 6px; background: #fff; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+    .search-result:hover { border-color: var(--primary); }
+    .search-result-title { font-weight: 600; margin-bottom: 4px; color: var(--gray-900); }
+    .search-result-subtitle { font-size: 0.85rem; color: var(--gray-500); }
+    .search-result-type { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; background: var(--gray-100); color: var(--gray-700); margin-right: 8px; }
+    .search-loading { text-align: center; padding: 20px; color: var(--gray-500); }
+  </style>
+</head>
+<body>
+<nav class="topnav">
+  <div class="topnav-logo"><a href="/" class="inherit-color no-underline">OPEN <span>AUDITOR</span></a></div>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Búsqueda</span>
+</nav>
+
+<main class="search-container">
+  <input type="text" id="searchInput" class="search-input" placeholder="Buscar plantillas, inspecciones, respuestas..." autofocus>
+  
+  <div class="search-filters" id="searchFilters">
+    <button class="search-filter active" data-type="all">Todo</button>
+    <button class="search-filter" data-type="templates">Plantillas</button>
+    <button class="search-filter" data-type="inspections">Inspecciones</button>
+  </div>
+
+  <div id="searchResults" class="search-results">
+    <!-- Results go here -->
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+  let currentType = 'all';
+  let searchTimeout = null;
+
+  const typeLabels = {
+    template: 'Plantilla',
+    question: 'Pregunta',
+    inspection: 'Inspección',
+    answer: 'Respuesta',
+    note: 'Nota',
+    action: 'Acción'
+  };
+
+  document.getElementById('searchFilters').addEventListener('click', (e) => {
+    if (e.target.classList.contains('search-filter')) {
+      document.querySelectorAll('.search-filter').forEach(btn => btn.classList.remove('active'));
+      e.target.classList.add('active');
+      currentType = e.target.getAttribute('data-type');
+      performSearch();
+    }
+  });
+
+  document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(performSearch, 300);
+  });
+
+  async function performSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    const resultsContainer = document.getElementById('searchResults');
+
+    if (query.length < 2) {
+      resultsContainer.innerHTML = '<div class="search-loading">Escribe al menos 2 caracteres para buscar...</div>';
+      return;
+    }
+
+    resultsContainer.innerHTML = '<div class="search-loading">Buscando...</div>';
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${currentType}`);
+      const data = await res.json();
+      
+      if (!data.results || data.results.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-loading">No se encontraron resultados.</div>';
+        return;
+      }
+
+      resultsContainer.innerHTML = '';
+      data.results.forEach(result => {
+        const a = document.createElement('a');
+        a.href = result.url;
+        a.className = 'search-result';
+        
+        const typeLabel = typeLabels[result.type] || result.type;
+
+        a.innerHTML = `
+          <div class="search-result-title">
+            <span class="search-result-type">${typeLabel}</span>
+            ${esc(result.title)}
+          </div>
+          <div class="search-result-subtitle">${esc(result.subtitle)}</div>
+        `;
+        resultsContainer.appendChild(a);
+      });
+    } catch (e) {
+      resultsContainer.innerHTML = '<div class="search-loading">Error al buscar.</div>';
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR - Editor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <div class="topnav-sep"></div>
+  <span id="navTemplateName" class="nav-template-name"></span>
+  <div class="ml-auto nav-actions">
+    <button class="btn btn-ghost btn-nav-ghost" onclick="exportTemplate()">Exportar JSON</button>
+    <button class="btn btn-ghost btn-nav-ghost" onclick="previewPdf()">Vista Previa PDF</button>
+    <button class="btn btn-ghost btn-nav-ghost qr-nav-btn" id="btnQR" onclick="showQR()">&#128241; QR</button>
+    <button class="btn btn-ghost btn-nav-ghost" onclick="openSettings()" title="Configuración global">⚙️</button>
+    <select id="revertSelect" class="btn btn-outline btn-sm btn-nav-outline revert-select" title="Versión a revertir" aria-label="Seleccionar versión a revertir" onchange="revertTemplate(this.value)">
+      <option value="" disabled selected>Revertir a...</option>
+    </select>
+    <button class="btn btn-outline btn-sm btn-nav-outline" id="btnSave">Guardar borrador</button>
+    <button class="btn btn-success btn-sm" id="btnPublish">Publicar</button>
+  </div>
+</nav>
+
+<div class="editor-layout">
+  <div class="editor-topbar">
+    <div class="editor-mode-tabs">
+      <button class="editor-mode-tab active" data-mode="create">Crear Plantilla</button>
+      <button class="editor-mode-tab" data-mode="report">Editar Informe</button>
+      <button class="editor-mode-tab" data-mode="history">Historial</button>
+     
+    </div>
+    <span id="topbarStatusBadge" class="ml-auto"></span>
+  </div>
+
+  <aside class="editor-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      Páginas
+      <div class="ml-auto page-count" id="pageCount"></div>
+    </div>
+    <div class="page-list" id="pageList"></div>
+    <button class="add-page-btn" id="btnAddPage">+ Agregar página</button>
+  </aside>
+
+  <main class="editor-content" id="mainContent">
+    <div class="content-inner" id="contentInner"></div>
+  </main>
+
+  <aside class="editor-preview" id="rightPanel"></aside>
+</div>
+
+<!-- Global Settings Modal -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Configuración global de plantilla</h2>
+      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-row">
+        <div>
+          <div class="settings-label" id="lblDefNotes">Notas habilitadas por defecto</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setDefaultNotes" aria-labelledby="lblDefNotes">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label" id="lblDefMedia">Adjuntos multimedia por defecto</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setDefaultMedia" aria-labelledby="lblDefMedia">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label" id="lblDefActions">Acciones habilitadas por defecto</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setDefaultActions" aria-labelledby="lblDefActions">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Marcado por defecto</div>
+        <div class="radio-group">
+          <label class="radio-item"><input type="radio" name="defaultRequired" value="false"> Opcional</label>
+          <label class="radio-item"><input type="radio" name="defaultRequired" value="true"> Requerido</label>
+        </div>
+      </div>
+    </div>
+      <div class="settings-row settings-col">
+        <div class="settings-label">Fecha de Expiracion</div>
+        <div class="settings-row-group">
+          <input type="date" class="input input-sm" id="setExpiryDate" title="Fecha de expiracion">
+          <input type="number" class="input input-sm w-120" id="setWarnDays" placeholder="Dias aviso" min="1">
+          <label class="settings-checkbox-label"><input type="checkbox" id="setBlockOnExpiry"> Bloquear al expirar</label>
+        </div>
+      </div>
+      
+      <hr class="settings-divider">
+      <h3>Numeración</h3>
+      <div class="settings-row">
+        <div><div class="settings-label" id="lblCorrEnabled">Numeración automática</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setCorrEnabled" aria-labelledby="lblCorrEnabled">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="correlativeSettings" class="correlative-settings hidden">
+        <div class="corr-field">
+          <label>Prefijo</label>
+          <input type="text" class="input input-sm" id="setCorrPrefix" maxlength="10" placeholder="Ej. OA">
+        </div>
+        <div class="corr-field">
+          <label>Año</label>
+          <label><input type="checkbox" id="setCorrYear" title="Incluir año"> Incluir año</label>
+        </div>
+        <div class="corr-field">
+          <label>Separador</label>
+          <input type="text" class="input input-sm w-60" id="setCorrSep" maxlength="2" placeholder="-" title="Separador">
+        </div>
+        <div class="corr-field">
+          <label>Ceros (1-6)</label>
+          <input type="number" class="input input-sm w-60" id="setCorrPad" min="1" max="6" value="3" title="Cantidad de ceros">
+        </div>
+        <div class="corr-field">
+          <label>Prox N°</label>
+          <input type="number" class="input input-sm w-100" id="setCorrNext" min="1" value="1" title="Próximo número">
+        </div>
+        <div id="corrPreview" class="corr-preview"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="applyAllSettings">Aplicar a todas las preguntas</button>
+      <button class="btn btn-primary" id="saveSettings">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logic Modal -->
+<div class="modal-overlay hidden" id="logicModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Lógica Condicional</h2>
+      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="document.getElementById('logicModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="modal-body" id="logicBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="clearLogic()">Quitar Lógica</button>
+      <button class="btn btn-primary" onclick="saveLogic()">Guardar Lógica</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal (Feature 4) -->
+<div class="modal-overlay hidden" id="qrEditorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Codigo QR - Acceso a Inspeccion</h2>
+      <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('qrEditorModal').classList.add('hidden')">&#x2715;</button>
+    </div>
+    <div class="modal-body qr-modal-body">
+      <img id="qrEditorImg" src="" class="qr-modal-img" alt="QR">
+      <p id="qrEditorUrl" class="text-sm text-muted qr-modal-url"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="downloadEditorQR()">Descargar PNG</button>
+      <button class="btn btn-outline" onclick="copyEditorQRUrl()">Copiar URL</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+
+<script>
+let tmpl = null;
+let currentPageId = null;
+let currentMode = 'create';
+let dragSrcEl = null;
+let logicQid = null;
+let logicPid = null;
+let logicSid = null;
+const id = location.pathname.split('/').pop();
+
+(async () => {
+  try {
+    tmpl = await api.get('/api/templates/' + id);
+    currentPageId = tmpl.pages[0]?.id;
+    render();
+  } catch(e) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:red;">Error: ' + e.message + '</div>';
+  }
+})();
+
+// Events
+document.getElementById('btnSave').onclick = async () => { await save(); toast('Borrador guardado', 'success'); };
+document.getElementById('btnPublish').onclick = async () => {
+  try {
+    const vr = await api.get('/api/templates/' + id + '/validate');
+    if (vr.warnings && vr.warnings.length > 0) {
+      if (!confirm('Advertencias antes de publicar: ' + vr.warnings.join(' | ') + ' - Publicar de todas formas?')) return;
+    }
+  } catch(e) {}
+  await save(); tmpl = await api.post('/api/templates/' + id + '/publish', {}); render(); toast('Plantilla publicada', 'success');
+};
+async function revertTemplate(vIndex) {
+  if (!vIndex) return;
+  if (!confirm('¿Revertir a esta versión?')) { renderStatus(); return; }
+  tmpl = await api.post('/api/templates/' + id + '/revert', { versionIndex: parseInt(vIndex) });
+  currentPageId = tmpl.pages[0]?.id;
+  render();
+  toast('Revertido a versión anterior', 'success');
+}
+
+function updateCorrPreview() {
+  var prefix = document.getElementById('setCorrPrefix').value;
+  var year = document.getElementById('setCorrYear').checked ? new Date().getFullYear() : '';
+  var sep = document.getElementById('setCorrSep').value || '-';
+  var pad = parseInt(document.getElementById('setCorrPad').value) || 3;
+  var next = document.getElementById('setCorrNext').value || '1';
+  var num = String(next).padStart(pad, '0');
+  var parts = [];
+  if (prefix) parts.push(prefix);
+  if (year) parts.push(year);
+  parts.push(num);
+  document.getElementById('corrPreview').textContent = 'Próximo código: ' + parts.join(sep);
+}
+
+document.getElementById('setCorrEnabled').addEventListener('change', function() {
+  const el = document.getElementById('correlativeSettings');
+  if (this.checked) {
+    el.classList.remove('hidden');
+    updateCorrPreview();
+  } else {
+    el.classList.add('hidden');
+  }
+});
+['setCorrPrefix','setCorrYear','setCorrSep','setCorrPad','setCorrNext'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', updateCorrPreview);
+  document.getElementById(id).addEventListener('change', updateCorrPreview);
+});
+
+function openSettings() {
+  const s = tmpl.settings;
+  document.getElementById('setDefaultNotes').checked = s.defaultNotes;
+  document.getElementById('setDefaultMedia').checked = s.defaultMedia;
+  document.getElementById('setDefaultActions').checked = s.defaultActions;
+  document.querySelectorAll('[name=defaultRequired]').forEach(r => r.checked = r.value === String(s.defaultRequired));
+  var exp = tmpl.expiry || {};
+  document.getElementById('setExpiryDate').value = exp.date || '';
+  document.getElementById('setWarnDays').value = exp.warnDays || 7;
+  document.getElementById('setBlockOnExpiry').checked = !!exp.blockOnExpiry;
+  
+  var cor = tmpl.correlative || { enabled: false, prefix: '', includeyear: true, separator: '-', padLength: 3, nextNumber: 1 };
+  document.getElementById('setCorrEnabled').checked = cor.enabled;
+  document.getElementById('setCorrPrefix').value = cor.prefix || '';
+  document.getElementById('setCorrYear').checked = cor.includeyear !== false;
+  document.getElementById('setCorrSep').value = cor.separator !== undefined ? cor.separator : '-';
+  document.getElementById('setCorrPad').value = cor.padLength || 3;
+  document.getElementById('setCorrNext').value = cor.nextNumber || 1;
+  const el = document.getElementById('correlativeSettings');
+  if (cor.enabled) {
+    el.classList.remove('hidden');
+    updateCorrPreview();
+  } else {
+    el.classList.add('hidden');
+  }
+  
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+document.getElementById('saveSettings').onclick = () => {
+  tmpl.settings.defaultNotes = document.getElementById('setDefaultNotes').checked;
+  tmpl.settings.defaultMedia = document.getElementById('setDefaultMedia').checked;
+  tmpl.settings.defaultActions = document.getElementById('setDefaultActions').checked;
+  tmpl.settings.defaultRequired = document.querySelector('[name=defaultRequired]:checked')?.value === 'true';
+  var expDate = document.getElementById('setExpiryDate').value;
+  if (expDate) {
+    tmpl.expiry = { date: expDate, warnDays: parseInt(document.getElementById('setWarnDays').value)||7, blockOnExpiry: document.getElementById('setBlockOnExpiry').checked };
+  } else {
+    tmpl.expiry = null;
+  }
+  
+  tmpl.correlative = {
+    enabled: document.getElementById('setCorrEnabled').checked,
+    prefix: document.getElementById('setCorrPrefix').value,
+    includeyear: document.getElementById('setCorrYear').checked,
+    separator: document.getElementById('setCorrSep').value,
+    padLength: parseInt(document.getElementById('setCorrPad').value) || 3,
+    nextNumber: parseInt(document.getElementById('setCorrNext').value) || 1
+  };
+  
+  closeSettings(); toast('Configuración guardada', 'success');
+};
+
+document.getElementById('applyAllSettings').onclick = () => {
+  const n = document.getElementById('setDefaultNotes').checked;
+  const m = document.getElementById('setDefaultMedia').checked;
+  const a = document.getElementById('setDefaultActions').checked;
+  const r = document.querySelector('[name=defaultRequired]:checked')?.value === 'true';
+  tmpl.pages.forEach(p => p.sections.forEach(s => s.questions.forEach(q => { q.allowNote = n; q.allowMedia = m; q.allowAction = a; q.required = r; })));
+  closeSettings(); render(); toast('Aplicado a todas', 'success');
+};
+
+document.addEventListener('click', e => {
+  if (e.target.matches('.editor-mode-tab')) {
+    currentMode = e.target.dataset.mode;
+    document.querySelectorAll('.editor-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === currentMode));
+    if (currentMode === 'history') { renderHistory(); } else { renderRightPanel(); renderContent(); }
+  }
+});
+
+async function save() {
+  tmpl.updatedAt = new Date().toISOString();
+  tmpl = await api.put('/api/templates/' + id, tmpl);
+  renderStatus();
+}
+
+function exportTemplate() {
+  window.open('/api/templates/' + id + '/export', '_blank');
+}
+
+function render() {
+  renderSidebar(); renderContent(); renderRightPanel(); renderStatus();
+  document.getElementById('navTemplateName').textContent = tmpl.name;
+}
+
+function renderStatus() {
+  var qrBtn = document.getElementById('btnQR');
+  if (qrBtn) qrBtn.classList.toggle('hidden', tmpl.status !== 'published');
+  const el = document.getElementById('topbarStatusBadge');
+  el.innerHTML = '<span class="badge badge-' + tmpl.status + '">' + (tmpl.status === 'published' ? 'Publicada' : 'Borrador') + '</span>';
+  if (tmpl.publishedAt) el.innerHTML += '<span class="text-xs text-muted" style="margin-left:8px">Publicada: ' + formatDate(tmpl.publishedAt) + '</span>';
+  
+  const sel = document.getElementById('revertSelect');
+  sel.innerHTML = '<option value="" disabled selected>Revertir a...</option>';
+  if (tmpl.publishedVersions && tmpl.publishedVersions.length > 0) {
+    tmpl.publishedVersions.forEach((v, i) => {
+      sel.innerHTML += `<option value="${i}">Versión ${i+1} (${formatDate(v.publishedAt)})</option>`;
+    });
+    sel.style.display = 'inline-block';
+  } else {
+    sel.style.display = 'none';
+  }
+}
+
+function renderSidebar() {
+  const list = document.getElementById('pageList');
+  list.innerHTML = '';
+  tmpl.pages.forEach(page => {
+    const div = document.createElement('div');
+    div.className = 'page-item' + (page.id === currentPageId ? ' active' : '');
+    const isCover = page.type === 'cover';
+    div.innerHTML = `
+      <span class="page-item-icon">${isCover ? '📄' : '📑'}</span>
+      <span class="page-item-name truncate">${esc(page.name)}</span>
+      ${!isCover ? `<span class="page-item-actions">
+        <button class="page-btn" title="Renombrar" onclick="renamePage('${page.id}',event)">✏️</button>
+        <button class="page-btn" title="Duplicar" onclick="dupPage('${page.id}',event)">📄</button>
+        <button class="page-btn" title="Eliminar" onclick="deletePage('${page.id}',event)">✕</button>
+      </span>` : ''}
+    `;
+    div.onclick = () => { currentPageId = page.id; render(); };
+    list.appendChild(div);
+  });
+  document.getElementById('pageCount').textContent = tmpl.pages.length + ' pág.';
+}
+
+function renderContent() {
+  const inner = document.getElementById('contentInner');
+  if (!tmpl) return;
+  const page = tmpl.pages.find(p => p.id === currentPageId);
+  if (!page) return;
+
+  let html = `<div class="template-header-block">
+    <input class="template-title-input" id="tmplName" value="${esc(tmpl.name)}" placeholder="Nombre de la plantilla">
+    <div class="tmpl-meta-row"><input class="input input-sm" id="tmplTags" value="${esc((tmpl.tags||[]).join(', '))}" placeholder="Etiquetas separadas por coma"><input class="input input-sm" type="date" id="tmplSchedule" value="${tmpl.schedule&&tmpl.schedule.nextDate||''}" title="Programar próxima inspección"></div>
+    <textarea class="template-desc-input" id="tmplDesc" placeholder="Descripción (opcional)">${esc(tmpl.description)}</textarea>
+  </div>`;
+
+  page.sections.forEach((sec, si) => { html += renderSection(page.id, sec, si); });
+
+  html += `<div class="add-controls">
+    <button class="add-section-btn-inline" onclick="addSection('${page.id}')">+ Agregar sección</button>
+    <button class="btn btn-primary btn-sm" onclick="addQuestion('${page.id}','${page.sections[page.sections.length-1]?.id || ''}')">+ Pregunta</button>
+  </div>`;
+
+  inner.innerHTML = html;
+  bindInlineEdits();
+}
+
+function renderSection(pageId, sec, si) {
+  let repSettings = '';
+  if (sec.repeatable) {
+    repSettings = `
+      <div style="background:var(--gray-50); padding:8px 12px; margin-bottom:12px; border-radius:4px; border:1px dashed var(--gray-300); display:flex; gap:12px; align-items:center; font-size:0.85rem">
+        <span style="font-weight:600; color:var(--indigo)">🔄 Sección Repetible</span>
+        <label>Min: <input type="number" class="input-inline" style="width:50px" value="${sec.minInstances||1}" min="0" onchange="updateSectionProp('${pageId}','${sec.id}','minInstances',parseInt(this.value))"></label>
+        <label>Max: <input type="number" class="input-inline" style="width:50px" value="${sec.maxInstances||''}" placeholder="∞" min="1" onchange="updateSectionProp('${pageId}','${sec.id}','maxInstances',this.value?parseInt(this.value):null)"></label>
+        <label>Botón: <input type="text" class="input-inline" style="width:120px" placeholder="+ Añadir" value="${esc(sec.addButtonLabel||'')}" onchange="updateSectionProp('${pageId}','${sec.id}','addButtonLabel',this.value)"></label>
+      </div>
+    `;
+  }
+
+  let html = `<div class="section-block" data-sec="${sec.id}">
+    <div class="section-header">
+      <input class="section-title-input" placeholder="Nombre de sección (opcional)" value="${esc(sec.title)}" onchange="updateSectionTitle('${pageId}','${sec.id}',this.value)">
+      <button class="btn btn-ghost btn-sm" style="margin-right:8px; font-size:0.8rem; color:${sec.repeatable?'var(--indigo)':'var(--gray-500)'}" onclick="toggleRepeatable('${pageId}','${sec.id}')">🔄 Repetible</button>
+      <button class="btn btn-ghost btn-icon btn-sm" title="Agregar pregunta" onclick="addQuestion('${pageId}','${sec.id}')">+ Pregunta</button>
+      ${si > 0 ? `<button class="btn btn-ghost btn-icon btn-sm" style="color:var(--gray-400)" onclick="deleteSection('${pageId}','${sec.id}')">✕</button>` : ''}
+    </div>
+    ${repSettings}
+    <div class="question-list" data-secid="${sec.id}" data-pageid="${pageId}">`;
+  sec.questions.forEach((q) => { html += renderQuestion(pageId, sec.id, q); });
+  html += '</div></div>';
+  return html;
+}
+
+function renderQuestion(pageId, secId, q) {
+  const typeOpts = RESPONSE_TYPES.map(t => `<option value="${t.value}" ${q.responseType === t.value ? 'selected' : ''}>${t.label}</option>`).join('');
+  
+  if (!q.options && (q.responseType === 'multiple_choice' || q.responseType === 'yesno')) {
+    q.options = [{id:uuid(),label:'Sí',scoreValue:1},{id:uuid(),label:'No',scoreValue:0},{id:uuid(),label:'N/A',scoreValue:-1}];
+    q.responseType = 'multiple_choice';
+  }
+
+  let optionsHtml = '';
+  if (q.responseType === 'multiple_choice') {
+    optionsHtml = `<div style="margin: 8px 0; padding: 8px; background: #fff; border: 1px dashed var(--gray-300); border-radius: var(--radius-sm);">
+      <div style="font-size:.75rem; color:var(--gray-500); margin-bottom:6px; font-weight:600">Opciones:</div>
+      ${(q.options||[]).map(o => `
+        <div style="display:flex; gap:6px; margin-bottom:4px; align-items:center;">
+          <input class="input-inline" style="flex:1; border:1px solid var(--gray-200); padding:2px 6px" value="${esc(o.label)}" onchange="updateOption('${pageId}','${secId}','${q.id}','${o.id}','label',this.value)">
+          <select class="input-inline" style="width:110px; border:1px solid var(--gray-200); padding:2px; font-size:.75rem" onchange="updateOption('${pageId}','${secId}','${q.id}','${o.id}','scoreValue',parseInt(this.value))">
+            <option value="1" ${o.scoreValue===1?'selected':''}>Puntúa total</option>
+            <option value="0" ${o.scoreValue===0?'selected':''}>Puntúa cero</option>
+            <option value="-1" ${o.scoreValue===-1?'selected':''}>Excluir (N/A)</option>
+          </select>
+          <button class="btn-icon" style="color:var(--red); border:none; background:transparent; cursor:pointer;" onclick="deleteOption('${pageId}','${secId}','${q.id}','${o.id}')">✕</button>
+        </div>
+      `).join('')}
+      <button class="btn-sm btn-ghost" style="margin-top:4px; font-size:.7rem" onclick="addOption('${pageId}','${secId}','${q.id}')">+ Añadir opción</button>
+    </div>`;
+  }
+
+  return `<div class="question-item" draggable="true" data-qid="${q.id}" data-secid="${secId}" data-pageid="${pageId}">
+    <span class="drag-handle" title="Arrastrar">⋮⋮</span>
+    <div class="question-body">
+      <div class="question-row1">
+        ${(q.helpText && q.helpTextVisible!=='never') ? '<span style="color:var(--indigo);font-size:1.1rem" title="Tiene instrucciones">ℹ️</span>' : ''}
+        <input class="question-text-input" value="${esc(q.text)}" placeholder="Texto de la pregunta" onchange="updateQ('${pageId}','${secId}','${q.id}','text',this.value)">
+        <select class="response-type-select" onchange="updateQ('${pageId}','${secId}','${q.id}','responseType',this.value)">${typeOpts}</select>
+        <input type="number" class="question-score-input" placeholder="Pts" value="${q.score||''}" onchange="updateQ('${pageId}','${secId}','${q.id}','score',this.value)">
+      </div>
+      ${optionsHtml}
+      <div class="question-row2">
+        <span class="q-pill required-pill ${q.required ? 'active' : ''}" onclick="toggleQ('${pageId}','${secId}','${q.id}','required')">${q.required ? '✓ Req' : 'Opcional'}</span>
+        <button class="btn-ghost btn-sm" style="font-size:0.75rem; color:var(--indigo);" onclick="toggleHelpText('${pageId}','${secId}','${q.id}')">ℹ️ ${q.helpText ? (q.helpText.substring(0,15)+'...') : 'Agregar instrucción'}</button>
+        <span class="q-pill ${q.allowNote ? 'active' : ''}" onclick="toggleQ('${pageId}','${secId}','${q.id}','allowNote')">📝 Nota</span>
+        <span class="q-pill ${q.allowMedia ? 'active' : ''}" onclick="toggleQ('${pageId}','${secId}','${q.id}','allowMedia')">📷 Media</span>
+        <span class="q-pill ${q.allowAction ? 'active' : ''}" onclick="toggleQ('${pageId}','${secId}','${q.id}','allowAction')">⚡ Acción</span>
+        <span class="q-pill ${q.conditionalLogic ? 'active' : ''}" onclick="openLogic('${pageId}','${secId}','${q.id}')">🔀 Lógica</span>
+      </div>
+    </div>
+    <div class="question-actions">
+      <button class="question-btn" title="Nota del editor" onclick="toggleEditorNote('${pageId}','${secId}','${q.id}')" style="${q.editorNote?'color:var(--indigo)':''}" >📋</button>
+      <button class="question-btn" title="Guardar en biblioteca" onclick="saveToLibrary('${pageId}','${secId}','${q.id}')">📚</button>
+      <button class="question-btn" title="Duplicar" onclick="dupQuestion('${pageId}','${secId}','${q.id}')">📄</button>
+      <button class="question-btn delete" title="Eliminar" onclick="deleteQuestion('${pageId}','${secId}','${q.id}')">✕</button>
+    </div>
+  </div>
+  ${q.showHelpEditor ? `
+    <div style="margin:4px 0 8px 32px; padding:8px; background:var(--gray-50); border:1px solid var(--gray-200); border-radius:4px;">
+      <textarea class="textarea" style="min-height:40px; font-size:0.85rem; margin-bottom:8px" placeholder="Escribe aquí las instrucciones de ayuda..." onchange="updateQ('${pageId}','${secId}','${q.id}','helpText',this.value)">${esc(q.helpText||'')}</textarea>
+      <div style="display:flex; gap:12px; font-size:0.8rem; align-items:center;">
+        <label><input type="radio" name="htv_${q.id}" value="always" ${q.helpTextVisible==='always'?'checked':''} onchange="updateQ('${pageId}','${secId}','${q.id}','helpTextVisible','always')"> Siempre visible</label>
+        <label><input type="radio" name="htv_${q.id}" value="on_demand" ${q.helpTextVisible==='on_demand'||!q.helpTextVisible?'checked':''} onchange="updateQ('${pageId}','${secId}','${q.id}','helpTextVisible','on_demand')"> Al hacer clic</label>
+        <label><input type="radio" name="htv_${q.id}" value="never" ${q.helpTextVisible==='never'?'checked':''} onchange="updateQ('${pageId}','${secId}','${q.id}','helpTextVisible','never')"> Oculto</label>
+      </div>
+    </div>
+  ` : ''}
+  ${q.editorNote !== undefined && q.editorNote !== null ? '<div id="en-' + q.id + '" style="padding:4px 8px;background:#fefce8;border:1px dashed #fbbf24;border-radius:4px;margin-top:4px"><textarea class="textarea" style="min-height:36px;font-size:.8rem;background:transparent;border:none" placeholder="Nota interna del editor (no visible en inspección)..." onchange="updateQ(\'' + pageId + '\',\'' + secId + '\',\'' + q.id + '\',\'editorNote\',this.value)">' + esc(q.editorNote) + '</textarea></div>' : ''}
+  `;
+}
+
+function toggleHelpText(pid, sid, qid) {
+  const q = getQ(pid, sid, qid);
+  q.showHelpEditor = !q.showHelpEditor;
+  if (q.showHelpEditor && !q.helpTextVisible) q.helpTextVisible = 'on_demand'; // default
+  renderContent();
+}
+
+function renderRightPanel() {
+  const panel = document.getElementById('rightPanel');
+  if (currentMode === 'report') {
+    const r = tmpl.report || {};
+    panel.innerHTML = `<div class="report-panel">
+      <h3>Configuración del informe</h3>
+      <div class="report-field"><label>Título</label><input class="input" id="rptTitle" value="${esc(r.title||'')}" placeholder="Por defecto: nombre"></div>
+      <div class="report-field"><label>Tamaño de pág</label><select class="input" id="rptPageSize">
+        <option value="A4" ${r.pageSize === 'A4'?'selected':''}>A4</option><option value="Letter" ${r.pageSize === 'Letter'?'selected':''}>Letter</option>
+      </select></div>
+      <div class="report-toggles">
+        ${['showCover','showTOC','showScore','showFlaggedItems'].map(k => `<div class="report-toggle-item"><span>${k}</span><label class="toggle-switch"><input type="checkbox" id="rpt_${k}" ${r[k]?'checked':''}><span class="toggle-track"></span></label></div>`).join('')}
+      </div>
+    </div>`;
+    ['title','pageSize'].forEach(k => { const e = document.getElementById('rpt'+k[0].toUpperCase()+k.slice(1)); if(e) e.onchange = ()=>tmpl.report[k]=e.value; });
+    ['showCover','showTOC','showScore','showFlaggedItems'].forEach(k => { const e = document.getElementById('rpt_'+k); if(e) e.onchange = ()=>tmpl.report[k]=e.checked; });
+  } else {
+    // Library panel with tabs
+    var libTab = (window._libTab || 'local');
+    var tabHtml = '<div class="library-panel">';
+    tabHtml += '<div style="display:flex;gap:6px;margin-bottom:12px">';
+    tabHtml += '<button class="btn btn-sm ' + (libTab==='local'?'btn-primary':'btn-outline') + '" onclick="window._libTab=\"local\";renderRightPanel()">Esta plantilla</button>';
+    tabHtml += '<button class="btn btn-sm ' + (libTab==='global'?'btn-primary':'btn-outline') + '" onclick="window._libTab=\"global\";renderRightPanel()">Biblioteca global</button>';
+    tabHtml += '</div>';
+    if (libTab === 'local') {
+      tabHtml += '<h3>Biblioteca Local</h3>';
+      if (!tmpl.questionLibrary || tmpl.questionLibrary.length === 0) tabHtml += '<p class="text-xs text-muted">No hay preguntas guardadas.</p>';
+      else {
+        tmpl.questionLibrary.forEach(function(q, i) {
+          tabHtml += '<div style="padding:8px;border:1px solid var(--gray-200);border-radius:4px;margin-bottom:8px;background:#fff">';
+          tabHtml += '<div class="text-sm fw-600">' + esc(q.text) + '</div><div class="text-xs text-muted">' + responseTypeLabel(q.responseType) + '</div>';
+          tabHtml += '<div style="margin-top:6px"><button class="btn-sm btn-outline" onclick="insertLib(' + i + ')">Insertar</button></div>';
+          tabHtml += '</div>';
+        });
+      }
+    } else {
+      tabHtml += '<h3>Biblioteca Global</h3><div id="globalLibContent">Cargando...</div>';
+    }
+    tabHtml += '</div>';
+    panel.innerHTML = tabHtml;
+    if (libTab === 'global') loadGlobalLibrary();
+  }
+}
+
+// Logic Modal
+function getQ(p, s, q) { return tmpl.pages.find(x=>x.id===p)?.sections.find(x=>x.id===s)?.questions.find(x=>x.id===q); }
+function openLogic(pid, sid, qid) {
+  logicPid = pid; logicSid = sid; logicQid = qid;
+  const q = getQ(pid, sid, qid);
+  let opts = '<option value="">Selecciona pregunta...</option>';
+  tmpl.pages.forEach(p => p.sections.forEach(s => s.questions.forEach(xq => {
+    if (xq.id !== qid) opts += `<option value="${xq.id}">${esc(xq.text)}</option>`;
+  })));
+  
+  const l = q.conditionalLogic || {};
+  document.getElementById('logicBody').innerHTML = `
+    <div class="report-field"><label>Mostrar solo si la pregunta:</label><select class="input" id="logicDep">${opts}</select></div>
+    <div class="report-field"><label>Condición:</label><select class="input" id="logicCond">
+      <option value="equals">Es igual a</option><option value="not_equals">No es igual a</option>
+    </select></div>
+    <div class="report-field"><label>Valor:</label><input class="input" id="logicVal" placeholder="ej. yes, true, o texto"></div>
+  `;
+  if (l.dependsOn) document.getElementById('logicDep').value = l.dependsOn;
+  if (l.condition) document.getElementById('logicCond').value = l.condition;
+  if (l.value) document.getElementById('logicVal').value = l.value;
+  document.getElementById('logicModal').classList.remove('hidden');
+}
+function saveLogic() {
+  const d = document.getElementById('logicDep').value;
+  const c = document.getElementById('logicCond').value;
+  const v = document.getElementById('logicVal').value;
+  const q = getQ(logicPid, logicSid, logicQid);
+  if (d && v) q.conditionalLogic = { dependsOn: d, condition: c, value: v };
+  else q.conditionalLogic = null;
+  document.getElementById('logicModal').classList.add('hidden');
+  renderContent();
+}
+function clearLogic() {
+  getQ(logicPid, logicSid, logicQid).conditionalLogic = null;
+  document.getElementById('logicModal').classList.add('hidden');
+  renderContent();
+}
+
+function toggleEditorNote(pid, sid, qid) {
+  var q = getQ(pid, sid, qid);
+  if (q.editorNote === null || q.editorNote === undefined) q.editorNote = '';
+  else q.editorNote = null;
+  renderContent();
+}
+function updateQ(pid, sid, qid, key, val) { getQ(pid, sid, qid)[key] = val; renderContent(); }
+function toggleQ(pid, sid, qid, key) { const q = getQ(pid, sid, qid); q[key] = !q[key]; renderContent(); }
+function updateSectionTitle(pid, sid, val) { tmpl.pages.find(p=>p.id===pid).sections.find(s=>s.id===sid).title = val; }
+function updateSectionProp(pid, sid, prop, val) { tmpl.pages.find(p=>p.id===pid).sections.find(s=>s.id===sid)[prop] = val; }
+function toggleRepeatable(pid, sid) {
+  const s = tmpl.pages.find(p=>p.id===pid).sections.find(x=>x.id===sid);
+  s.repeatable = !s.repeatable;
+  if (s.repeatable) { s.minInstances = s.minInstances||1; s.maxInstances = s.maxInstances||null; s.addButtonLabel = s.addButtonLabel||''; }
+  renderContent();
+}
+
+function updateOption(pid, sid, qid, optId, key, val) {
+  const q = getQ(pid, sid, qid);
+  const o = q.options.find(x => x.id === optId);
+  if (o) { o[key] = val; }
+}
+
+function addOption(pid, sid, qid) {
+  const q = getQ(pid, sid, qid);
+  if (!q.options) q.options = [];
+  q.options.push({id: uuid(), label: 'Nueva Opción', scoreValue: 0});
+  renderContent();
+}
+
+function deleteOption(pid, sid, qid, optId) {
+  const q = getQ(pid, sid, qid);
+  q.options = q.options.filter(x => x.id !== optId);
+  renderContent();
+}
+
+function addQuestion(pid, sid) {
+  const s = tmpl.pages.find(p=>p.id===pid)?.sections.find(x=>x.id===sid);
+  if (!s) return;
+  s.questions.push({ 
+    id: uuid(), text: '', responseType: 'multiple_choice', score: null, 
+    options: [{id:uuid(),label:'Sí',scoreValue:1},{id:uuid(),label:'No',scoreValue:0},{id:uuid(),label:'N/A',scoreValue:-1}],
+    required: tmpl.settings.defaultRequired, allowNote: tmpl.settings.defaultNotes, allowMedia: tmpl.settings.defaultMedia, allowAction: tmpl.settings.defaultActions, conditionalLogic: null 
+  });
+  renderContent();
+}
+
+function dupQuestion(pid, sid, qid) {
+  const s = tmpl.pages.find(p=>p.id===pid)?.sections.find(x=>x.id===sid);
+  const q = s.questions.find(x=>x.id===qid);
+  const copy = JSON.parse(JSON.stringify(q));
+  copy.id = uuid();
+  s.questions.push(copy);
+  renderContent();
+}
+
+function deleteQuestion(pid, sid, qid) {
+  const s = tmpl.pages.find(p=>p.id===pid).sections.find(x=>x.id===sid);
+  s.questions = s.questions.filter(q => q.id !== qid);
+  renderContent();
+}
+
+function addSection(pid) { tmpl.pages.find(p=>p.id===pid).sections.push({ id: uuid(), title: '', questions: [] }); renderContent(); }
+function deleteSection(pid, sid) {
+  const p = tmpl.pages.find(x=>x.id===pid);
+  if (p.sections.length <= 1) return toast('Debe haber 1 sección', 'error');
+  p.sections = p.sections.filter(s => s.id !== sid); renderContent();
+}
+
+function addPage() {
+  const p = { id: uuid(), name: 'Nueva Página', type: 'page', sections: [{ id: uuid(), title: '', questions: [] }] };
+  tmpl.pages.push(p); currentPageId = p.id; render();
+}
+function renamePage(pid, e) {
+  e.stopPropagation(); const p = tmpl.pages.find(x=>x.id===pid);
+  const name = prompt('Nombre:', p.name); if (name) { p.name = name; render(); }
+}
+function dupPage(pid, e) {
+  e.stopPropagation(); const p = tmpl.pages.find(x=>x.id===pid);
+  const copy = JSON.parse(JSON.stringify(p));
+  copy.id = uuid(); copy.name = copy.name + ' (Copia)';
+  copy.sections.forEach(s => { s.id=uuid(); s.questions.forEach(q=>q.id=uuid()); });
+  tmpl.pages.push(copy); render();
+}
+function deletePage(pid, e) {
+  e.stopPropagation(); if (tmpl.pages.length <= 1) return toast('Debe haber 1 página', 'error');
+  tmpl.pages = tmpl.pages.filter(p => p.id !== pid);
+  if (currentPageId === pid) currentPageId = tmpl.pages[0].id; render();
+}
+
+function saveToLibrary(pid, sid, qid) {
+  const q = getQ(pid, sid, qid);
+  if (!tmpl.questionLibrary) tmpl.questionLibrary = [];
+  tmpl.questionLibrary.push(JSON.parse(JSON.stringify(q)));
+  // Also save to global library
+  api.post('/api/library', JSON.parse(JSON.stringify(q))).catch(function() {});
+  renderRightPanel();
+  toast('Pregunta guardada en biblioteca local y global', 'success');
+}
+function insertLib(idx) {
+  const s = tmpl.pages.find(p=>p.id===currentPageId).sections[0]; // insert in first section
+  const q = JSON.parse(JSON.stringify(tmpl.questionLibrary[idx]));
+  q.id = uuid();
+  s.questions.push(q);
+  renderContent();
+  toast('Pregunta insertada', 'success');
+}
+
+function bindInlineEdits() {
+  var tagsEl = document.getElementById('tmplTags');
+  var schedEl = document.getElementById('tmplSchedule');
+  if (tagsEl) tagsEl.oninput = function() { tmpl.tags = tagsEl.value.split(',').map(function(t){ return t.trim(); }).filter(Boolean); };
+  if (schedEl) schedEl.onchange = function() { tmpl.schedule = schedEl.value ? { nextDate: schedEl.value } : null; };
+  const n = document.getElementById('tmplName'); const d = document.getElementById('tmplDesc');
+  if (n) n.oninput = () => { tmpl.name = n.value; document.getElementById('navTemplateName').textContent = tmpl.name; };
+  if (d) d.oninput = () => { tmpl.description = d.value; };
+  
+  // DND
+  document.querySelectorAll('.question-item[draggable]').forEach(el => {
+    el.ondragstart = e => { dragSrcEl = el; e.dataTransfer.effectAllowed = 'move'; setTimeout(()=>el.style.opacity='.4',0); };
+    el.ondragend = () => { el.style.opacity='1'; document.querySelectorAll('.question-item').forEach(q=>q.classList.remove('drag-over')); };
+    el.ondragover = e => { e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('.question-item').forEach(q=>q.classList.remove('drag-over')); if (el!==dragSrcEl) el.classList.add('drag-over'); return false; };
+    el.ondrop = e => {
+      e.stopPropagation(); if (dragSrcEl === el) return;
+      const sSec = tmpl.pages.find(p=>p.id===dragSrcEl.dataset.pageid).sections.find(s=>s.id===dragSrcEl.dataset.secid);
+      const dSec = tmpl.pages.find(p=>p.id===el.dataset.pageid).sections.find(s=>s.id===el.dataset.secid);
+      const sIdx = sSec.questions.findIndex(q=>q.id===dragSrcEl.dataset.qid);
+      const dIdx = dSec.questions.findIndex(q=>q.id===el.dataset.qid);
+      const [moved] = sSec.questions.splice(sIdx, 1);
+      dSec.questions.splice(dIdx, 0, moved);
+      renderContent();
+    };
+  });
+}
+function showQR() {
+  var imgEl = document.getElementById('qrEditorImg');
+  var urlEl = document.getElementById('qrEditorUrl');
+  imgEl.src = '/api/templates/' + id + '/qr';
+  var ip = location.hostname;
+  urlEl.textContent = 'http://' + ip + ':3001/inspector/' + id;
+  document.getElementById('qrEditorModal').classList.remove('hidden');
+}
+function downloadEditorQR() {
+  var a = document.createElement('a'); a.href = document.getElementById('qrEditorImg').src;
+  a.download = 'qr-' + id + '.png'; a.click();
+}
+function copyEditorQRUrl() {
+  navigator.clipboard.writeText(document.getElementById('qrEditorUrl').textContent).then(function() { toast('URL copiada', 'success'); });
+}
+
+function previewPdf() {
+  window.open('/api/templates/' + id + '/preview/pdf', '_blank');
+}
+
+async function loadGlobalLibrary() {
+  try {
+    var qs = await api.get('/api/library');
+    var el = document.getElementById('globalLibContent');
+    if (!el) return;
+    if (!qs.length) { el.innerHTML = '<p class="text-xs text-muted">No hay preguntas en la biblioteca global.</p>'; return; }
+    el.innerHTML = qs.map(function(q) {
+      return '<div style="padding:8px;border:1px solid var(--gray-200);border-radius:4px;margin-bottom:8px;background:#fff">' +
+        '<div class="text-sm fw-600">' + esc(q.text) + '</div><div class="text-xs text-muted">' + responseTypeLabel(q.responseType) + ' | Usos: ' + (q.usageCount||0) + '</div>' +
+        '<div style="margin-top:6px;display:flex;gap:4px">' +
+        '<button class="btn-sm btn-outline" onclick="insertGlobalLib(\'' + q.id + '\')" >Insertar</button>' +
+        '<button class="btn-sm btn-ghost" style="color:var(--red)" onclick="deleteGlobalLib(\'' + q.id + '\')">Quitar</button>' +
+        '</div></div>';
+    }).join('');
+  } catch(e) { var el = document.getElementById('globalLibContent'); if (el) el.innerHTML = 'Error'; }
+}
+
+async function insertGlobalLib(libId) {
+  try {
+    var qs = await api.get('/api/library');
+    var q = qs.find(function(x) { return x.id === libId; });
+    if (!q) return;
+    await api.post('/api/library/' + libId + '/use', {});
+    var s = tmpl.pages.find(function(p) { return p.id === currentPageId; }).sections[0];
+    var copy = JSON.parse(JSON.stringify(q));
+    copy.id = uuid();
+    s.questions.push(copy);
+    renderContent();
+    toast('Pregunta insertada desde biblioteca global', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteGlobalLib(libId) {
+  try {
+    await api.del('/api/library/' + libId);
+    loadGlobalLibrary();
+    toast('Pregunta eliminada de biblioteca global', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function renderHistory() {
+  var inner = document.getElementById('contentInner');
+  var rightPanel = document.getElementById('rightPanel');
+  rightPanel.innerHTML = '';
+  inner.innerHTML = '<div style="padding:20px"><h2>Historial de Inspecciones</h2><div id="historyList">Cargando...</div><div style="margin-top:24px"><canvas id="scoreChart" width="600" height="200" style="border:1px solid var(--gray-200);border-radius:8px"></canvas></div></div>';
+  try {
+    var hins = await api.get('/api/templates/' + id + '/inspections');
+    var listEl = document.getElementById('historyList');
+    if (!hins.length) { listEl.innerHTML = '<p class="text-muted">No hay inspecciones para esta plantilla.</p>'; return; }
+    var rows = hins.map(function(i) {
+      var score = i.maxScore > 0 ? (i.score + '/' + i.maxScore + ' (' + Math.round(i.score/i.maxScore*100) + '%)') : '-';
+      return '<tr><td>' + formatDate(i.startedAt) + '</td><td><span class="badge badge-' + i.status + '">' + (i.status === 'completed' ? 'Completada' : 'En Curso') + '</span></td><td>' + score + '</td><td><a class="btn btn-ghost btn-sm" href="/inspector/' + i.id + '">Ver</a></td></tr>';
+    }).join('');
+    listEl.innerHTML = '<table class="template-table"><thead><tr><th>Fecha</th><th>Estado</th><th>Puntuación</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+    drawScoreChart(hins);
+  } catch(e) { document.getElementById('historyList').innerHTML = 'Error cargando historial'; }
+}
+
+function drawScoreChart(hins) {
+  var canvas = document.getElementById('scoreChart');
+  if (!canvas) return;
+  var done = hins.filter(function(i) { return i.status === 'completed' && i.maxScore > 0; });
+  if (!done.length) { canvas.style.display = 'none'; return; }
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  var W = canvas.width; var H = canvas.height;
+  var PAD = 40;
+  var pts = done.map(function(i) { return Math.round(i.score/i.maxScore*100); });
+  var maxPt = 100; var minPt = 0;
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+  [0,25,50,75,100].forEach(function(pct) {
+    var y = H - PAD - (pct / maxPt) * (H - PAD*2);
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    ctx.fillStyle = '#9ca3af'; ctx.font = '11px sans-serif'; ctx.fillText(pct + '%', 4, y + 4);
+  });
+  if (pts.length < 2) { canvas.style.display = 'none'; return; }
+  var stepX = (W - PAD*2) / (pts.length - 1);
+  ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2; ctx.beginPath();
+  pts.forEach(function(p, idx) {
+    var x = PAD + idx * stepX;
+    var y = H - PAD - (p / maxPt) * (H - PAD*2);
+    if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  pts.forEach(function(p, idx) {
+    var x = PAD + idx * stepX;
+    var y = H - PAD - (p / maxPt) * (H - PAD*2);
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = '#4f46e5'; ctx.fill();
+    ctx.fillStyle = '#1f2937'; ctx.font = '11px sans-serif'; ctx.fillText(p + '%', x - 10, y - 8);
+  });
+}
+
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>

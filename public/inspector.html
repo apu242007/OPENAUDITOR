@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR - Inspección</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<nav class="inspector-topbar">
+  <a href="/" class="btn btn-ghost btn-icon">⬅️</a>
+  <span class="fw-600 truncate max-w-200" id="insTitle"></span>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <span class="text-sm text-muted" id="progressText">0/0</span>
+  <button class="btn btn-ghost" id="btnKiosk" title="Modo Kiosco">&#x26F6;</button>
+  <div class="ml-auto nav-actions">
+    <button class="btn btn-outline" id="btnSave">Guardar</button>
+    <button class="btn btn-primary" id="btnComplete">Finalizar inspección</button>
+  </div>
+</nav>
+
+<div class="inspector-layout" id="insLayout">
+  <div class="inspector-body">
+    <aside class="inspector-nav" id="pageNav"></aside>
+    <main class="inspector-content" id="insContent"></main>
+  </div>
+</div>
+
+<div class="report-view hidden" id="reportView"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+
+<script>
+let ins = null;
+let tmpl = null;
+let currentPageId = null;
+const id = location.pathname.split('/').pop();
+var activityBuffer = [];
+
+(async () => {
+  try {
+    ins = await api.get('/api/inspections/' + id);
+    if (!ins.repeatableAnswers) ins.repeatableAnswers = {};
+    if (!ins.answers) ins.answers = {};
+    tmpl = ins.snapshot;
+    if (ins.status === 'completed') {
+      renderReport();
+    } else {
+      currentPageId = tmpl.pages[0]?.id;
+      renderNav();
+      renderContent();
+      updateProgress();
+      // auto save every 30s
+      setInterval(saveSilent, 30000);
+    }
+  } catch(e) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:red;">Error: ' + e.message + '</div>';
+  }
+})();
+
+document.getElementById('btnSave').onclick = async () => {
+  await api.put('/api/inspections/' + id, { answers: ins.answers });
+  toast('Progreso guardado', 'success');
+};
+
+document.getElementById('btnComplete').onclick = async () => {
+  if (!confirm('¿Seguro que deseas finalizar la inspección? No podrás modificarla después.')) return;
+  try {
+    ins = await api.post('/api/inspections/' + id + '/complete', { answers: ins.answers });
+    toast('Inspección finalizada', 'success');
+    renderReport();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+async function saveSilent() {
+  if (ins.status === 'completed') return;
+  try {
+    var payload = { answers: ins.answers };
+    if (activityBuffer.length > 0) { payload.activityLog = activityBuffer.slice(); activityBuffer = []; }
+    await api.put('/api/inspections/' + id, payload);
+  } catch(e){}
+}
+
+function updateProgress() {
+  let total = 0; let answered = 0;
+  tmpl.pages.forEach(p => p.sections.forEach(s => {
+    if (s.repeatable) {
+      const instances = ins.repeatableAnswers[s.id] || [];
+      instances.forEach((inst, instIdx) => {
+        s.questions.forEach(q => {
+          if (shouldShow(q, instIdx, s.id)) {
+            total++;
+            if (inst[q.id] && inst[q.id].value !== null && inst[q.id].value !== '') answered++;
+          }
+        });
+      });
+    } else {
+      s.questions.forEach(q => {
+        if (shouldShow(q)) {
+          total++;
+          if (ins.answers[q.id] && ins.answers[q.id].value !== null && ins.answers[q.id].value !== '') answered++;
+        }
+      });
+    }
+  }));
+  const pct = total === 0 ? 100 : (answered/total)*100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = answered + '/' + total;
+}
+
+function shouldShow(q, instIdx = null, secId = null) {
+  if (!q.conditionalLogic) return true;
+  const l = q.conditionalLogic;
+  let depAns = null;
+  if (instIdx !== null && secId !== null && ins.repeatableAnswers[secId] && ins.repeatableAnswers[secId][instIdx]) {
+    depAns = ins.repeatableAnswers[secId][instIdx][l.dependsOn];
+  }
+  if (!depAns) depAns = ins.answers[l.dependsOn]; // Fallback to global answers
+  
+  const depVal = depAns ? String(depAns.value) : '';
+  if (l.condition === 'equals') return depVal === l.value;
+  if (l.condition === 'not_equals') return depVal !== l.value;
+  return true;
+}
+
+function renderNav() {
+  const codeBadge = ins.code ? `<span class="badge" style="background:var(--indigo); color:#fff; font-family:monospace; margin-right:8px; font-size: 0.8rem; padding: 2px 6px;">${esc(ins.code)}</span>` : '';
+  document.getElementById('insTitle').innerHTML = codeBadge + esc(tmpl.name);
+  const nav = document.getElementById('pageNav');
+  nav.innerHTML = '';
+  tmpl.pages.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'inspector-nav-item' + (p.id === currentPageId ? ' active' : '');
+    d.textContent = p.name;
+    d.onclick = () => { currentPageId = p.id; renderNav(); renderContent(); };
+    nav.appendChild(d);
+  });
+}
+
+function renderContent() {
+  const content = document.getElementById('insContent');
+  const page = tmpl.pages.find(p => p.id === currentPageId);
+  if (!page) return;
+  
+  let html = '';
+  page.sections.forEach(s => {
+    if (s.repeatable) {
+      if (!ins.repeatableAnswers[s.id]) ins.repeatableAnswers[s.id] = [];
+      const instances = ins.repeatableAnswers[s.id];
+      const minInstances = s.minInstances || 1;
+      while (instances.length < minInstances) instances.push({}); // Ensure min instances
+
+      let sHtml = '';
+      instances.forEach((inst, instIdx) => {
+        let qHtml = '';
+        s.questions.forEach(q => {
+          if (!shouldShow(q, instIdx, s.id)) return;
+          qHtml += renderQuestionEditorHtml(q, inst, instIdx, s.id);
+        });
+        
+        let headerHtml = `<div class="exec-section-title" style="display:flex; align-items:center; margin-bottom:12px; font-style:italic">
+          <span style="flex:1">${esc(s.title || 'Sección')} ${instIdx + 1}</span>
+          ${instances.length > minInstances ? `<button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeRepInstance('${s.id}', ${instIdx})">✕ Eliminar</button>` : ''}
+        </div>`;
+        
+        sHtml += `<div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px dashed #e9e8e6">${headerHtml}${qHtml}</div>`;
+      });
+      
+      const maxInstances = s.maxInstances || null;
+      if (maxInstances === null || instances.length < maxInstances) {
+        sHtml += `<button class="btn btn-outline btn-sm" onclick="addRepInstance('${s.id}')">${esc(s.addButtonLabel || '+ Añadir instancia')}</button>`;
+      }
+      
+      html += `<div class="exec-section">${sHtml}</div>`;
+    } else {
+      let qHtml = '';
+      s.questions.forEach(q => {
+        if (!shouldShow(q)) return;
+        qHtml += renderQuestionEditorHtml(q, ins.answers, null, null);
+      });
+      if (qHtml) {
+        html += `<div class="exec-section">
+          ${s.title ? `<div class="exec-section-title">${esc(s.title)}</div>` : ''}
+          ${qHtml}
+        </div>`;
+      }
+    }
+  });
+  
+  if (!html) html = '<div class="text-muted text-center" style="padding:40px">No hay preguntas visibles en esta página.</div>';
+  content.innerHTML = html;
+}
+
+function renderQuestionEditorHtml(q, answerStore, instIdx, secId) {
+  const ans = answerStore[q.id] || { value: '', note: '', mediaFiles: [], flagged: false, action: '' };
+  if (!answerStore[q.id]) answerStore[q.id] = ans; // init
+  
+  const val = ans.value || '';
+  let inputHtml = '';
+  const qArgs = instIdx !== null ? `'${q.id}', this.value, ${instIdx}, '${secId}'` : `'${q.id}', this.value`;
+  const qArgsCk = instIdx !== null ? `'${q.id}', this.checked?'true':'', ${instIdx}, '${secId}'` : `'${q.id}', this.checked?'true':''`;
+  
+  if (q.responseType === 'multiple_choice' || q.responseType === 'yesno') {
+    let opts = q.options;
+    if (!opts) opts = [{id:'yes',label:'Sí'},{id:'no',label:'No'},{id:'na',label:'N.A.'}];
+    
+    inputHtml = `
+      <div class="exec-yesno-group">
+        ${opts.map(o => `
+          <button class="btn-yn ${val===String(o.id)?'active':''}" data-val="${o.id}" onclick="setAns('${q.id}','${o.id}', ${instIdx !== null ? instIdx : 'null'}, ${secId ? `'${secId}'` : 'null'})">${esc(o.label)}</button>
+        `).join('')}
+      </div>
+    `;
+  } else if (q.responseType === 'checkbox') {
+    inputHtml = `<label style="display:flex;align-items:center;gap:8px;font-size:1rem;cursor:pointer"><input type="checkbox" style="width:20px;height:20px" ${val==='true'?'checked':''} onchange="setAns(${qArgsCk})"> Marcar opción</label>`;
+  } else if (q.responseType === 'text') {
+    inputHtml = `<textarea class="textarea" oninput="setAns(${qArgs})">${esc(val)}</textarea>`;
+  } else if (q.responseType === 'date') {
+    inputHtml = `<input type="datetime-local" class="input" value="${val}" onchange="setAns(${qArgs})">`;
+  } else if (q.responseType === 'number') {
+    inputHtml = `<input type="number" class="input" value="${esc(val)}" oninput="setAns(${qArgs})">`;
+  } else {
+    inputHtml = `<input type="text" class="input" placeholder="Ingresa texto..." value="${esc(val)}" oninput="setAns(${qArgs})">`;
+  }
+  
+  let helpTextHtml = '';
+  const htId = `ht-${secId||''}-${instIdx||''}-${q.id}`;
+  if (q.helpText && q.helpTextVisible !== 'never') {
+    if (q.helpTextVisible === 'always') {
+      helpTextHtml = `<div style="font-size:0.85rem; font-style:italic; color:#6b6b68; border-left:2px solid #c7d2fe; padding:6px 10px; margin-bottom:8px; background:var(--gray-50); border-radius:0 4px 4px 0">${esc(q.helpText)}</div>`;
+    } else if (q.helpTextVisible === 'on_demand') {
+      helpTextHtml = `<div id="${htId}" style="display:none; font-size:0.85rem; font-style:italic; color:#6b6b68; border-left:2px solid #c7d2fe; padding:6px 10px; margin-bottom:8px; background:var(--gray-50); border-radius:0 4px 4px 0">${esc(q.helpText)}</div>`;
+    }
+  }
+
+  let extrasHtml = '';
+  if (q.allowNote || q.allowMedia || q.allowAction) {
+    const extId = `eb-${secId||''}-${instIdx||''}-${q.id}`;
+    const tArgs = instIdx !== null ? `'${q.id}', '{type}', ${instIdx}, '${secId}'` : `'${q.id}', '{type}'`;
+    extrasHtml += `<div class="exec-extras"><div class="exec-extra-btns">`;
+    if (q.allowNote) extrasHtml += `<button class="exec-extra-btn ${ans.note?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','note')})">📝 Nota</button>`;
+    if (q.allowMedia) extrasHtml += `<button class="exec-extra-btn ${(ans.mediaFiles&&ans.mediaFiles.length>0)?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','media')})">📷 Foto/Media</button>`;
+    if (q.allowAction) {
+      extrasHtml += `<button class="exec-extra-btn ${ans.action?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','action')})">⚡ Acción</button>`;
+      extrasHtml += `<button class="exec-extra-btn ${ans.flagged?'active':''}" style="${ans.flagged?'color:red;border-color:red':''}" onclick="toggleFlag(${tArgs.replace('{type}','')})">🚩 Señalar</button>`;
+    }
+    extrasHtml += `</div>`;
+    
+    const setMetaArgs = instIdx !== null ? `'${q.id}', '{type}', this.value, ${instIdx}, '${secId}'` : `'${q.id}', '{type}', this.value`;
+    extrasHtml += `<div id="note-${extId}" class="exec-note-box ${ans.note?'active':''}">
+      <textarea class="textarea" style="min-height:50px" placeholder="Escribe una nota..." oninput="setAnsMeta(${setMetaArgs.replace('{type}','note')})">${esc(ans.note)}</textarea>
+    </div>`;
+    extrasHtml += `<div id="action-${extId}" class="exec-action-box ${ans.action?'active':''}">
+      <textarea class="textarea" style="min-height:50px" placeholder="Describe la acción correctiva..." oninput="setAnsMeta(${setMetaArgs.replace('{type}','action')})">${esc(ans.action)}</textarea>
+    </div>`;
+    const fId = `fi-${extId}`;
+    const upArgs = instIdx !== null ? `'${q.id}', this, ${instIdx}, '${secId}'` : `'${q.id}', this`;
+    extrasHtml += `<div id="media-${extId}" class="exec-media-box ${(ans.mediaFiles&&ans.mediaFiles.length>0)?'active':''}">
+      <input type="file" id="${fId}" style="display:none" accept="image/*,video/*" onchange="uploadMedia(${upArgs})">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('${fId}').click()">+ Subir archivo</button>
+      <div class="media-preview-list">
+        ${(ans.mediaFiles||[]).map(m => `<img src="/uploads/${m}" class="media-preview-item">`).join('')}
+      </div>
+    </div>`;
+    extrasHtml += `</div>`;
+  }
+  
+  let qTitleHtml = `<div class="exec-q-text" style="display:flex; align-items:center;">
+    <span style="flex:1">${esc(q.text)}${q.required?'<span class="req">*</span>':''}</span>
+    ${(q.helpText && q.helpTextVisible === 'on_demand') ? `<button class="btn-icon" style="color:var(--indigo); padding:4px;" onclick="document.getElementById('${htId}').style.display = document.getElementById('${htId}').style.display === 'none' ? 'block' : 'none'" title="Ver instrucciones">ℹ️</button>` : ''}
+  </div>`;
+
+  const eqId = `eq-${secId||''}-${instIdx||''}-${q.id}`;
+  return `
+    <div class="exec-question" id="${eqId}">
+      ${qTitleHtml}
+      ${helpTextHtml}
+      <div class="exec-answer-area">${inputHtml}</div>
+      ${extrasHtml}
+    </div>
+  `;
+}
+
+function addRepInstance(secId) {
+  if (!ins.repeatableAnswers[secId]) ins.repeatableAnswers[secId] = [];
+  ins.repeatableAnswers[secId].push({});
+  renderContent();
+  updateProgress();
+}
+
+function removeRepInstance(secId, idx) {
+  if (confirm('¿Eliminar esta instancia? Se perderán las respuestas.')) {
+    ins.repeatableAnswers[secId].splice(idx, 1);
+    renderContent();
+    updateProgress();
+  }
+}
+
+function getAnswerObj(qid, instIdx, secId) {
+  if (instIdx !== null && secId) {
+    if (!ins.repeatableAnswers[secId][instIdx]) ins.repeatableAnswers[secId][instIdx] = {};
+    if (!ins.repeatableAnswers[secId][instIdx][qid]) ins.repeatableAnswers[secId][instIdx][qid] = { value: '', note: '', mediaFiles: [], flagged: false, action: '' };
+    return ins.repeatableAnswers[secId][instIdx][qid];
+  } else {
+    if (!ins.answers[qid]) ins.answers[qid] = { value: '', note: '', mediaFiles: [], flagged: false, action: '' };
+    return ins.answers[qid];
+  }
+}
+
+function setAns(qid, val, instIdx = null, secId = null) {
+  let ans = getAnswerObj(qid, instIdx, secId);
+  ans.value = val;
+  activityBuffer.push({ type: 'answer', qid: qid, val: val, ts: new Date().toISOString() });
+  updateProgress();
+  
+  const affectsLogic = tmpl.pages.some(p => p.sections.some(s => s.questions.some(q => q.conditionalLogic && q.conditionalLogic.dependsOn === qid)));
+  if (affectsLogic) {
+    renderContent();
+  } else {
+    const eqId = `eq-${secId||''}-${instIdx||''}-${qid}`;
+    const el = document.getElementById(eqId);
+    if (el) {
+      el.querySelectorAll('.btn-yn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === val);
+      });
+    }
+  }
+}
+
+function setAnsMeta(qid, key, val, instIdx = null, secId = null) {
+  let ans = getAnswerObj(qid, instIdx, secId);
+  ans[key] = val;
+}
+
+function toggleFlag(qid, instIdx = null, secId = null) {
+  let a = getAnswerObj(qid, instIdx, secId);
+  a.flagged = !a.flagged;
+  renderContent(); 
+}
+
+function toggleExtra(qid, type, instIdx = null, secId = null) {
+  const extId = `eb-${secId||''}-${instIdx||''}-${qid}`;
+  const el = document.getElementById(`${type}-${extId}`);
+  if (el) {
+    el.classList.toggle('active');
+    renderContent();
+  }
+}
+
+async function uploadMedia(qid, input, instIdx = null, secId = null) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const res = await api.upload('/api/inspections/' + id + '/upload', file);
+    let ans = getAnswerObj(qid, instIdx, secId);
+    if (!ans.mediaFiles) ans.mediaFiles = [];
+    ans.mediaFiles.push(res.filename);
+    renderContent();
+  } catch(e) { toast('Error subiendo', 'error'); }
+}
+
+function renderReport() {
+  document.querySelector('.inspector-topbar').style.display = 'none';
+  document.getElementById('insLayout').style.display = 'none';
+  const v = document.getElementById('reportView');
+  v.classList.remove('hidden');
+  
+  const rCodeBadge = ins.code ? `<div style="font-family:monospace; font-size:1.1rem; color:var(--primary); font-weight:700; margin-bottom:8px;">${esc(ins.code)}</div>` : '';
+  let rHtml = `<div class="report-header">
+    ${rCodeBadge}
+    <h1 style="margin-top:0">${esc(ins.templateName)}</h1>
+    <p class="text-muted">Completada el: ${formatDate(ins.completedAt)}</p>
+  </div>`;
+  
+  if (ins.maxScore > 0) {
+    rHtml += `<div class="report-score-box">
+      <div style="font-size:.9rem;text-transform:uppercase;color:var(--gray-500);letter-spacing:1px;margin-bottom:8px;">Puntuación</div>
+      <div class="report-score-val">${ins.score} / ${ins.maxScore} (${Math.round(ins.score/ins.maxScore*100)}%)</div>
+    </div>`;
+  }
+  
+  var mailBody = 'Inspeccion: ' + ins.templateName + ' | Score: ' + (ins.maxScore > 0 ? ins.score + '/' + ins.maxScore : 'N/A');
+  rHtml += `<div class="report-actions">
+    <a class="btn btn-outline" href="/">Volver</a>
+    <a class="btn btn-primary" href="/api/inspections/${ins.id}/export/pdf">Exportar PDF</a>
+    <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/pdf-findings">Hallazgos PDF</a>
+    <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/xlsx">Excel</a>
+    <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/csv">CSV</a>
+    <button class="btn btn-outline" onclick="openSignature()">Firma Digital</button>
+    <button class="btn btn-ghost" onclick="window.location='mailto:?subject='+encodeURIComponent(ins.templateName)+'&body='+encodeURIComponent(mailBody)">Enviar por Email</button>
+    ${ins.activityLog && ins.activityLog.length > 0 ? '<button class="btn btn-ghost" onclick="toggleActivityLog()">Ver Actividad (' + ins.activityLog.length + ')</button>' : ''}
+  </div>`;
+  
+  const renderAnsContent = (q, a) => {
+    if (!a || (a.value==='' && !a.note && !a.mediaFiles?.length && !a.action)) return '';
+    return `<div style="margin-bottom:16px;border-bottom:1px solid var(--gray-200);padding-bottom:16px;">
+      <div style="font-weight:600;margin-bottom:8px;">${esc(q.text)}</div>
+      ${a.flagged ? '<div style="color:var(--red);font-size:.85rem;font-weight:600;margin-bottom:4px;">🚩 Elemento señalado</div>' : ''}
+      <div style="color:var(--gray-600);margin-bottom:4px;">Respuesta: <span style="color:var(--gray-800);font-weight:500">${esc(a.value)||'-'}</span></div>
+      ${a.note ? `<div style="font-size:.85rem;color:var(--gray-500);margin-bottom:4px;">Nota: ${esc(a.note)}</div>` : ''}
+      ${a.action ? `<div style="font-size:.85rem;color:var(--indigo);margin-bottom:4px;">Acción: ${esc(a.action)}</div>` : ''}
+      ${(a.mediaFiles&&a.mediaFiles.length>0) ? `<div style="display:flex;gap:8px;margin-top:8px">${a.mediaFiles.map(m=>`<img src="/uploads/${m}" style="height:60px;border-radius:4px;border:1px solid var(--gray-200)">`).join('')}</div>` : ''}
+    </div>`;
+  };
+
+  tmpl.pages.forEach(p => {
+    let pContent = '';
+    p.sections.forEach(s => {
+      let sContent = '';
+      if (s.repeatable) {
+        const instances = ins.repeatableAnswers[s.id] || [];
+        instances.forEach((inst, idx) => {
+          let iContent = '';
+          s.questions.forEach(q => { iContent += renderAnsContent(q, inst[q.id]); });
+          if (iContent) sContent += `<div style="margin-left:16px"><h4 style="margin:16px 0 8px; font-style:italic; color:var(--gray-500)">${esc(s.title || 'Sección')} ${idx + 1}</h4>${iContent}</div>`;
+        });
+      } else {
+        s.questions.forEach(q => { sContent += renderAnsContent(q, ins.answers[q.id]); });
+      }
+      if (sContent) pContent += `${s.title && !s.repeatable ? `<h3 style="margin:24px 0 16px;color:var(--gray-600);font-size:1.1rem">${esc(s.title)}</h3>` : (s.repeatable && s.title ? `<h3 style="margin:24px 0 8px;color:var(--gray-600);font-size:1.1rem">${esc(s.title)} (Repetible)</h3>` : '')}${sContent}`;
+    });
+    if (pContent) rHtml += `<div style="background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;">
+      <h2 style="margin-bottom:20px;border-bottom:2px solid var(--gray-200);padding-bottom:12px">${esc(p.name)}</h2>
+      ${pContent}
+    </div>`;
+  });
+  
+  v.innerHTML = rHtml;
+}
+function toggleActivityLog() {
+  var existing = document.getElementById('activityLogPanel');
+  if (existing) { existing.remove(); return; }
+  var panel = document.createElement('div');
+  panel.id = 'activityLogPanel';
+  panel.style = 'background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:24px;';
+  var rows = (ins.activityLog || []).slice(-50).reverse().map(function(e) {
+    return '<tr><td class="text-sm text-muted">' + formatDate(e.ts) + '</td><td class="text-sm">' + esc(e.type) + '</td><td class="text-sm">' + esc(e.qid || '') + '</td><td class="text-sm">' + esc(String(e.val || '')) + '</td></tr>';
+  }).join('');
+  panel.innerHTML = '<h3 style="margin-bottom:12px">Registro de Actividad</h3><table class="template-table"><thead><tr><th>Hora</th><th>Tipo</th><th>Pregunta</th><th>Valor</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  document.getElementById('reportView').appendChild(panel);
+}
+
+// Kiosk mode
+var kioskMode = false;
+document.getElementById('btnKiosk').onclick = function() {
+  kioskMode = !kioskMode;
+  document.querySelector('.inspector-topbar').classList.toggle('kiosk-hidden', kioskMode);
+  document.body.classList.toggle('kiosk-mode', kioskMode);
+};
+
+// Signature
+var sigCanvas = null; var sigCtx = null; var sigDrawing = false;
+function openSignature() {
+  document.getElementById('sigModal').classList.remove('hidden');
+  sigCanvas = document.getElementById('sigPad');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  sigCtx.strokeStyle = '#1f2937'; sigCtx.lineWidth = 2; sigCtx.lineCap = 'round';
+  sigCanvas.onmousedown = function(e) { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); };
+  sigCanvas.onmousemove = function(e) { if (!sigDrawing) return; sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); };
+  sigCanvas.onmouseup = function() { sigDrawing = false; };
+  sigCanvas.onmouseleave = function() { sigDrawing = false; };
+}
+async function saveSignature() {
+  var dataUrl = sigCanvas.toDataURL('image/png');
+  try { await api.post('/api/inspections/' + id + '/signature', { signature: dataUrl }); toast('Firma guardada', 'success'); }
+  catch(e) { toast('Error guardando firma', 'error'); }
+  document.getElementById('sigModal').classList.add('hidden');
+}
+function clearSignature() { if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+
+</script>
+
+<!-- Signature Modal -->
+<div class='modal-overlay hidden' id='sigModal'>
+  <div class='modal'>
+    <div class='modal-header'><h2>Firma Digital</h2><button class='btn btn-ghost btn-icon ml-auto' onclick="document.getElementById('sigModal').classList.add('hidden')">&#x2715;</button></div>
+    <div class='modal-body'><canvas id='sigPad' width='500' height='200' class='sig-canvas'></canvas></div>
+    <div class='modal-footer'><button class='btn btn-outline' onclick='clearSignature()'>Limpiar</button><button class='btn btn-primary' onclick='saveSignature()'>Guardar Firma</button></div>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>

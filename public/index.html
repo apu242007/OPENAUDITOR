@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<nav class="topnav">
+  <div class="topnav-logo">OPEN <span>AUDITOR</span></div>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Dashboard</span>
+  <div class="ml-auto nav-actions">
+    <button class="btn btn-ghost btn-nav-ghost" onclick="importTemplate()">Importar JSON</button>
+    <a class="btn btn-ghost btn-nav-ghost" href="/actions">Acciones Correctivas</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/compare">Comparar</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/search.html">Búsqueda</a>
+    <button class="btn btn-ghost btn-nav-ghost" onclick="openConfig()">⚙️ Configuración</button>
+  </div>
+</nav>
+
+<main class="index-main">
+  <div id="scheduledAlert" class="scheduled-alert hidden"></div>
+  <div class="page-header">
+    <h1>Mis Plantillas</h1>
+    <div class="ml-auto">
+      <button class="btn btn-primary" id="btnNew">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Nueva Plantilla
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" class="input" id="searchName" placeholder="Buscar por nombre..." title="Buscar por nombre">
+    <select class="input w-160" id="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
+      <option value="all">Todos los estados</option>
+      <option value="draft">Borrador</option>
+      <option value="published">Publicada</option>
+    </select>
+    <input type="text" class="input w-160" id="filterTag" placeholder="Filtrar por etiqueta..." title="Filtrar por etiqueta">
+    <select class="input w-160" id="sortOrder" title="Ordenar por" aria-label="Ordenar por">
+      <option value="desc">Más recientes</option>
+      <option value="asc">Más antiguos</option>
+      <option value="az">A - Z</option>
+    </select>
+  </div>
+
+  <div class="card" id="templateCard">
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-state-icon">📄</div>
+      <h3>No hay plantillas</h3>
+      <p class="empty-state-text">Crea tu primera plantilla o ajusta los filtros.</p>
+      <button class="btn btn-primary" id="btnNewEmpty">+ Nueva Plantilla</button>
+    </div>
+    <table class="template-table" id="templateTable">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Páginas</th>
+          <th>Usos</th>
+          <th>Etiquetas</th>
+          <th>Estado</th>
+          <th>Última modificación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="templateBody"></tbody>
+    </table>
+  </div>
+  
+  <div class="page-header mt-40">
+    <h1>Inspecciones Recientes</h1>
+  </div>
+  <div class="card">
+    <table class="template-table" id="inspectionsTable">
+      <thead>
+        <tr>
+          <th>Plantilla</th>
+          <th>Estado</th>
+          <th>Iniciada</th>
+          <th>Puntuación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="inspectionsBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+<input type="file" id="importInput" class="hidden" accept=".json" title="Importar plantilla JSON" aria-label="Importar plantilla JSON">
+
+<!-- Config Modal -->
+<div class="modal-overlay hidden" id="configModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Configuración</h2>
+      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="document.getElementById('configModal').classList.add('hidden')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="report-field">
+        <label>Directorio de datos personalizado (opcional)</label>
+        <input type="text" class="input" id="dataPathInput" placeholder="/ruta/absoluta/a/tus/datos">
+        <p class="text-xs text-muted mt-4">Deja en blanco para usar la ruta por defecto del SO. Requiere reiniciar el servidor.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveConfig()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+
+let templates = [];
+let inspections = [];
+
+async function loadData() {
+  templates = await api.get('/api/templates');
+  inspections = await api.get('/api/inspections');
+  renderTemplates();
+  renderInspections();
+  renderScheduledAlert();
+}
+
+// Recargar el tablero automáticamente al volver desde el editor
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted || document.referrer.includes('/editor/')) {
+    loadData();
+  }
+});
+
+function renderTemplates() {
+  const tbody = document.getElementById('templateBody');
+  const emptyState = document.getElementById('emptyState');
+  const table = document.getElementById('templateTable');
+  const search = document.getElementById('searchName').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  const sort = document.getElementById('sortOrder').value;
+
+  const tagFilter = document.getElementById('filterTag').value.toLowerCase();
+  let filtered = templates.filter(t => t.name.toLowerCase().includes(search));
+  if (tagFilter) filtered = filtered.filter(t => t.tags && t.tags.some(tg => tg.toLowerCase().includes(tagFilter)));
+  if (status !== 'all') {
+    filtered = filtered.filter(t => t.status === status);
+  }
+
+  filtered.sort((a, b) => {
+    if (sort === 'az') return a.name.localeCompare(b.name);
+    const timeA = new Date(a.updatedAt).getTime();
+    const timeB = new Date(b.updatedAt).getTime();
+    return sort === 'desc' ? timeB - timeA : timeA - timeB;
+  });
+
+  tbody.innerHTML = '';
+  if (!filtered.length) {
+    emptyState.classList.remove('hidden');
+    table.classList.add('hidden');
+  } else {
+    emptyState.classList.add('hidden');
+    table.classList.remove('hidden');
+    filtered.forEach(t => {
+      const isPub = t.status === 'published';
+      const tr = document.createElement('tr');
+      var expiryBadge = '';
+      if (t.expiryStatus === 'expired') expiryBadge = '<span class="badge" style="background:#ef4444;color:#fff;margin-left:6px">Expirada</span>';
+      else if (t.expiryStatus === 'warning') expiryBadge = '<span class="badge" style="background:#f59e0b;color:#fff;margin-left:6px">Expira pronto</span>';
+      tr.innerHTML = `
+        <td><a class="template-name-link" href="/editor/${t.id}">${esc(t.name)}</a>${expiryBadge}</td>
+        <td class="text-muted text-sm">${t.pageCount} pág</td>
+        <td><span class="badge badge-${t.status}">${isPub ? 'Publicada' : 'Borrador'}</span></td>
+        <td class="text-muted text-sm">${formatDate(t.updatedAt)}</td>
+        <td>
+          <div class="actions-cell">
+            ${isPub ? '<button class="btn btn-success btn-sm" onclick="startInspection(\'' + t.id + '\')">Iniciar Inspección</button>' : ''}
+            ${isPub ? '<button class="btn btn-ghost btn-sm" onclick="showQR(\'' + t.id + '\')">📱 QR</button>' : ''}
+            <a class="btn btn-ghost btn-sm" href="/editor/${t.id}">Editar</a>
+            <button class="btn btn-ghost btn-sm" onclick="duplicateTemplate('${t.id}')">Duplicar</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteTemplate('${t.id}')">Eliminar</button>
+          </div>
+        </td>
+      `;
+      var tdUsos = document.createElement('td');
+      tdUsos.className = 'text-muted text-sm';
+      tdUsos.textContent = (t.inspectionCount || 0) + ' usos';
+      tr.insertBefore(tdUsos, tr.children[2]);
+      var tdTags = document.createElement('td');
+      tdTags.className = 'tags-row';
+      (t.tags || []).forEach(function(tg) {
+        var sp = document.createElement('span');
+        sp.className = 'tag-pill';
+        sp.textContent = tg;
+        tdTags.appendChild(sp);
+      });
+      tr.insertBefore(tdTags, tr.children[3]);
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+function renderInspections() {
+  const tbody = document.getElementById('inspectionsBody');
+  tbody.innerHTML = '';
+  // Sort desc by startedAt
+  const sorted = [...inspections].sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+  
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-20">No hay inspecciones</td></tr>';
+    return;
+  }
+  
+  sorted.forEach(i => {
+    const isCompleted = i.status === 'completed';
+    const tr = document.createElement('tr');
+    const codeBadge = i.code ? `<span class="badge" style="background:var(--gray-100); color:var(--primary); font-family:monospace; margin-right:8px">${esc(i.code)}</span>` : '';
+    tr.innerHTML = `
+      <td class="fw-600">${codeBadge}${esc(i.templateName)}</td>
+      <td><span class="badge badge-${i.status}">${isCompleted ? 'Completada' : 'En Curso'}</span></td>
+      <td class="text-muted text-sm">${formatDate(i.startedAt)}</td>
+      <td class="text-sm">${isCompleted && i.maxScore > 0 ? `${i.score}/${i.maxScore} (${Math.round(i.score/i.maxScore*100)}%)` : '-'}</td>
+      <td>
+        <div class="actions-cell">
+          <a class="btn btn-primary btn-sm" href="/inspector/${i.id}">${isCompleted ? 'Ver Reporte' : 'Continuar'}</a>
+          ${isCompleted ? `<a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf">PDF</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf-findings">Hallazgos</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/xlsx">Excel</a>` : ''}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('searchName').addEventListener('input', renderTemplates);
+document.getElementById('filterTag').addEventListener('input', renderTemplates);
+document.getElementById('filterStatus').addEventListener('change', renderTemplates);
+document.getElementById('sortOrder').addEventListener('change', renderTemplates);
+
+document.getElementById('btnNew').onclick = createNew;
+document.getElementById('btnNewEmpty').onclick = createNew;
+
+async function createNew() {
+  const t = await api.post('/api/templates', { name: 'Nueva Plantilla' });
+  window.location.href = '/editor/' + t.id;
+}
+
+async function startInspection(tid) {
+  try {
+    const ins = await api.post('/api/inspections', { templateId: tid });
+    window.location.href = '/inspector/' + ins.id;
+  } catch(e) {
+    toast('Error al iniciar inspección', 'error');
+  }
+}
+
+async function duplicateTemplate(id) {
+  await api.post('/api/templates/' + id + '/duplicate', {});
+  toast('Plantilla duplicada', 'success');
+  loadData();
+}
+
+async function deleteTemplate(id) {
+  if (!confirm('¿Eliminar esta plantilla de forma permanente?')) return;
+  await api.del('/api/templates/' + id);
+  toast('Plantilla eliminada', 'success');
+  loadData();
+}
+
+function importTemplate() {
+  document.getElementById('importInput').click();
+}
+
+document.getElementById('importInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const res = await api.upload('/api/templates/import', file);
+    toast('Plantilla importada', 'success');
+    window.location.href = '/editor/' + res.id;
+  } catch (err) {
+    toast('Error importando: ' + err.message, 'error');
+  }
+  e.target.value = '';
+});
+
+async function openConfig() {
+  const cfg = await api.get('/api/config');
+  document.getElementById('dataPathInput').value = cfg.dataPath || '';
+  document.getElementById('configModal').classList.remove('hidden');
+}
+
+async function saveConfig() {
+  const dataPath = document.getElementById('dataPathInput').value;
+  await api.put('/api/config', { dataPath });
+  document.getElementById('configModal').classList.add('hidden');
+  toast('Configuración guardada. Reinicia el servidor si cambiaste la ruta.', 'success');
+}
+
+function renderScheduledAlert() {
+  var today = new Date().toISOString().slice(0, 10);
+  var due = templates.filter(function(t) { return t.schedule && t.schedule.nextDate && t.schedule.nextDate <= today; });
+  var el = document.getElementById('scheduledAlert');
+  if (!due.length) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = '<strong>' + due.length + ' plantilla(s) con inspección programada para hoy:</strong> ' + due.map(function(t) { return '<a href="/editor/' + t.id + '">' + t.name + '</a>'; }).join(', ');
+}
+
+var currentQRTemplateId = null;
+function showQR(tid) {
+  currentQRTemplateId = tid;
+  var imgEl = document.getElementById('qrImg');
+  var urlEl = document.getElementById('qrUrl');
+  imgEl.src = '/api/templates/' + tid + '/qr';
+  var ip = location.hostname;
+  urlEl.textContent = 'http://' + ip + ':3001/inspector/' + tid;
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+function downloadQR() {
+  var a = document.createElement('a');
+  a.href = document.getElementById('qrImg').src;
+  a.download = 'qr-' + currentQRTemplateId + '.png';
+  a.click();
+}
+function copyQRUrl() {
+  navigator.clipboard.writeText(document.getElementById('qrUrl').textContent).then(function() { toast('URL copiada', 'success'); });
+}
+
+// Init
+loadData();
+</script>
+<!-- QR Modal -->
+<div class="modal-overlay hidden" id="qrModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Codigo QR</h2>
+      <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('qrModal').classList.add('hidden')">&#x2715;</button>
+    </div>
+    <div class="modal-body qr-modal-body">
+      <img id="qrImg" src="" class="qr-modal-img" alt="QR">
+      <p id="qrUrl" class="text-sm text-muted qr-modal-url"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="downloadQR()">Descargar</button>
+      <button class="btn btn-outline" onclick="copyQRUrl()">Copiar URL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>
