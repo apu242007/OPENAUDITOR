@@ -1,17 +1,3 @@
-// Eliminar inspección por ID
-app.delete('/api/inspections/:id', (req, res) => {
-  try {
-    let ins = readJson(INSPECTIONS_FILE);
-    const idx = ins.findIndex(x => x.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    ins.splice(idx, 1);
-    writeJson(INSPECTIONS_FILE, ins);
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Error eliminando inspección:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -95,6 +81,21 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 // Serve uploads statically
 app.use('/uploads', (req, res, next) => express.static(uploadsDir)(req, res, next));
+
+// Eliminar inspección por ID
+app.delete('/api/inspections/:id', (req, res) => {
+  try {
+    let ins = readJson(INSPECTIONS_FILE);
+    const idx = ins.findIndex(x => x.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    ins.splice(idx, 1);
+    writeJson(INSPECTIONS_FILE, ins);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error eliminando inspección:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -310,7 +311,17 @@ function fileToBase64(filename) {
   var filePath = path.join(uploadsDir, filename);
   if (!fs.existsSync(filePath)) return null;
   var ext = path.extname(filename).slice(1).toLowerCase();
-  var mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp' }[ext] || 'image/jpeg';
+  var mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', ico: 'image/x-icon' }[ext] || 'image/jpeg';
+  var data = fs.readFileSync(filePath).toString('base64');
+  return 'data:' + mime + ';base64,' + data;
+}
+
+function filePathToBase64(relPath) {
+  if (!relPath) return null;
+  var filePath = path.join(dataDir, relPath);
+  if (!fs.existsSync(filePath)) return null;
+  var ext = path.extname(filePath).slice(1).toLowerCase();
+  var mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', ico: 'image/x-icon' }[ext] || 'application/octet-stream';
   var data = fs.readFileSync(filePath).toString('base64');
   return 'data:' + mime + ';base64,' + data;
 }
@@ -406,6 +417,16 @@ app.get('/api/config/favicon', (req, res) => {
   }
 });
 
+app.get('/api/config/pdf-logo', (req, res) => {
+  const config = readJson(CONFIG_FILE);
+  const pdfLogoPath = config.branding && (config.branding.pdfLogoPath || config.branding.logoPath);
+  if (pdfLogoPath) {
+    res.sendFile(path.join(dataDir, pdfLogoPath));
+  } else {
+    res.status(404).send('No pdf logo');
+  }
+});
+
 app.post('/api/config/logo', upload.single('logo'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const config = readJson(CONFIG_FILE);
@@ -422,6 +443,15 @@ app.post('/api/config/favicon', upload.single('favicon'), (req, res) => {
   config.branding.faviconPath = 'uploads/' + req.file.filename;
   writeJson(CONFIG_FILE, config);
   res.json({ path: config.branding.faviconPath });
+});
+
+app.post('/api/config/pdf-logo', upload.single('pdfLogo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const config = readJson(CONFIG_FILE);
+  if (!config.branding) config.branding = {};
+  config.branding.pdfLogoPath = 'uploads/' + req.file.filename;
+  writeJson(CONFIG_FILE, config);
+  res.json({ path: config.branding.pdfLogoPath });
 });
 
 // Webhooks API
@@ -1095,7 +1125,10 @@ app.get('/api/inspections/:id/export/pdf', async (req, res) => {
   var ins = readJson(INSPECTIONS_FILE).find(function(i){ return i.id === req.params.id; });
   if (!ins) return res.status(404).json({ error: 'Not found' });
   try {
-    var html = buildPdfHtml(ins, uploadsDir);
+    var config = readJson(CONFIG_FILE);
+    var branding = config.branding || {};
+    branding.pdfLogoDataUri = filePathToBase64(branding.pdfLogoPath || branding.logoPath);
+    var html = buildPdfHtml(ins, uploadsDir, branding);
     var browser = await puppeteer.launch({ headless: 'new' });
     var pg = await browser.newPage();
     await pg.setContent(html, { waitUntil: 'networkidle0' });
@@ -1320,6 +1353,9 @@ app.get('/api/inspections/:id/export/xlsx', async function(req, res) {
 app.get('/api/templates/:id/preview/pdf', async function(req, res) {
   var t = readJson(TEMPLATES_FILE).find(function(x) { return x.id === req.params.id; });
   if (!t) return res.status(404).json({ error: 'Not found' });
+  var config = readJson(CONFIG_FILE);
+  var branding = config.branding || {};
+  var previewLogo = filePathToBase64(branding.pdfLogoPath || branding.logoPath);
   var css = 'body{font-family:sans-serif;color:#333;padding:32px;max-width:800px;margin:0 auto}' +
     'h1{color:#1a1a2e;border-bottom:3px solid #4f46e5;padding-bottom:16px;margin-bottom:8px}' +
     'h2{color:#4f46e5;font-size:1.1rem;margin:28px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}' +
@@ -1331,6 +1367,7 @@ app.get('/api/templates/:id/preview/pdf', async function(req, res) {
     '.q-req{color:#ef4444;font-weight:700;margin-left:4px}' +
     '.opts{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 4px 32px}' +
     '.opt{padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:600;color:#fff}' +
+    '.preview-logo{max-width:220px;max-height:90px;object-fit:contain;margin:0 auto 18px;display:block}' +
     '.cover{text-align:center;padding:60px 0 40px;border-bottom:2px solid #4f46e5;margin-bottom:32px}' +
     '.meta{display:flex;gap:24px;justify-content:center;margin-top:12px;font-size:.85rem;color:#6b7280}' +
     '.page-break{page-break-before:always}';
@@ -1338,6 +1375,7 @@ app.get('/api/templates/:id/preview/pdf', async function(req, res) {
   var totalQ = 0; t.pages.forEach(function(p) { p.sections.forEach(function(s) { totalQ += s.questions.length; }); });
   var html = '<html><head><meta charset="UTF-8"><style>' + css + '</style></head><body>';
   html += '<div class="cover">';
+  if (previewLogo) html += '<img class="preview-logo" src="' + previewLogo + '" alt="Logo">';
   html += '<h1>' + t.name + '</h1>';
   if (t.description) html += '<p style="color:#6b7280;margin-top:8px">' + t.description + '</p>';
   html += '<div class="meta"><span>' + t.pages.length + ' paginas</span><span>' + totalQ + ' preguntas</span><span>Estado: ' + (t.status === 'published' ? 'Publicada' : 'Borrador') + '</span>';

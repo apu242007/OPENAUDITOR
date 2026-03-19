@@ -53,6 +53,9 @@
         <div class="report-field">
           <label for="pdfLogoPath">Logo para PDFs (puede ser diferente al de la app)</label>
           <div class="file-input-group">
+            <img id="pdfLogoPreview" src="/api/config/pdf-logo" class="logo-preview" alt="Logo PDF actual" onerror="this.style.display='none'">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('pdfLogoFile').click()" title="Seleccionar logo PDF" aria-label="Seleccionar logo PDF">Examinar...</button>
+            <input type="file" id="pdfLogoFile" class="hidden" accept="image/png,image/svg+xml,image/jpeg,image/webp" onchange="uploadBrandingFile('pdfLogo')" aria-label="Logo para PDF">
             <span id="pdfLogoPath" class="text-sm text-muted" title="Ruta del logo PDF" aria-label="Ruta del logo PDF"></span>
           </div>
         </div>
@@ -201,12 +204,15 @@ async function uploadBrandingFile(type) {
   if (!file) return;
   try {
     const fd = new FormData();
-    fd.append(type, file);
+    fd.append(type === 'pdfLogo' ? 'pdfLogo' : type, file);
     const res = await fetch(`/api/config/${type}`, { method: 'POST', body: fd });
     if (!res.ok) throw new Error();
     const data = await res.json();
     document.getElementById(type + 'Preview').src = `/${data.path}?t=${Date.now()}`;
     document.getElementById(type + 'Preview').style.display = 'block';
+    if (!currentConfig.branding) currentConfig.branding = {};
+    currentConfig.branding[type + 'Path'] = data.path;
+    if (type === 'pdfLogo') document.getElementById('pdfLogoPath').textContent = data.path;
     toast('✅ Imagen actualizada', 'success');
   } catch(e) {
     toast('Error subiendo imagen', 'error');
