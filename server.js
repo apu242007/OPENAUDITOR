@@ -1433,6 +1433,7 @@ app.get('/editor/:id', (req, res) => res.sendFile(path.join(__dirname, 'public',
 app.get('/inspector/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'inspector.html')));
 app.get('/actions', (req, res) => res.sendFile(path.join(__dirname, 'public', 'actions.html')));
 app.get('/compare', (req, res) => res.sendFile(path.join(__dirname, 'public', 'compare.html')));
+app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'public', 'settings.html')));
 
 // ---- SEARCH API ----
 function normalizeText(str) {
