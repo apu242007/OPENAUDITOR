@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPEN AUDITOR</title>
+  <meta name="description" content="OPEN AUDITOR es una plataforma para crear plantillas de auditoria, ejecutar inspecciones y exportar reportes PDF.">
+  <style>
+    :root {
+      --bg: #f4f1e8;
+      --bg-strong: #e8dcc6;
+      --ink: #1f2a24;
+      --muted: #5d665e;
+      --card: rgba(255, 252, 246, 0.82);
+      --line: rgba(31, 42, 36, 0.12);
+      --accent: #154734;
+      --accent-strong: #0f3628;
+      --accent-soft: #d7eadf;
+      --shadow: 0 20px 60px rgba(29, 33, 28, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.75), transparent 28%),
+        linear-gradient(135deg, var(--bg), #efe7d5 45%, var(--bg-strong));
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav a,
+    .btn {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.5);
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .nav a:hover,
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.78);
+      border-color: rgba(21, 71, 52, 0.28);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 26px;
+      align-items: stretch;
+      margin-bottom: 26px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.65);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-copy {
+      padding: 42px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
+      line-height: 0.94;
+      font-weight: 700;
+    }
+
+    .lead {
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 56ch;
+    }
+
+    .cta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-strong);
+    }
+
+    .hero-side {
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100%;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255,255,255,0.55);
+      margin-bottom: 14px;
+    }
+
+    .mini-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .mini-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .mini-title {
+      font-size: 1.35rem;
+      margin: 0 0 8px;
+    }
+
+    .mini-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin: 26px 0;
+    }
+
+    .feature {
+      padding: 26px;
+    }
+
+    .feature h2 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .note {
+      padding: 28px 30px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+    }
+
+    .note p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 70ch;
+    }
+
+    .code {
+      font-family: "Courier New", monospace;
+      background: rgba(21, 71, 52, 0.08);
+      border: 1px solid rgba(21, 71, 52, 0.16);
+      padding: 12px 14px;
+      border-radius: 14px;
+      white-space: nowrap;
+    }
+
+    .footer {
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .grid,
+      .note {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .note {
+        align-items: start;
+      }
+
+      .hero-copy,
+      .hero-side,
+      .feature {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">OPEN <span>AUDITOR</span></div>
+      <nav class="nav">
+        <a href="https://github.com/apu242007/OPENAUDITOR" target="_blank" rel="noreferrer">Repositorio</a>
+        <a href="https://github.com/apu242007/OPENAUDITOR/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <article class="panel hero-copy">
+        <div class="eyebrow">Auditorias e inspecciones</div>
+        <h1>Plantillas, ejecucion y reportes PDF en un solo flujo.</h1>
+        <p class="lead">
+          OPEN AUDITOR permite crear plantillas de auditoria, iniciar inspecciones,
+          registrar evidencia y exportar reportes con branding propio. Esta pagina
+          es la portada estatica para GitHub Pages.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://github.com/apu242007/OPENAUDITOR" target="_blank" rel="noreferrer">Ver codigo</a>
+          <a class="btn" href="https://github.com/apu242007/OPENAUDITOR/blob/main/README.md" target="_blank" rel="noreferrer">Como ejecutarlo</a>
+        </div>
+      </article>
+
+      <aside class="panel hero-side">
+        <div class="mini-card">
+          <div class="mini-label">Incluye</div>
+          <p class="mini-title">Editor de plantillas</p>
+          <p class="mini-text">Paginas, secciones, preguntas, logica condicional y versionado.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Salida</div>
+          <p class="mini-title">PDF con logo</p>
+          <p class="mini-text">Reportes con branding, portada, evidencias, firma y hallazgos.</p>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">Importante</div>
+          <p class="mini-title">GitHub Pages es estatico</p>
+          <p class="mini-text">La app completa necesita el backend Node.js para funcionar localmente o en un servidor.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="panel feature">
+        <h2>Crear</h2>
+        <p>Disena auditorias con portada, preguntas puntuables, adjuntos y acciones correctivas.</p>
+      </article>
+      <article class="panel feature">
+        <h2>Inspeccionar</h2>
+        <p>Ejecuta inspecciones desde el navegador, guarda progreso y registra evidencia multimedia.</p>
+      </article>
+      <article class="panel feature">
+        <h2>Exportar</h2>
+        <p>Genera PDFs, hojas Excel, CSV y paquetes reutilizables para compartir plantillas.</p>
+      </article>
+    </section>
+
+    <section class="panel note">
+      <div>
+        <strong>Para usar la aplicacion completa</strong>
+        <p>Clona el repositorio, instala dependencias y ejecuta el servidor Node.js. GitHub Pages mostrara esta portada, pero no puede reemplazar las rutas API del backend.</p>
+      </div>
+      <div class="code">npm install && npm start</div>
+    </section>
+
+    <div class="footer">
+      OPEN AUDITOR · GitHub Pages homepage
+    </div>
+  </div>
+</body>
+</html>
