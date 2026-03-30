@@ -36,7 +36,22 @@
       "Bash(node --check \"c:/Users/jcastro/Documents/01-Apps en Github/iAuditorNew/public/inspector.html\")",
       "Bash(node --check /tmp/inspector_js.js)",
       "Bash(node /tmp/extract_js.js)",
-      "Bash(curl -s http://localhost:3001/api/templates/3a9eb057-0de1-4a93-85d8-bfa3786ff892/preview/pdf -o /tmp/test.pdf)"
+      "Bash(curl -s http://localhost:3001/api/templates/3a9eb057-0de1-4a93-85d8-bfa3786ff892/preview/pdf -o /tmp/test.pdf)",
+      "Bash(npm install:*)",
+      "Bash(node --check:*)",
+      "Bash(if not exist .env copy .env.example .env)",
+      "Bash(timeout 10 node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill //F //PID 13440)",
+      "Bash(curl:*)",
+      "Bash(python -m json.tool)",
+      "Bash(node -e \"require\\(''''./server.js''''\\)\")",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/jcastro/OneDrive - EXERTION AI/01-APPS GITHUB/OPENAUDITOR/**)",
+      "Bash(done)",
+      "Bash(npm run:*)"
     ]
   }
 }

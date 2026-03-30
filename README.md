@@ -1,55 +1,137 @@
-# OPENAUDITOR
+#  ___  ____  _____ _   _    _    _   _ ____ ___ _____ ___  ____
+# / _ \|  _ \| ____| \ | |  / \  | | | |  _ \_ _|_   _/ _ \|  _ \
+#| | | | |_) |  _| |  \| | / _ \ | | | | | | | |  | || | | | |_) |
+#| |_| |  __/| |___| |\  |/ ___ \| |_| | |_| | |  | || |_| |  _ <
+# \___/|_|   |_____|_| \_/_/   \_\\___/|____/___| |_| \___/|_| \_\
 
-La alternativa open source a iAuditor para crear plantillas, ejecutar inspecciones, trabajar offline, sincronizar cuando haga falta y exportar reportes sin licencias por usuario.
+[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-1f6f43?style=for-the-badge&logo=node.js&logoColor=white)](#7-instalacion-desde-cero-en-windows)
+[![Offline First](https://img.shields.io/badge/offline-first-4f46e5?style=for-the-badge)](#13-trabajo-offline)
+[![Open Source](https://img.shields.io/badge/open-source-0f172a?style=for-the-badge)](#4-filosofia-del-producto)
+[![Docker Ready](https://img.shields.io/badge/docker-ready-0ea5e9?style=for-the-badge&logo=docker&logoColor=white)](#16-produccion-paso-a-paso)
+[![License](https://img.shields.io/badge/license-see%20license-7c3aed?style=for-the-badge)](#24-licencia)
 
-OPENAUDITOR está pensado para equipos que quieren:
+**La alternativa open source, offline-first y sin licencias por usuario para inspecciones, auditorías y checklists operativos.**
 
-- empezar gratis
-- tener sus datos en su propio entorno
-- inspeccionar desde PC, tablet o celular
-- trabajar offline cuando no hay conectividad
-- adaptar la herramienta a su realidad
-- evitar una nube cerrada y costosa
+OPENAUDITOR te permite crear plantillas, probarlas, ejecutar inspecciones desde PC o celular, trabajar sin conexión, sincronizar cuando haga falta y exportar reportes sin depender de una nube cerrada.
 
----
+Si estás buscando algo tipo iAuditor pero:
 
-## 1. Qué hace OPENAUDITOR
+- más abierto,
+- más adaptable,
+- más barato,
+- más portable,
+- y con tus datos bajo tu control,
 
-Hoy OPENAUDITOR ya permite:
-
-- crear plantillas con páginas, secciones y preguntas
-- usar portada, logo e imagen de portada
-- definir lógica condicional
-- usar scoring
-- cargar notas, fotos, acciones correctivas y firma
-- probar plantillas antes de publicarlas
-- ejecutar inspecciones desde navegador
-- guardar borradores locales
-- exportar `PDF`, `XLSX`, `CSV` y `JSON`
-- exportar HTML standalone para uso offline
-- importar inspecciones standalone después
-- sincronizar opcionalmente a `Apps Script`, `webhooks`, `PocketBase`, `Supabase` y otros receptores
-- importar plantillas reales desde un catálogo comunitario
-
-En una frase:
-
-> Diseñás la plantilla, la probás, inspeccionás en campo, exportás reportes y seguís siendo dueño del sistema.
+este proyecto está hecho para vos.
 
 ---
 
-## 2. Filosofía del proyecto
+## -1. Por qué gana OPENAUDITOR
 
-OPENAUDITOR va en dirección contraria a una herramienta cerrada:
+### Comparación rápida
 
-- `open source`
-- `local-first`
-- `offline-friendly`
-- `sin login ni roles internos obligatorios`
-- `sin dependencia obligatoria de nube`
-- `portable`
-- `hackeable`
+| Tema | OPENAUDITOR | Herramienta cerrada típica |
+|---|---|---|
+| Licencias por usuario | No obligatorias | Sí, normalmente |
+| Propiedad de datos | Tuya | Depende del proveedor |
+| Trabajo offline | Sí | A veces, limitado |
+| Personalización | Alta | Media o baja |
+| Hosting propio | Sí | No siempre |
+| Catálogo editable | Sí | Limitado |
+| Integraciones libres | Sí | Sujetas al plan |
+| Extensión por comunidad | Sí | No |
 
-La seguridad perimetral, si el equipo la necesita, se resuelve mejor con red local, VPN, reverse proxy o HTTPS, no con fricción interna innecesaria.
+### Elevator pitch
+
+**OPENAUDITOR convierte checklists, auditorías e inspecciones en una plataforma open source que podés instalar hoy, adaptar mañana y seguir controlando siempre.**
+
+---
+
+## 0. Cómo se ve
+
+### Dashboard principal
+
+![Dashboard principal de OPENAUDITOR](docs/images/dashboard-home.png)
+
+### Menú para crear o importar plantillas
+
+![Menú para crear o importar plantillas](docs/images/template-create-menu.png)
+
+### Editor con visualizador en tiempo real
+
+![Editor con visualizador en tiempo real](docs/images/template-editor-live-preview.png)
+
+### Configuración abierta y destinos de sincronización
+
+![Configuración abierta y destinos de sincronización](docs/images/settings-open-sync.png)
+
+---
+
+## 1. Qué es OPENAUDITOR
+
+OPENAUDITOR es una plataforma open source para:
+
+1. crear plantillas de inspección,
+2. probarlas antes de publicarlas,
+3. ejecutarlas en campo,
+4. guardar evidencia,
+5. generar reportes,
+6. trabajar offline,
+7. y sincronizar opcionalmente con servicios gratuitos o self-hosted.
+
+### Lo que ya hace hoy
+
+- Editor visual de plantillas.
+- Páginas, secciones y preguntas.
+- Portada configurable con imagen y branding.
+- Logo al lado del nombre de la plantilla.
+- Lógica condicional.
+- Puntuación y scoring.
+- Notas, fotos, acciones correctivas y firma.
+- Modo `Probar` antes de publicar.
+- Inspector mejorado para trabajo real en campo.
+- Filtros como `Solo pendientes`, `Solo requeridas` y `Con evidencia`.
+- Panel de hallazgos en vivo.
+- Bloqueo de cierre si faltan requeridas.
+- Exportación a `PDF`, `CSV`, `XLSX` y `JSON`.
+- HTML standalone para operar offline en celular.
+- Importación posterior de inspecciones offline.
+- Sincronización opcional con `Apps Script`, `webhooks`, `PocketBase`, `Supabase` y otros receptores.
+- Catálogo comunitario de plantillas reales.
+- Plantillas orientadas a Ley 19.587 y Decreto 351/79.
+
+### Lo que hace especial al proyecto
+
+- `Open source` de verdad.
+- `Local-first`.
+- `Offline-friendly`.
+- Sin login ni roles internos obligatorios.
+- Sin lock-in de proveedor.
+- Fácil de correr con `Node`, `PM2` o `Docker`.
+- Fácil de adaptar por cualquier equipo técnico.
+
+---
+
+## 2. Por qué este proyecto es valioso
+
+La mayoría de las herramientas de inspección te venden:
+
+- licencias por usuario,
+- dependencia de su nube,
+- límites artificiales,
+- y poca capacidad real de personalización.
+
+OPENAUDITOR propone lo contrario:
+
+1. empezás local y gratis,
+2. usás tus propias plantillas,
+3. seguís siendo dueño de tus datos,
+4. escalás cuando querés,
+5. y elegís si sincronizar o no.
+
+### En una frase
+
+**Diseñás la plantilla, la probás, inspeccionás en campo, generás evidencia, exportás reportes y seguís siendo dueño del sistema.**
 
 ---
 
@@ -57,70 +139,101 @@ La seguridad perimetral, si el equipo la necesita, se resuelve mejor con red loc
 
 OPENAUDITOR encaja muy bien en:
 
-- seguridad e higiene
-- SST / HSE
-- mantenimiento
-- retail
-- operaciones
-- auditorías internas
-- inspecciones preoperacionales
-- control de contratistas
-- chequeos legales internos
-- listas operativas en campo
+- seguridad e higiene,
+- SST / HSE,
+- mantenimiento,
+- retail,
+- operaciones,
+- auditorías internas,
+- inspecciones legales,
+- control de contratistas,
+- recorridas de planta,
+- verificación de extintores,
+- orden y limpieza,
+- tableros eléctricos,
+- depósitos,
+- vehículos,
+- andamios,
+- BPM / inocuidad,
+- y checklists operativos diarios.
 
 ---
 
-## 4. Stack técnico
+## 4. Filosofía del producto
+
+La filosofía del proyecto es simple:
+
+1. **Tus datos son tuyos.**
+2. **La herramienta tiene que funcionar aunque no haya internet.**
+3. **El software no debe obligarte a usar roles o login interno si no los necesitás.**
+4. **El despliegue debe ser simple.**
+5. **La comunidad tiene que poder extenderlo sin pedir permiso.**
+
+Por eso OPENAUDITOR prioriza:
+
+- simplicidad,
+- portabilidad,
+- hackeabilidad,
+- despliegue barato,
+- documentación clara,
+- y catálogos reutilizables.
+
+---
+
+## 5. Stack técnico
 
 - `Node.js`
 - `Express`
 - `better-sqlite3`
 - `HTML + CSS + JavaScript vanilla`
 - `Puppeteer` para PDF
-- `ExcelJS` para Excel
+- `ExcelJS` para exportes Excel
 - `Multer` para uploads
-- `qrcode` para QR
-- `Archiver` / `adm-zip` para backups y packs
+- `QRCode` para QR
+- `Archiver` y `adm-zip` para backups y paquetes
 
-Además:
+### Decisiones técnicas importantes
 
-- CSP endurecida con `script-src-attr 'none'`
-- pantallas principales sin handlers inline
-- modo abierto por diseño
-- despliegue simple por `Node`, `PM2` o `Docker`
+- Base local simple con SQLite.
+- CSP endurecida.
+- Frontend sin frameworks pesados.
+- Rutas y módulos separados.
+- Modo abierto por diseño.
+- Despliegue compatible con `PM2`, `Docker` y reverse proxy.
 
 ---
 
-## 5. Requisitos
+## 6. Requisitos
 
 ### Requisitos mínimos
 
-- `Node.js 18` o superior
+- `Node.js >= 18`
 - `npm`
 - navegador moderno
 
 ### Recomendado
 
 - `Node.js 20`
-- Git
-- al menos `2 GB` libres para trabajar cómodo con adjuntos y PDFs
+- `Git`
+- al menos `2 GB` libres para trabajar cómodo con adjuntos, caché y PDFs
 
 ---
 
-## 6. Instalación desde cero en Windows
+## 7. Instalación desde cero en Windows
 
-Si querés el camino más simple posible, seguí estos pasos exactos.
+Esta es la guía pensada para alguien que quiere instalarlo desde cero y validarlo paso a paso.
 
 ### Paso 1. Instalar Node.js
 
 1. Abrí `https://nodejs.org/`
 2. Descargá la versión `LTS`
-3. Instalá con el asistente normal
-4. Cerrá y volvé a abrir PowerShell
+3. Ejecutá el instalador
+4. Aceptá las opciones normales
+5. Cerrá y reabrí PowerShell
 
 ### Paso 2. Verificar Node y npm
 
-En PowerShell:
+Ejecutá:
 
 ```powershell
 node -v
@@ -129,13 +242,14 @@ npm -v
 
 Qué deberías ver:
 
-- una versión de Node, por ejemplo `v18.x` o `v20.x`
+- una versión de Node, por ejemplo `v20.x.x`
 - una versión de npm
 
-Si Windows dice que `node` no existe:
+Si no funciona:
 
-- cerrá la terminal y abrila de nuevo
-- si sigue igual, reiniciá la PC
+1. cerrá la terminal,
+2. abrila de nuevo,
+3. si sigue igual, reiniciá Windows.
 
 ### Paso 3. Instalar Git
 
@@ -151,10 +265,17 @@ git --version
 
 ### Paso 4. Clonar el proyecto
 
+Ubicate en una carpeta de trabajo:
+
 ```powershell
 cd "C:\Users\TU_USUARIO\Documents"
-git clone https://github.com/apu242007/Auditor Libre.git
-cd "Auditor Libre"
+```
+
+Cloná el repo:
+
+```powershell
+git clone https://github.com/apu242007/OPENAUDITOR.git
+cd OPENAUDITOR
 ```
 
 Si ya tenés el proyecto descargado en otra ruta:
@@ -171,11 +292,11 @@ npm install
 
 Qué deberías ver:
 
-- descarga de paquetes
-- actualización de `node_modules`
-- fin del proceso sin error fatal
+- descarga de paquetes,
+- creación o actualización de `node_modules`,
+- y fin del proceso sin error fatal.
 
-### Paso 6. Levantar la app
+### Paso 6. Levantar la app en desarrollo
 
 ```powershell
 npm start
@@ -183,42 +304,37 @@ npm start
 
 Qué deberías ver:
 
-- el servidor iniciando
-- mensajes del tipo `Server started successfully`
-- referencia al puerto `3001`
+- el servidor iniciando,
+- mensajes del tipo `Server started successfully`,
+- y referencia al puerto `3001`.
 
 ### Paso 7. Abrir la app
 
-Abrí:
+Abrí en el navegador:
 
 ```text
 http://localhost:3001
 ```
 
-Qué deberías ver:
+### Paso 8. Verificar pantallas principales
 
-- dashboard principal
-- plantillas
-- inspecciones recientes
-- accesos a catálogo, configuración y acciones
-
-### Paso 8. Verificar que la app está viva
-
-Abrí estas rutas:
+Probá estas rutas:
 
 ```text
 http://localhost:3001
 http://localhost:3001/catalog
 http://localhost:3001/settings
+http://localhost:3001/about
 ```
 
 Qué deberías ver:
 
-- dashboard
-- catálogo comunitario
-- pantalla de configuración
+1. dashboard principal,
+2. catálogo comunitario,
+3. configuración,
+4. pantalla informativa del proyecto.
 
-### Paso 9. Verificar que el modo abierto está activo
+### Paso 9. Verificar el modo abierto
 
 En otra terminal:
 
@@ -232,13 +348,24 @@ Resultado esperado:
 {"securityRequired":false,"authenticated":true,"mode":"open"}
 ```
 
+### Paso 10. Verificar tests
+
+```powershell
+npm test
+```
+
+Resultado esperado:
+
+- tests pasando,
+- y salida tipo `28 passing` o superior.
+
 ---
 
-## 7. Instalación rápida para quien ya usa Node
+## 8. Instalación rápida para quien ya usa Node
 
 ```bash
-git clone https://github.com/apu242007/Auditor Libre.git
-cd "Auditor Libre"
+git clone https://github.com/apu242007/OPENAUDITOR.git
+cd OPENAUDITOR
 npm install
 npm start
 ```
@@ -251,701 +378,520 @@ http://localhost:3001
 
 ---
 
-## 8. Scripts disponibles
+## 9. Scripts disponibles
 
 ```bash
 npm start
+npm run dev
 npm run start:prod
 npm run check:prod
-npm run dev
 npm test
 npm run test:coverage
-npm run test:watch
 npm run lint
 npm run pm2:start
-npm run pm2:stop
 npm run pm2:restart
 npm run pm2:logs
 ```
 
 ### Qué hace cada script
 
-- `npm start`: arranque normal
-- `npm run start:prod`: arranque en modo producción
-- `npm run check:prod`: chequeo post-deploy
-- `npm run dev`: modo desarrollo con recarga
-- `npm test`: tests automáticos
-- `npm run test:coverage`: tests con cobertura
-- `npm run test:watch`: tests en modo watch
-- `npm run lint`: validación estática
-- `npm run pm2:start`: arranque bajo PM2
-- `npm run pm2:stop`: detener PM2
-- `npm run pm2:restart`: reinicio PM2
-- `npm run pm2:logs`: logs PM2
+- `npm start`: arranca la app normal.
+- `npm run dev`: arranca con `nodemon`.
+- `npm run start:prod`: arranca en modo producción.
+- `npm run check:prod`: valida endpoints críticos de producción.
+- `npm test`: ejecuta la suite de tests.
+- `npm run test:coverage`: ejecuta tests con cobertura.
+- `npm run lint`: corre ESLint.
+- `npm run pm2:start`: levanta con PM2.
+- `npm run pm2:restart`: reinicia la instancia en PM2.
+- `npm run pm2:logs`: mira logs con PM2.
 
 ---
 
-## 9. Primer uso: de cero a tu primer PDF
+## 10. Primer uso paso a paso
 
-Esta es la secuencia ideal para entender el producto completo.
+Esta parte está pensada para que cualquier persona entienda el flujo completo del producto.
 
-### Paso 1. Entrar al dashboard
+### Flujo 1. Crear una plantilla desde cero
 
-Abrí:
+1. Abrí `http://localhost:3001`
+2. Hacé clic en `Nueva plantilla`
+3. Elegí crear una plantilla nueva o importar desde JSON
+4. Definí nombre, descripción y branding
+5. Agregá páginas
+6. Agregá secciones
+7. Agregá preguntas
+8. Definí si son requeridas
+9. Configurá scoring si aplica
+10. Guardá el borrador
 
-```text
-http://localhost:3001
-```
+Vista de referencia:
 
-Vas a ver:
+![Editor de plantilla OPENAUDITOR](docs/images/template-editor-live-preview.png)
 
-- plantillas
-- inspecciones recientes
-- catálogo comunitario
-- importación JSON
-- accesos a configuración, acciones y comparación
+### Flujo 2. Crear una plantilla desde el catálogo comunitario
 
-### Paso 2. Importar una plantilla real del catálogo
+1. Entrá al dashboard
+2. Hacé clic en `Importar desde JSON`
+3. Elegí una plantilla real del catálogo
+4. Tocá `Usar ejemplo`
+5. Se importa como borrador
+6. Entrás al editor para adaptarla
 
-Tenés dos caminos:
+Vista de referencia:
 
-1. desde `Importar desde JSON`
-2. desde `/catalog`
+![Menú de creación e importación](docs/images/template-create-menu.png)
 
-Ruta directa:
+### Flujo 3. Probar una plantilla antes de publicarla
 
-```text
-http://localhost:3001/catalog
-```
+1. Abrí el editor de una plantilla
+2. Guardá el borrador
+3. Tocá `Probar`
+4. Se crea una inspección de prueba
+5. Abrís el inspector real con el snapshot del borrador
+6. Validás la experiencia antes de publicar
 
-Qué hacer:
+### Flujo 4. Publicar una plantilla
 
-1. entrá a `Catálogo`
-2. elegí una plantilla real, por ejemplo:
-   - `Checklist Legal Ley 19.587`
-   - `Checklist de Salidas y Emergencia`
-   - `Checklist SST para Oficinas`
-3. hacé clic en `Importar en mi espacio`
+1. Revisá estructura, branding y portada
+2. Probá la plantilla
+3. Volvé al editor
+4. Hacé clic en `Publicar`
+5. Desde ese momento ya se puede usar como plantilla operativa
 
-Qué debería pasar:
+### Flujo 5. Ejecutar una inspección
 
-- se crea un borrador
-- se abre el editor
+1. Desde el dashboard elegí una plantilla publicada
+2. Tocá `Iniciar`
+3. Completá respuestas
+4. Sumá notas, fotos, acciones y señalamientos
+5. Usá filtros como `Solo pendientes` o `Solo requeridas`
+6. Revisá el panel `Hallazgos en vivo`
+7. Guardá
+8. Finalizá cuando no queden requeridas pendientes
 
-### Paso 3. Editar la plantilla
+### Flujo 6. Exportar resultados
 
-La pantalla del editor queda en:
-
-```text
-/editor/:id
-```
-
-Ahí podés:
-
-- cambiar nombre y descripción
-- agregar páginas
-- agregar secciones
-- agregar preguntas
-- marcar preguntas requeridas
-- activar nota, foto y acción
-- definir scoring
-- configurar lógica condicional
-- cargar logo
-- usar portada
-- ver preview en tiempo real
-- probar sin publicar
-
-### Paso 4. Probar antes de publicar
-
-Usá el botón `Probar`.
-
-Eso crea una inspección de test usando el borrador actual, sin necesidad de publicar.
-
-Qué deberías ver:
-
-- una inspección marcada como `Prueba`
-- el flujo real del inspector funcionando
-
-### Paso 5. Volver y publicar
-
-Cuando la plantilla ya está bien:
-
-1. volvé al editor
-2. hacé clic en `Publicar`
-
-Qué debería pasar:
-
-- la plantilla queda activa
-- ya aparece lista para iniciar inspecciones reales
-
-### Paso 6. Iniciar una inspección real
-
-Desde dashboard:
-
-- iniciar una inspección normal
-
-O por URL/QR:
-
-```text
-/inspect/:templateId
-```
-
-### Paso 7. Completar la inspección
-
-En el inspector podés:
-
-- responder preguntas
-- marcar `Sí / No / N/A`
-- agregar notas
-- sacar fotos
-- cargar acciones correctivas
-- usar secciones repetibles
-- ver progreso por página
-- saltar al siguiente pendiente
-
-### Paso 8. Finalizar la inspección
-
-Usá:
-
-```text
-Finalizar inspección
-```
-
-Qué debería pasar:
-
-- la inspección cambia a completada
-- queda lista para exportar
-
-### Paso 9. Exportar el primer PDF
-
-Abrí la inspección terminada y exportá:
-
-- `PDF`
-- `PDF de hallazgos`
-
-Si la plantilla tiene portada activada:
-
-- el PDF incluye portada
-- incluye todas las páginas
-- incluye anexos cuando corresponda
+1. Abrí la inspección terminada
+2. Elegí exportar a `PDF`, `CSV`, `XLSX` o `JSON`
+3. Descargá el archivo
+4. Si la plantilla tiene portada, el PDF la incluye
 
 ---
 
-## 10. Trabajo offline
+## 11. Qué tiene el editor
 
-OPENAUDITOR tiene tres niveles de operación offline.
+El editor actual incluye:
 
-### Modo 1. Borrador local en navegador
+- visualizador en tiempo real,
+- panel redimensionable,
+- branding,
+- portada con imagen,
+- logo junto al nombre,
+- biblioteca de preguntas,
+- secciones repetibles,
+- ayuda contextual,
+- lógica condicional,
+- preview PDF,
+- y modo prueba.
 
-Mientras inspeccionás en el navegador:
+### Mejoras UX actuales en el editor
 
-- las respuestas se van guardando
-- si perdés conexión, el flujo no se corta de inmediato
-
-### Modo 2. HTML standalone
-
-Podés exportar una plantilla como HTML autónomo para usar fuera de la app principal.
-
-Ese HTML:
-
-- funciona sin depender del dashboard
-- puede guardar localmente
-- puede exportar JSON
-- puede sincronizar cuando vuelva Internet
-
-### Modo 3. Importación posterior
-
-Si el operario completó datos fuera de la instancia principal:
-
-- exporta JSON
-- luego lo importás en OPENAUDITOR
+- mejor tipografía,
+- acentos corregidos,
+- panel más claro,
+- preview más útil,
+- interfaz más tipo studio,
+- y base más limpia para CSP.
 
 ---
 
-## 11. Sync opcional
+## 12. Qué tiene el inspector
 
-OPENAUDITOR no te obliga a usar una nube, pero permite sumar sync opcional.
+El inspector está pensado para trabajo real en campo.
 
-Destinos soportados conceptualmente:
+### Hoy incluye
 
-- `Apps Script / Google Sheets`
-- `Webhook JSON`
-- `n8n`
-- `PocketBase`
-- `Supabase`
-- `OPENAUDITOR remoto`
+- progreso por página,
+- navegación lateral,
+- métricas por sección,
+- filtros inteligentes,
+- modo compacto,
+- colapsado de respondidas,
+- `Siguiente pendiente`,
+- `Siguiente requerida`,
+- `Con evidencia`,
+- panel de hallazgos en vivo,
+- severidad de hallazgos,
+- resumen ejecutivo,
+- y bloqueo de cierre si falta algo obligatorio.
 
-### Estrategia recomendada
+### Qué resuelve esto
 
-#### Para empezar gratis
-
-- OPENAUDITOR local
-- HTML standalone
-- Apps Script o webhook
-
-#### Para crecer
-
-- OPENAUDITOR como nodo de administración
-- PocketBase o Supabase como capa remota opcional
-
-### Google Sheets
-
-La estrategia actual recomendada es:
-
-- una hoja por plantilla
-- columnas automáticas según la plantilla
-- ampliación automática si la plantilla cambia
+1. checklists largos,
+2. revisión rápida,
+3. foco en obligatorias,
+4. foco en evidencia,
+5. y menos errores al finalizar.
 
 ---
 
-## 12. Catálogo comunitario
+## 13. Trabajo offline
 
-La app trae un catálogo de plantillas reales listas para importar.
+OPENAUDITOR no depende obligatoriamente de una conexión permanente.
 
-Ruta:
+### Modo local
 
-```text
-http://localhost:3001/catalog
-```
+1. Corrés la app en tu PC
+2. Todo se guarda localmente
+3. Exportás cuando querés
 
-Hoy incluye líneas como:
+### Modo offline con HTML standalone
 
-- seguridad
-- mantenimiento
-- retail
-- calidad
-- vehículos
-- construcción
+1. Exportás una plantilla como HTML autónomo
+2. El operario la abre en celular
+3. Completa respuestas aunque no tenga internet
+4. El HTML guarda temporalmente en el navegador
+5. Después exporta JSON o sincroniza cuando haya conexión
 
-Y además ya está orientado a marcos argentinos como:
+### Modo offline + sync
 
-- Ley 19.587
-- Decreto 351/79
-- focos legales de SST
+1. El celular trabaja offline
+2. Cuando vuelve la conexión envía datos
+3. El receptor puede ser:
+   - `Apps Script`
+   - `Webhook`
+   - `PocketBase`
+   - `Supabase`
+   - otra instancia de OPENAUDITOR
 
 ---
 
-## 13. Producción paso a paso
+## 14. Sincronización gratis y open source
 
-OPENAUDITOR ya quedó preparado para producción con estas decisiones:
+### Opción 1. Apps Script + Google Sheets
 
-- `SQLite + una sola instancia`
-- `HOST` configurable
-- `Docker` escuchando en `0.0.0.0`
-- `PM2` en `fork`, no en `cluster`
-- `healthcheck` por `readyz`
-- sin notificaciones de escritorio en `production`
+Ideal para arrancar rápido y gratis.
 
-### Opción A. Producción simple en la misma máquina
+Paso a paso:
 
-#### Paso 1. Crear archivo de entorno
+1. Generás el HTML standalone
+2. Configurás destino `Apps Script`
+3. El payload incluye `sheetSchema` y `flatRow`
+4. Apps Script crea una hoja por plantilla
+5. Agrega columnas automáticamente
+6. Guarda además el payload crudo en una hoja raw
 
-```powershell
-copy .env.production.example .env
-```
+### Opción 2. Webhook propio
 
-#### Paso 2. Editar variables
+Ideal para integraciones más libres.
 
-```env
-NODE_ENV=production
-PORT=3001
-HOST=0.0.0.0
-DATA_DIR=C:\OPENAUDITOR\data
-LOG_LEVEL=info
-SECURE_COOKIES=false
-```
+Paso a paso:
 
-#### Paso 3. Instalar dependencias
+1. Configurás una URL receptora
+2. El HTML o la app envían JSON por `fetch`
+3. Tu backend procesa y almacena
 
-```powershell
+### Opción 3. PocketBase o Supabase
+
+Ideal para evolución profesional open source.
+
+Paso a paso:
+
+1. Montás el backend
+2. Configurás el destino de sync
+3. Enviás inspecciones y adjuntos
+4. Conservás control total del sistema
+
+---
+
+## 15. Catálogo comunitario
+
+El proyecto ya incluye plantillas reales listas para importar.
+
+### Rubros incluidos hoy
+
+- seguridad,
+- mantenimiento,
+- retail,
+- calidad,
+- construcción,
+- vehículos.
+
+### Orientación legal incluida
+
+Hay plantillas enfocadas en:
+
+- Ley 19.587,
+- Decreto 351/79,
+- salidas de emergencia,
+- riesgo eléctrico,
+- orden y limpieza,
+- depósitos,
+- incendio,
+- oficinas,
+- servicios para el personal.
+
+### Cómo usar el catálogo
+
+1. Abrí `http://localhost:3001/catalog`
+2. Filtrá por rubro o foco legal
+3. Revisá la plantilla
+4. Importala como borrador
+5. Adaptala a tu operación
+
+Desde el dashboard también podés empezar rápido:
+
+![Dashboard principal](docs/images/dashboard-home.png)
+
+---
+
+## 16. Producción paso a paso
+
+Si querés publicar OPENAUDITOR para uso serio interno o comunitario, hacelo así.
+
+### Opción A. Producción simple con Node
+
+1. Instalá dependencias
+
+```bash
 npm install
 ```
 
-#### Paso 4. Arrancar
+2. Arrancá en modo producción
 
-```powershell
+```bash
 npm run start:prod
 ```
 
-#### Paso 5. Verificar
+3. Verificá
 
-```powershell
-curl http://127.0.0.1:3001/readyz
-curl http://127.0.0.1:3001/health
+```bash
 npm run check:prod
 ```
 
 ### Opción B. Producción con PM2
 
-#### Paso 1. Crear `.env`
+1. Instalá dependencias
 
-```powershell
-copy .env.production.example .env
-```
-
-#### Paso 2. Instalar dependencias
-
-```powershell
+```bash
 npm install
 ```
 
-#### Paso 3. Arrancar con PM2
+2. Levantá PM2
 
-```powershell
+```bash
 npm run pm2:start
 ```
 
-#### Paso 4. Operación diaria
+3. Mirá logs
 
-```powershell
-npm run pm2:restart
+```bash
 npm run pm2:logs
 ```
 
-Notas:
+4. Reiniciá cuando haga falta
 
-- PM2 quedó configurado con `1` instancia
-- no uses `cluster` con SQLite
+```bash
+npm run pm2:restart
+```
 
 ### Opción C. Producción con Docker
 
-#### Paso 1. Crear `.env`
-
-```bash
-cp .env.production.example .env
-```
-
-#### Paso 2. Ajustar variables
-
-```env
-NODE_ENV=production
-PORT=3001
-HOST=0.0.0.0
-DATA_DIR=/data
-SECURE_COOKIES=false
-LOG_LEVEL=info
-```
-
-#### Paso 3. Construir y levantar
+1. Revisá `Dockerfile`
+2. Revisá `docker-compose.yml`
+3. Levantá contenedores
 
 ```bash
 docker compose up -d --build
 ```
 
-#### Paso 4. Ver estado
+4. Verificá con:
 
 ```bash
 docker compose ps
-docker compose logs -f app
 ```
 
-#### Paso 5. Verificar
+### Recomendaciones de producción
+
+1. Definí `DATA_DIR` persistente.
+2. Poné un reverse proxy con `Nginx` o similar.
+3. Serví por HTTPS si la vas a exponer.
+4. Verificá espacio en disco.
+5. Corré `npm run check:prod`.
+
+La pantalla de configuración ya está preparada para una operación open source sin login interno:
+
+![Configuración abierta de OPENAUDITOR](docs/images/settings-open-sync.png)
+
+### Archivos útiles para deploy
+
+- [ecosystem.config.js](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/ecosystem.config.js)
+- [Dockerfile](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/Dockerfile)
+- [docker-compose.yml](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/docker-compose.yml)
+- [nginx.conf.example](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/nginx.conf.example)
+- [scripts/check-production.js](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/scripts/check-production.js)
+
+---
+
+## 17. Verificaciones rápidas útiles
+
+### Verificar que la app está viva
+
+```powershell
+curl http://localhost:3001/readyz
+curl http://localhost:3001/health
+curl http://localhost:3001/api/auth/status
+```
+
+### Verificar pantallas
+
+```text
+http://localhost:3001/
+http://localhost:3001/catalog
+http://localhost:3001/settings
+http://localhost:3001/about
+```
+
+### Verificar pruebas
 
 ```bash
-curl http://127.0.0.1:3001/readyz
-curl http://127.0.0.1:3001/health
-npm run check:prod
-```
-
-### Opción D. Producción detrás de reverse proxy
-
-Si la vas a publicar fuera de tu LAN:
-
-1. poné OPENAUDITOR detrás de `Nginx`, `Caddy` o `Traefik`
-2. activá HTTPS real
-3. recién ahí usá:
-
-```env
-SECURE_COOKIES=true
-```
-
-Ejemplo base:
-
-- [nginx.conf.example](./nginx.conf.example)
-
-### Checklist de salida a producción
-
-1. definir `DATA_DIR` persistente
-2. verificar `readyz`
-3. verificar `health`
-4. probar `/`, `/catalog`, `/settings`
-5. crear una plantilla de prueba
-6. ejecutar una inspección de prueba
-7. exportar un PDF
-8. probar backup
-9. si hay proxy y HTTPS, activar `SECURE_COOKIES=true`
-
-### Qué no hacer
-
-- no usar PM2 en `cluster`
-- no correr múltiples procesos contra la misma base SQLite
-- no publicar la app a Internet sin proxy y HTTPS
-- no depender de `localhost` si el objetivo es acceso por red
-
----
-
-## 14. Rutas útiles
-
-### Rutas principales
-
-```text
-/
-/catalog
-/settings
-/about
-/actions
-/compare
-/search
-```
-
-### Rutas funcionales
-
-```text
-/editor/:id
-/inspect/:templateId
-/inspector/:inspectionId
-```
-
-### Rutas de salud
-
-```text
-/readyz
-/health
-```
-
-### Rutas API útiles
-
-```text
-/api/auth/status
-/api/templates/examples
-/api/config
+npm test
 ```
 
 ---
 
-## 15. Estructura del proyecto
+## 18. Estructura principal del repo
 
 ```text
 OPENAUDITOR/
-├─ public/
-├─ routes/
-├─ lib/
-├─ templates/catalog/
-├─ docs/
-├─ plugins/
-├─ schemas/
-├─ scripts/
-├─ server.js
+├─ public/                 # UI y assets
+├─ routes/                 # endpoints y páginas
+├─ lib/                    # utilidades de backend
+├─ templates/catalog/      # plantillas comunitarias
+├─ docs/                   # documentación extendida
+├─ plugins/                # ejemplos de conectores
+├─ schemas/                # ejemplos de payloads
+├─ test/                   # tests
+├─ server.js               # arranque principal
 ├─ standalone_inspection.js
-├─ pdf_report.js
-├─ package.json
-├─ docker-compose.yml
-├─ Dockerfile
-└─ ecosystem.config.js
-```
-
-### Qué hay en cada carpeta
-
-- `public/`: UI estática y pantallas principales
-- `routes/`: endpoints Express
-- `lib/`: utilidades internas
-- `templates/catalog/`: plantillas comunitarias importables
-- `docs/`: documentación extendida
-- `plugins/`: conectores y ejemplos
-- `schemas/`: ejemplos de payloads y estructuras
-- `scripts/`: helpers operativos
-
----
-
-## 16. Backups
-
-Desde la app:
-
-- podés exportar backup completo
-- podés restaurar backup
-
-Incluye:
-
-- configuración
-- plantillas
-- inspecciones
-- biblioteca
-- uploads
-
-En producción, además conviene:
-
-- respaldar `DATA_DIR`
-- respaldar volúmenes Docker si usás contenedores
-
----
-
-## 17. Troubleshooting paso a paso
-
-### La app no abre
-
-1. verificá Node:
-
-```bash
-node -v
-npm -v
-```
-
-2. instalá dependencias:
-
-```bash
-npm install
-```
-
-3. levantá:
-
-```bash
-npm start
-```
-
-### El puerto 3001 está ocupado
-
-En Windows:
-
-```powershell
-Get-NetTCPConnection -LocalPort 3001
-Get-Process -Id <PID>
-```
-
-Si necesitás cerrarlo:
-
-```powershell
-Stop-Process -Id <PID> -Force
-```
-
-### El celular no abre `localhost`
-
-`localhost` existe solo dentro de la misma máquina.
-
-Soluciones:
-
-- usar la IP local de la PC
-- usar QR en LAN
-- usar HTML standalone
-- desplegar con `HOST=0.0.0.0`
-
-### `npm test` no corría en Windows
-
-Eso ya quedó corregido usando `cross-env`.
-
-Probalo así:
-
-```powershell
-npm test
-```
-
-### `health` devuelve `degraded`
-
-Eso significa que la app vive, pero detectó un problema operativo, por ejemplo:
-
-- poco espacio en disco
-
-La ruta sigue siendo útil para producción porque te avisa antes de que la instancia falle de verdad.
-
-### El sync falla
-
-No perdés el trabajo si:
-
-- guardaste borrador local
-- exportaste JSON
-- reenviás luego al destino remoto
-
----
-
-## 18. Estado actual de calidad
-
-### Validado recientemente
-
-- arranque en modo producción
-- escucha en `0.0.0.0`
-- `readyz`
-- `health`
-- dashboard principal
-- catálogo
-- settings
-- chequeo post-deploy con `npm run check:prod`
-
-### Pendiente técnico conocido
-
-- todavía hay deuda legacy de `lint` en varios archivos viejos
-- todavía conviene una pasada final de limpieza textual/visual en algunas pantallas secundarias
-
-Eso no bloquea el uso ni el deploy, pero sí es una línea de mejora real.
-
----
-
-## 19. Cómo contribuir
-
-1. leé:
-
-- `CONTRIBUTING.md`
-- `CHANGELOG.md`
-- `ROADMAP.md`
-
-2. creá rama:
-
-```bash
-git checkout -b mi-mejora
-```
-
-3. instalá:
-
-```bash
-npm install
-```
-
-4. probá:
-
-```bash
-npm test
-npm run check:prod
+└─ pdf_report.js
 ```
 
 ---
 
-## 20. Roadmap natural
+## 19. Documentación relacionada
 
-Las líneas de crecimiento más fuertes son:
-
-- PWA instalable real
-- más packs legales por país
-- más plantillas comunitarias
-- más conectores oficiales
-- mejor analítica
-- mejor documentación para integradores
+- [docs/deployment/README.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/docs/deployment/README.md)
+- [docs/deployment/docker.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/docs/deployment/docker.md)
+- [docs/deployment/hosting-checklist.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/docs/deployment/hosting-checklist.md)
+- [docs/integrations/README.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/docs/integrations/README.md)
+- [public/sync-guide.html](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/public/sync-guide.html)
+- [templates/catalog/README.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/templates/catalog/README.md)
 
 ---
 
-## 21. Resumen rápido
+## 20. Troubleshooting
 
-Con OPENAUDITOR podés:
+### La app no arranca
 
-1. crear una plantilla
-2. probarla
-3. publicarla
-4. inspeccionar online u offline
-5. sincronizar si querés
-6. exportar reportes
-7. seguir siendo dueño de todo
+1. Revisá que Node esté instalado.
+2. Revisá que `npm install` haya terminado bien.
+3. Revisá si el puerto `3001` ya está ocupado.
+
+### El navegador muestra errores raros de extensiones
+
+Probá en una ventana incógnita o en otro perfil. Algunos errores como `overlay_bundle.js`, `webcomponents-ce.js` o warnings de React Router suelen venir de extensiones, no del proyecto.
+
+### El PDF no sale bien
+
+1. Revisá que Puppeteer haya instalado bien.
+2. Probá exportar una inspección simple.
+3. Revisá branding, portada y rutas de archivos.
+
+### El health sale degradado
+
+Eso suele indicar bajo espacio en disco o una condición operativa no ideal. Revisá `DATA_DIR` y espacio disponible.
+
+### GitHub Actions tarda demasiado
+
+El workflow actual ya omite `Snyk`, `SonarCloud` y `Docker publish` si faltan secretos. Si un run viejo queda colgado, cancelalo desde `Actions`.
 
 ---
 
-## 22. Si este proyecto te sirve
+## 21. Qué viene después
 
-Las mejores formas de ayudar son:
+OPENAUDITOR ya es útil hoy, pero la visión sigue creciendo.
 
-- usarlo
-- adaptarlo
-- compartirlo
-- abrir issues
-- aportar plantillas
-- sumar conectores
-- mejorarlo para tu rubro y devolver esas mejoras
+Las siguientes capas naturales del proyecto son:
 
-La idea no es solo competir con una herramienta paga.
+1. más plantillas legales y operativas,
+2. mejor experiencia móvil,
+3. más conectores open source,
+4. más analítica,
+5. mejor comunidad y catálogo compartido.
 
-La idea es que cualquier equipo pueda construir su propia plataforma de inspección libre.
+---
+
+## 22. Cómo venderlo internamente o a la comunidad
+
+Si querés presentar el proyecto, esta es una frase útil:
+
+**OPENAUDITOR es una plataforma open source para inspecciones y auditorías que empieza local y gratis, funciona offline, genera reportes y te deja evolucionar sin atarte a una nube propietaria.**
+
+### Beneficios concretos
+
+- sin licencias por usuario,
+- sin lock-in,
+- con datos bajo control propio,
+- con despliegue simple,
+- y con capacidad real de adaptación.
+
+---
+
+## 23. Contribuir
+
+Si querés sumar mejoras:
+
+1. hacé fork,
+2. creá una rama,
+3. implementá cambios,
+4. corré tests,
+5. abrí PR.
+
+Leé también:
+
+- [CONTRIBUTING.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/CONTRIBUTING.md)
+- [ROADMAP.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/ROADMAP.md)
+- [CHANGELOG.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/CHANGELOG.md)
+
+---
+
+## 24. Licencia
+
+Este proyecto se distribuye bajo la licencia incluida en:
+
+- [LICENSE](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/LICENSE)
+
+---
+
+## 25. Resumen final
+
+Si querés una herramienta open source para inspecciones que:
+
+- se pueda instalar fácil,
+- funcione offline,
+- genere reportes serios,
+- tenga catálogo de plantillas,
+- se pueda adaptar,
+- y no dependa de licencias por usuario,
+
+**OPENAUDITOR ya está listo para jugar en esa cancha.**
+
+---
+
+## 26. Inglés / English
+
+También tenés una versión base en inglés para compartir el proyecto fuera del mercado hispano:
+
+- [README_EN.md](c:/Users/jcastro/OneDrive%20-%20EXERTION%20AI/01-APPS%20GITHUB/OPENAUDITOR/README_EN.md)

@@ -68,7 +68,21 @@
       "Bash(node \"C:/tmp/find_syntax3.js\")",
       "Bash(node -e \"const fs=require\\(''fs''\\); const c=fs.readFileSync\\(''c:/Users/jcastro/Documents/01-Apps en Github/iAuditorNew/public/index.html'',''utf8''\\); console.log\\(''startInspection count:'', \\(c.match\\(/startInspection\\\\\\(''''/g\\)||[]\\).length, \\(c.match\\(/startInspection\\\\\\(\\\\\\\\''''/g\\)||[]\\).length\\); console.log\\(''showQR count:'', \\(c.match\\(/showQR\\\\\\(''''/g\\)||[]\\).length, \\(c.match\\(/showQR\\\\\\(\\\\\\\\''''/g\\)||[]\\).length\\);\")",
       "Bash(\"C:/tmp/debug_replace.js\")",
-      "Bash(node \"C:/tmp/debug_replace.js\")"
+      "Bash(node \"C:/tmp/debug_replace.js\")",
+      "Bash(grep -v \"^\\\\.\\\\.$\")",
+      "Read(//c/Users/jcastro/OneDrive - EXERTION AI/01-APPS GITHUB/OPENAUDITOR/**)",
+      "Bash(node --check server.js)",
+      "Bash(node --check routes/admin.js)",
+      "Bash(node --check routes/inspections.js)",
+      "Bash(node --check routes/templates.js)",
+      "Bash(node --check lib/validation.js)",
+      "Bash(npm test:*)",
+      "Bash(node server.js)",
+      "Bash(node -e \"require\\(''./server.js''\\)\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(node -e \"const db = require\\(''./lib/db''\\); console.log\\(Object.keys\\(db\\)\\);\")",
+      "Bash(node -e \"require\\(''dotenv''\\)\")",
+      "Bash(taskkill /F /IM node.exe)"
     ]
   }
 }
