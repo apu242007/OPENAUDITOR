@@ -50,6 +50,8 @@ coverage/
 *.swp
 *.swo
 *~
+.claude/
+artifacts/
 
 # PM2
 .pm2/
