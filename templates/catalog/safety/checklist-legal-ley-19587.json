@@ -1,0 +1,118 @@
+{
+  "name": "Checklist Legal Ley 19.587",
+  "description": "Plantilla base para inspecciones generales de higiene y seguridad orientadas a Ley 19.587 y Decreto 351/79 en establecimientos no encuadrados en reglamentaciones especificas.",
+  "tags": ["safety", "ley-19587", "decreto-351-79", "cumplimiento", "inspeccion-legal"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-l19587",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-l19587",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-site-l19587", "text": "Establecimiento o sitio", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-area-l19587", "text": "Sector inspeccionado", "responseType": "location", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-l19587", "text": "Fecha de inspeccion", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-inspector-l19587", "text": "Inspector responsable", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-conditions-l19587",
+      "name": "Condiciones generales",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-order-l19587",
+          "title": "Orden y limpieza",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-cleanliness-l19587", "text": "Sectores de trabajo limpios y ordenados", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-circulation-l19587", "text": "Pasillos y salidas libres de obstrucciones", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        },
+        {
+          "id": "sec-building-l19587",
+          "title": "Infraestructura visible",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-floors-l19587", "text": "Pisos en buen estado y sin riesgos de caida", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-lighting-l19587", "text": "Iluminacion suficiente para la tarea", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-ventilation-l19587", "text": "Ventilacion adecuada", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-risk-l19587",
+      "name": "Riesgos criticos",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-fire-l19587",
+          "title": "Incendio y emergencia",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-extinguishers-l19587", "text": "Extintores visibles, accesibles y vigentes", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-signage-l19587", "text": "Senalizacion de emergencia visible", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        },
+        {
+          "id": "sec-electric-l19587",
+          "title": "Riesgo electrico",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-cables-l19587", "text": "Cables y conexiones sin danos visibles", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-panels-l19587", "text": "Tableros cerrados e identificados", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        },
+        {
+          "id": "sec-ppe-l19587",
+          "title": "Elementos de proteccion personal",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-ppe-available-l19587", "text": "EPP disponible segun riesgo de la tarea", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-ppe-use-l19587", "text": "Uso efectivo del EPP en el sector", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}

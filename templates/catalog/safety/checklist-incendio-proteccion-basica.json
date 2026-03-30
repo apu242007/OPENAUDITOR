@@ -1,0 +1,76 @@
+{
+  "name": "Checklist de Incendio y Proteccion Basica",
+  "description": "Plantilla comunitaria para revisar extintores, senalizacion, circulaciones, alarma basica y preparacion general ante emergencia e incendio.",
+  "tags": ["safety", "incendio", "decreto-351-79", "emergencia", "extintores"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-fire-basic",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-fire-basic",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-site-fire-basic", "text": "Establecimiento o sitio", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-sector-fire-basic", "text": "Sector inspeccionado", "responseType": "location", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-fire-basic", "text": "Fecha de inspeccion", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-inspector-fire-basic", "text": "Inspector responsable", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-protection-fire-basic",
+      "name": "Proteccion contra incendio",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-extinguishers-fire-basic",
+          "title": "Extintores y acceso",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-exting-visible-fire-basic", "text": "Extintores visibles y senalizados", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-exting-access-fire-basic", "text": "Acceso libre a equipos de extincion", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-exting-validity-fire-basic", "text": "Equipos con control visible o vigencia verificada", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        },
+        {
+          "id": "sec-egress-fire-basic",
+          "title": "Evacuacion y emergencia",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-egress-clear-fire-basic", "text": "Circulaciones y salidas libres", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-emerg-light-fire-basic", "text": "Iluminacion de emergencia operativa o presente donde aplica", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-signal-fire-basic", "text": "Senalizacion de evacuacion visible", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        }
+      ]
+    }
+  ]
+}

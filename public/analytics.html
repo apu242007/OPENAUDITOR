@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analíticas - Auditor Libre</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="analytics-page">
+<nav class="topnav">
+  <div class="topnav-logo">Auditor <span>Libre</span></div>
+  <a class="btn btn-ghost ml-auto" href="/">Volver al inicio</a>
+</nav>
+
+<main class="index-main">
+  <section class="secondary-hero secondary-hero-analytics">
+    <div>
+      <div class="secondary-hero-kicker">Lectura ejecutiva</div>
+      <h1 class="secondary-hero-title">Panel de analíticas</h1>
+      <p class="secondary-hero-copy">Visualizá volumen, puntaje promedio y severidad para detectar tendencias sin salir del flujo operativo.</p>
+    </div>
+    <div class="secondary-hero-stats">
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Estado</span>
+        <strong>En vivo</strong>
+      </div>
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Fuente</span>
+        <strong>Inspecciones cerradas</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="analytics-stats-grid">
+    <div class="card stats-card analytics-stat-card">
+      <div class="text-muted text-xs analytics-stat-label">Total inspecciones</div>
+      <div id="statTotal" class="analytics-stat-value analytics-stat-value-primary">0</div>
+    </div>
+    <div class="card stats-card analytics-stat-card">
+      <div class="text-muted text-xs analytics-stat-label">Puntaje promedio</div>
+      <div id="statScore" class="analytics-stat-value analytics-stat-value-success">0%</div>
+    </div>
+    <div class="card stats-card analytics-stat-card">
+      <div class="text-muted text-xs analytics-stat-label">Completadas</div>
+      <div id="statCompleted" class="analytics-stat-value analytics-stat-value-indigo">0</div>
+    </div>
+  </section>
+
+  <div class="card card-padding card-elevated analytics-chart-card">
+    <h3>Distribución de hallazgos por severidad</h3>
+    <div id="severityChart" class="analytics-chart-bars"></div>
+    <div class="analytics-chart-legend">
+      <div class="analytics-chart-legend-item"><span class="analytics-chart-dot analytics-chart-dot-critical"></span> Crítico</div>
+      <div class="analytics-chart-legend-item"><span class="analytics-chart-dot analytics-chart-dot-major"></span> Mayor</div>
+      <div class="analytics-chart-legend-item"><span class="analytics-chart-dot analytics-chart-dot-minor"></span> Menor</div>
+      <div class="analytics-chart-legend-item"><span class="analytics-chart-dot analytics-chart-dot-observation"></span> Observación</div>
+    </div>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+async function loadAnalytics() {
+  const stats = await api.get('/api/analytics/stats');
+  document.getElementById('statTotal').textContent = stats.total;
+  document.getElementById('statScore').textContent = stats.avgScore + '%';
+  document.getElementById('statCompleted').textContent = stats.completedCount;
+
+  const chart = document.getElementById('severityChart');
+  const max = Math.max(...Object.values(stats.severities), 1);
+  const colors = { critical: '#dc2626', major: '#d97706', minor: '#2563eb', observation: '#16a34a' };
+
+  chart.innerHTML = '';
+  ['critical', 'major', 'minor', 'observation'].forEach(key => {
+    const val = stats.severities[key] || 0;
+    const h = (val / max) * 100;
+    const bar = document.createElement('div');
+    bar.className = 'analytics-chart-bar';
+    bar.style.setProperty('--bar-height', Math.max(h, 5) + '%');
+    bar.style.setProperty('--bar-color', colors[key]);
+    bar.title = key + ': ' + val;
+
+    const label = document.createElement('span');
+    label.className = 'analytics-chart-bar-label';
+    label.textContent = val;
+    bar.appendChild(label);
+
+    chart.appendChild(bar);
+  });
+}
+
+loadAnalytics();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{
+  "name": "Checklist de Tablero Electrico",
+  "description": "Plantilla comunitaria para inspeccionar tableros electricos, orden interno, protecciones y condiciones visibles de riesgo.",
+  "tags": ["maintenance", "electrico", "tablero", "energia", "inspeccion"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-elec",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-elec",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-site-elec", "text": "Sitio", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-board-date-elec", "text": "Fecha de inspeccion", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-inspector-elec", "text": "Tecnico responsable", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-board-elec",
+      "name": "Tablero",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-board-ident-elec",
+          "title": "Identificacion",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-board-code-elec", "text": "Codigo del tablero", "responseType": "text", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-board-location-elec", "text": "Ubicacion", "responseType": "location", "required": true, "allowNote": true, "allowMedia": true, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-board-type-elec", "text": "Tipo de tablero", "responseType": "multiple_choice", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null, "options": [ { "id": "principal", "label": "Principal", "color": "#2563eb", "score": 10 }, { "id": "seccional", "label": "Seccional", "color": "#0f766e", "score": 10 }, { "id": "control", "label": "Control", "color": "#d97706", "score": 10 } ] }
+          ]
+        },
+        {
+          "id": "sec-board-cond-elec",
+          "title": "Condicion visible",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-door-elec", "text": "Puerta y cerradura operativas", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-labels-elec", "text": "Circuitos identificados", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-clean-elec", "text": "Interior limpio y sin objetos ajenos", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-heat-elec", "text": "Sin marcas de recalentamiento visibles", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-ground-elec", "text": "Puesta a tierra identificada y conectada", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}

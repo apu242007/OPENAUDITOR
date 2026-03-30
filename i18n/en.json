@@ -1,0 +1,72 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "date": "Date",
+    "back": "Back",
+    "close": "Close"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "settings": "Settings",
+    "about": "About",
+    "import_json": "Import JSON",
+    "corrective_actions": "Corrective Actions",
+    "compare": "Compare",
+    "search": "Search"
+  },
+  "dashboard": {
+    "templates_title": "My Templates",
+    "inspections_title": "Recent Inspections",
+    "new_template": "New Template",
+    "blank_template": "Blank Template",
+    "import_from_json": "Import from JSON file",
+    "import_from_url": "Import from URL",
+    "import_package": "Import .oapack package",
+    "search_placeholder": "Search by name...",
+    "filter_all": "All statuses",
+    "filter_draft": "Draft",
+    "filter_published": "Published",
+    "sort_recent": "Newest first",
+    "sort_oldest": "Oldest first",
+    "no_templates": "No templates",
+    "no_inspections": "No inspections",
+    "pages_count": "{{count}} pgs.",
+    "uses_count": "{{count}} uses",
+    "start_inspection": "Start Inspection",
+    "qr": "QR",
+    "ver_reporte": "View Report",
+    "continuar": "Continue"
+  },
+  "inspector": {
+    "complete_inspection": "Complete inspection",
+    "kiosk_mode": "Kiosk Mode",
+    "completed_on": "Completed on",
+    "score": "Score",
+    "digital_signature": "Digital Signature",
+    "send_email": "Send by Email",
+    "view_activity": "View Activity ({{count}})",
+    "flagged_item": "Flagged item",
+    "response": "Response",
+    "note": "Note",
+    "action": "Action",
+    "signature_modal": {
+      "title": "Finalize with Signature",
+      "signer_name": "Signer Name",
+      "signer_title": "Job Title (Optional)",
+      "draw_hint": "Sign on the line",
+      "clear": "Clear stroke",
+      "save": "Save Signature and Complete"
+    }
+  }
+}

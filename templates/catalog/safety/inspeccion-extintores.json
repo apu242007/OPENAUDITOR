@@ -1,0 +1,191 @@
+{
+  "name": "Inspeccion de Extintores",
+  "description": "Plantilla comunitaria para verificar estado, ubicacion, señalizacion y mantenimiento de extintores.",
+  "tags": ["safety", "extintores", "sst", "inspeccion"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-ext",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-ext",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            {
+              "id": "q-site-ext",
+              "text": "Sitio",
+              "responseType": "site",
+              "required": true,
+              "allowNote": false,
+              "allowMedia": false,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            },
+            {
+              "id": "q-date-ext",
+              "text": "Fecha de inspeccion",
+              "responseType": "date",
+              "required": true,
+              "allowNote": false,
+              "allowMedia": false,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            },
+            {
+              "id": "q-inspector-ext",
+              "text": "Inspector responsable",
+              "responseType": "person",
+              "required": true,
+              "allowNote": false,
+              "allowMedia": false,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-assets-ext",
+      "name": "Extintores",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-repeat-ext",
+          "title": "Unidad inspeccionada",
+          "repeatable": true,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "+ Agregar extintor",
+          "questions": [
+            {
+              "id": "q-code-ext",
+              "text": "Codigo o identificacion",
+              "responseType": "text",
+              "required": true,
+              "allowNote": false,
+              "allowMedia": false,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            },
+            {
+              "id": "q-location-ext",
+              "text": "Ubicacion especifica",
+              "responseType": "location",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            },
+            {
+              "id": "q-type-ext",
+              "text": "Tipo de extintor",
+              "responseType": "multiple_choice",
+              "required": true,
+              "allowNote": false,
+              "allowMedia": false,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "abc", "label": "ABC", "color": "#2563eb", "score": 10 },
+                { "id": "co2", "label": "CO2", "color": "#0f766e", "score": 10 },
+                { "id": "k", "label": "K", "color": "#d97706", "score": 10 }
+              ]
+            },
+            {
+              "id": "q-pressure-ext",
+              "text": "Presion dentro de rango",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-signal-ext",
+              "text": "Señalizacion visible",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-access-ext",
+              "text": "Acceso libre de obstrucciones",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-expiry-ext",
+              "text": "Vencimiento de carga vigente",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditor Libre - Sin conexión</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="index-main offline-shell">
+  <div class="card card-padding card-elevated offline-card">
+    <h1 class="offline-title">Sin conexión</h1>
+    <p class="text-sm text-muted">La app no pudo llegar a la red. Si ya abriste esta inspección antes, volvé a usar la misma URL cuando el Service Worker termine de cargar el caché.</p>
+    <div class="save-group">
+      <a class="btn btn-outline" href="/">Ir al inicio</a>
+      <button class="btn btn-primary" id="btnRetryOffline">Reintentar</button>
+    </div>
+  </div>
+</main>
+<script>
+document.getElementById('btnRetryOffline').addEventListener('click', function() {
+  location.reload();
+});
+</script>
+</body>
+</html>

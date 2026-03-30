@@ -3,42 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPEN AUDITOR - Acciones Correctivas</title>
+  <title>Auditor Libre - Acciones correctivas</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
   <link rel="stylesheet" href="/style.css">
+  <script defer src="/colorized-selects.js"></script>
 </head>
 <body>
 <nav class="topnav">
-  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <a href="/" class="topnav-logo cursor-pointer">Auditor <span>Libre</span></a>
   <div class="topnav-sep"></div>
-  <span class="nav-subtitle">Acciones Correctivas</span>
+  <span class="nav-subtitle">Acciones correctivas</span>
 </nav>
 
 <main class="index-main">
-  <div class="page-header">
-    <h1>Acciones Correctivas</h1>
-  </div>
+  <section class="secondary-hero secondary-hero-actions">
+    <div>
+      <div class="secondary-hero-kicker">Seguimiento operativo</div>
+      <h1 class="secondary-hero-title">Acciones correctivas</h1>
+      <p class="secondary-hero-copy">Concentrá responsables, fechas límite y estado de ejecución en una sola vista para no perder trazabilidad.</p>
+    </div>
+    <div class="secondary-hero-stats">
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Vista</span>
+        <strong id="actionsViewCount">0 acciones</strong>
+      </div>
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Filtro</span>
+        <strong id="actionsStatusHint">Todos</strong>
+      </div>
+    </div>
+  </section>
 
-  <div class="filter-bar">
+  <div class="filter-bar filter-bar-elevated">
     <select class="input w-160" id="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
       <option value="all">Todos los estados</option>
       <option value="open">Abierta</option>
       <option value="in_progress">En progreso</option>
       <option value="resolved">Resuelta</option>
     </select>
-    <input type="text" class="input" id="searchAction" placeholder="Buscar por pregunta o inspeccion...">
+    <input type="text" class="input" id="searchAction" placeholder="Buscar por pregunta o inspección...">
     <input type="text" class="input w-160" id="filterAssignedTo" placeholder="Filtrar por asignado...">
   </div>
 
-  <div class="card">
+  <div class="card card-padding card-elevated">
     <table class="template-table" id="actionsTable">
       <thead>
         <tr>
-          <th>Inspeccion</th>
+          <th>Inspección</th>
           <th>Pregunta</th>
-          <th>Accion Correctiva</th>
+          <th>Acción correctiva</th>
           <th>Asignado a</th>
           <th>Estado</th>
-          <th>Fecha Limite</th>
+          <th>Fecha límite</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -47,7 +67,7 @@
     <div id="emptyActions" class="empty-state hidden">
       <div class="empty-state-icon">OK</div>
       <h3>No hay acciones correctivas</h3>
-      <p class="empty-state-text">Las acciones correctivas registradas en inspecciones apareceran aqui.</p>
+      <p class="empty-state-text">Las acciones correctivas registradas en inspecciones aparecerán aquí.</p>
     </div>
   </div>
 </main>
@@ -68,14 +88,22 @@ function renderActions() {
   var table = document.getElementById('actionsTable');
   var statusFilter = document.getElementById('filterStatus').value;
   var search = document.getElementById('searchAction').value.toLowerCase();
+  var assignedFilter = document.getElementById('filterAssignedTo').value.toLowerCase();
+  var viewCount = document.getElementById('actionsViewCount');
+  var statusHint = document.getElementById('actionsStatusHint');
 
   var filtered = actions.filter(function(a) {
     if (statusFilter !== 'all' && a.status !== statusFilter) return false;
-    if (search && !a.questionText.toLowerCase().includes(search) && !a.inspectionName.toLowerCase().includes(search) && !(a.assignedTo||"").toLowerCase().includes(search)) return false;
-    var assignedFilter = document.getElementById("filterAssignedTo").value.toLowerCase();
-    if (assignedFilter && !(a.assignedTo||"").toLowerCase().includes(assignedFilter)) return false;
+    if (search && !a.questionText.toLowerCase().includes(search) && !a.inspectionName.toLowerCase().includes(search) && !(a.assignedTo || '').toLowerCase().includes(search)) return false;
+    if (assignedFilter && !(a.assignedTo || '').toLowerCase().includes(assignedFilter)) return false;
     return true;
   });
+
+  statusHint.textContent =
+    statusFilter === 'all' ? 'Todos' :
+    statusFilter === 'open' ? 'Abiertas' :
+    statusFilter === 'in_progress' ? 'En progreso' : 'Resueltas';
+  viewCount.textContent = filtered.length + (filtered.length === 1 ? ' acción' : ' acciones');
 
   tbody.innerHTML = '';
   if (!filtered.length) {
@@ -89,20 +117,20 @@ function renderActions() {
   filtered.forEach(function(a) {
     var tr = document.createElement('tr');
     var statusClass = a.status === 'resolved' ? 'badge-published' : (a.status === 'in_progress' ? 'badge-in_progress' : 'badge-draft');
-    var statusLabel = a.status === 'resolved' ? 'Resuelta' : (a.status === 'in_progress' ? 'En Progreso' : 'Abierta');
+    var statusLabel = a.status === 'resolved' ? 'Resuelta' : (a.status === 'in_progress' ? 'En progreso' : 'Abierta');
     tr.innerHTML = '<td><a href="/inspector/' + a.inspectionId + '">' + esc(a.inspectionName) + '</a>' + (a.flagged ? ' <span style="color:var(--red)">&#x1F6A9;</span>' : '') + '</td>' +
       '<td class="text-sm">' + esc(a.questionText) + '</td>' +
       '<td class="text-sm">' + esc(a.action) + '</td>' +
-      '<td class="text-sm">' + esc(a.assignedTo || '-') + '</td>' +
+      '<td><input type="text" class="input input-sm js-action-assigned" value="' + esc(a.assignedTo || '') + '" placeholder="Asignar responsable" data-inspection-id="' + esc(a.inspectionId) + '" data-question-id="' + esc(a.questionId) + '"></td>' +
       '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
       '<td class="text-sm">' + (a.deadline || '-') + '</td>' +
       '<td><div class="actions-cell">' +
-        '<select class="input input-sm" onchange="updateStatus(\'' + a.inspectionId + '\',\'' + a.questionId + '\',this.value)">' +
+        '<select class="input input-sm js-action-status" data-inspection-id="' + esc(a.inspectionId) + '" data-question-id="' + esc(a.questionId) + '">' +
           '<option value="open"' + (a.status === 'open' ? ' selected' : '') + '>Abierta</option>' +
-          '<option value="in_progress"' + (a.status === 'in_progress' ? ' selected' : '') + '>En Progreso</option>' +
+          '<option value="in_progress"' + (a.status === 'in_progress' ? ' selected' : '') + '>En progreso</option>' +
           '<option value="resolved"' + (a.status === 'resolved' ? ' selected' : '') + '>Resuelta</option>' +
         '</select>' +
-        '<input type="date" class="input input-sm" value="' + (a.deadline || '') + '" onchange="updateDeadline(\'' + a.inspectionId + '\',\'' + a.questionId + '\',this.value)">' +
+        '<input type="date" class="input input-sm js-action-deadline" value="' + (a.deadline || '') + '" data-inspection-id="' + esc(a.inspectionId) + '" data-question-id="' + esc(a.questionId) + '">' +
       '</div></td>';
     tbody.appendChild(tr);
   });
@@ -111,35 +139,48 @@ function renderActions() {
 async function updateStatus(inspId, qId, status) {
   try {
     await api.put('/api/actions/' + inspId + '/' + qId, { status: status });
-    await async function updateAssignedTo(inspId, qId, assignedTo) {
-  try {
-    await api.put('/api/actions/' + inspId + '/' + qId, { assignedTo: assignedTo });
-    toast('Asignacion guardada', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'error'); }
+    await loadActions();
+    toast('Estado actualizado', 'success');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
-loadActions();
-    toast('Estado actualizado', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'error'); }
+async function updateAssignedTo(inspId, qId, assignedTo) {
+  try {
+    await api.put('/api/actions/' + inspId + '/' + qId, { assignedTo: assignedTo });
+    await loadActions();
+    toast('Asignación guardada', 'success');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
 async function updateDeadline(inspId, qId, deadline) {
   try {
     await api.put('/api/actions/' + inspId + '/' + qId, { deadline: deadline });
-    toast('Fecha limite guardada', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'error'); }
+    await loadActions();
+    toast('Fecha límite guardada', 'success');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
 document.getElementById('filterStatus').addEventListener('change', renderActions);
 document.getElementById('searchAction').addEventListener('input', renderActions);
 document.getElementById('filterAssignedTo').addEventListener('input', renderActions);
+document.getElementById('actionsBody').addEventListener('change', function(event) {
+  var target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  var inspId = target.dataset.inspectionId;
+  var qId = target.dataset.questionId;
+  if (!inspId || !qId) return;
+  if (target.classList.contains('js-action-status')) return updateStatus(inspId, qId, target.value);
+  if (target.classList.contains('js-action-deadline')) return updateDeadline(inspId, qId, target.value);
+  if (target.classList.contains('js-action-assigned')) return updateAssignedTo(inspId, qId, target.value);
+});
 
 loadActions();
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(function() {});
-}
 </script>
 </body>
 </html>

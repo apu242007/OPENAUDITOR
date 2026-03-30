@@ -1,0 +1,87 @@
+{
+  "name": "Inspeccion de EPP",
+  "description": "Plantilla comunitaria para verificar disponibilidad, estado, uso correcto y reposicion de elementos de proteccion personal.",
+  "tags": ["safety", "epp", "sst", "ppe", "inspeccion"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-epp",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-epp",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-site-epp", "text": "Sitio", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-epp", "text": "Fecha de inspeccion", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-inspector-epp", "text": "Inspector responsable", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-area-epp", "text": "Area o sector", "responseType": "location", "required": false, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-workers-epp",
+      "name": "Verificacion por persona",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-repeat-worker-epp",
+          "title": "Trabajador evaluado",
+          "repeatable": true,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "+ Agregar trabajador",
+          "questions": [
+            { "id": "q-worker-name-epp", "text": "Nombre del trabajador", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-role-epp", "text": "Puesto o tarea", "responseType": "text", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-helmet-epp", "text": "Casco en buen estado y correctamente usado", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-glasses-epp", "text": "Proteccion ocular disponible y en uso", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-footwear-epp", "text": "Calzado de seguridad adecuado", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-gloves-epp", "text": "Guantes adecuados para la tarea", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-vest-epp", "text": "Ropa o chaleco de alta visibilidad", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-stock-epp",
+      "name": "Stock y gestion",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-stock-epp",
+          "title": "Gestion del EPP",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-stock-available-epp", "text": "Existe stock minimo de reposicion", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-signoff-epp", "text": "Entrega de EPP firmada y registrada", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] },
+            { "id": "q-training-epp", "text": "Personal capacitado en uso y limitaciones del EPP", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [ { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}

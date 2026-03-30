@@ -1,0 +1,34 @@
+{
+  "templateId": "uuid-plantilla",
+  "templateName": "Checklist de seguridad",
+  "answers": {},
+  "repeatableAnswers": {},
+  "media": [],
+  "completedAt": "2026-03-27T16:00:00.000Z",
+  "exportedFrom": "standalone-html",
+  "inspectorFileId": "standalone-1743091200000",
+  "sheetSchema": [
+    {
+      "key": "q__q1__base__value",
+      "label": "Portada / Sitio / Respuesta",
+      "responseType": "text",
+      "questionId": "q1",
+      "page": "Portada",
+      "section": "General",
+      "repeatable": false,
+      "instance": null
+    }
+  ],
+  "flatRow": {
+    "receivedAt": "2026-03-27T16:00:00.000Z",
+    "templateId": "uuid-plantilla",
+    "templateName": "Checklist de seguridad",
+    "q__q1__base__value": "Planta Norte"
+  },
+  "syncDestination": {
+    "id": "demo-apps",
+    "name": "Apps Script demo",
+    "kind": "apps_script",
+    "url": "https://example.com/apps-script"
+  }
+}

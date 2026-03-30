@@ -3,16 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPEN AUDITOR - Configuración</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>Auditor Libre - Configuración</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>  <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/api/config/theme.css">
   <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
+  <script defer src="/colorized-selects.js"></script>
 </head>
 <body>
 <nav class="topnav">
-  <a href="/" class="topnav-logo cursor-pointer">OPEN <span>AUDITOR</span></a>
+  <a href="/" class="topnav-logo cursor-pointer">Auditor <span>Libre</span></a>
   <div class="topnav-sep"></div>
   <span class="nav-subtitle">Configuración</span>
+  <div class="ml-auto nav-actions">
+    <a class="btn btn-ghost btn-nav-ghost" href="/">Inicio</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/settings">Configuración</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/about">Acerca de</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/catalog">Catálogo</a>
+  </div>
 </nav>
 
 <main class="index-main">
@@ -30,7 +41,7 @@
         
         <div class="report-field">
           <label for="appName">Nombre de la aplicación</label>
-          <input type="text" id="appName" class="input w-full" placeholder="OPEN AUDITOR" title="Nombre de la aplicación" aria-label="Nombre de la aplicación">
+          <input type="text" id="appName" class="input w-full" placeholder="Auditor Libre" title="Nombre de la aplicación" aria-label="Nombre de la aplicación">
         </div>
 
         <div class="report-field">
@@ -44,38 +55,28 @@
         <div class="report-field">
           <label for="logoFile">Logo de la aplicación (PNG, SVG, max 2MB)</label>
           <div class="file-input-group">
-            <img id="logoPreview" src="/api/config/logo" class="logo-preview" alt="Logo actual" onerror="this.style.display='none'">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('logoFile').click()" title="Seleccionar logo" aria-label="Seleccionar logo">Examinar...</button>
-            <input type="file" id="logoFile" class="hidden" accept="image/png,image/svg+xml" onchange="uploadBrandingFile('logo')" aria-label="Logo de la aplicación">
+            <img id="logoPreview" src="/api/config/logo" class="logo-preview" alt="Logo actual">
+            <button class="btn btn-outline btn-sm" id="btnBrowseLogo" title="Seleccionar logo" aria-label="Seleccionar logo">Examinar...</button>
+            <input type="file" id="logoFile" class="hidden" accept="image/png,image/svg+xml" aria-label="Logo de la aplicación">
           </div>
         </div>
         
         <div class="report-field">
-          <label for="pdfLogoPath">Logo para PDFs (puede ser diferente al de la app)</label>
-          <div class="file-input-group">
-            <img id="pdfLogoPreview" src="/api/config/pdf-logo" class="logo-preview" alt="Logo PDF actual" onerror="this.style.display='none'">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('pdfLogoFile').click()" title="Seleccionar logo PDF" aria-label="Seleccionar logo PDF">Examinar...</button>
-            <input type="file" id="pdfLogoFile" class="hidden" accept="image/png,image/svg+xml,image/jpeg,image/webp" onchange="uploadBrandingFile('pdfLogo')" aria-label="Logo para PDF">
-            <span id="pdfLogoPath" class="text-sm text-muted" title="Ruta del logo PDF" aria-label="Ruta del logo PDF"></span>
-          </div>
-        </div>
-
-        <div class="report-field">
           <label for="footerText">Pie de página en PDFs</label>
-          <input type="text" id="footerText" class="input w-full" placeholder="Generado con OPEN AUDITOR" title="Pie de página PDF" aria-label="Pie de página PDF">
+          <input type="text" id="footerText" class="input w-full" placeholder="Generado con Auditor Libre" title="Pie de página PDF" aria-label="Pie de página PDF">
         </div>
 
         <div class="report-field">
           <label for="faviconFile">Favicon (ICO, PNG 32x32)</label>
           <div class="file-input-group">
-            <img id="faviconPreview" src="/api/config/favicon" class="favicon-preview" alt="Favicon actual" onerror="this.style.display='none'">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('faviconFile').click()" title="Seleccionar favicon" aria-label="Seleccionar favicon">Examinar...</button>
-            <input type="file" id="faviconFile" class="hidden" accept="image/x-icon,image/png" onchange="uploadBrandingFile('favicon')" aria-label="Favicon de la aplicación">
+            <img id="faviconPreview" src="/api/config/favicon" class="favicon-preview" alt="Favicon actual">
+            <button class="btn btn-outline btn-sm" id="btnBrowseFavicon" title="Seleccionar favicon" aria-label="Seleccionar favicon">Examinar...</button>
+            <input type="file" id="faviconFile" class="hidden" accept="image/x-icon,image/png" aria-label="Favicon de la aplicación">
           </div>
         </div>
         
         <div class="save-group">
-          <button class="btn btn-primary" onclick="saveBranding()" title="Guardar apariencia" aria-label="Guardar apariencia">Guardar apariencia</button>
+          <button class="btn btn-primary" id="btnSaveBranding" title="Guardar apariencia" aria-label="Guardar apariencia">Guardar apariencia</button>
         </div>
       </div>
       
@@ -88,7 +89,33 @@
           <p class="text-xs text-muted mt-6">Requiere reiniciar el servidor si lo cambiás.</p>
         </div>
         <div class="save-group">
-          <button class="btn btn-outline" onclick="saveDataPath()" title="Cambiar directorio" aria-label="Cambiar directorio">Cambiar directorio</button>
+          <button class="btn btn-outline" id="btnSaveDataPath" title="Cambiar directorio" aria-label="Cambiar directorio">Cambiar directorio</button>
+        </div>
+        <div class="report-field mt-20">
+          <label>Backups completos</label>
+          <div class="flex gap-2">
+            <a class="btn btn-outline" href="/api/system/backup/export">Descargar backup</a>
+            <button class="btn btn-outline" id="btnRestoreBackup">Restaurar backup</button>
+            <input type="file" id="backupFile" class="hidden" accept=".zip">
+          </div>
+          <p class="text-xs text-muted mt-6">Incluye configuracion, plantillas, inspecciones y biblioteca.</p>
+        </div>
+      </div>
+
+      <div class="card card-padding">
+        <h2 class="section-title">3. Acceso abierto</h2>
+        <div class="report-field">
+          <p class="text-sm text-muted">OPENAUDITOR funciona en modo open source sin login ni PIN internos. La instancia queda abierta para facilitar adopción, pruebas, despliegue local y adaptación por parte de cada equipo.</p>
+        </div>
+        <div class="report-field">
+          <label for="openAccessNote">Recomendación</label>
+          <input type="text" id="openAccessNote" class="input w-full" value="Protegé el acceso con red local, VPN o reverse proxy si tu entorno lo necesita." readonly>
+        </div>
+        <div class="report-field">
+          <p class="text-xs text-muted">La seguridad perimetral se resuelve mejor fuera de la app que con un formulario de login interno.</p>
+        </div>
+        <div class="save-group">
+          <button class="btn btn-outline" type="button" disabled>Modo abierto activo</button>
         </div>
       </div>
 
@@ -96,11 +123,44 @@
 
     <div class="settings-column">
 
-      <!-- 3. Webhooks -->
+      <div class="card card-padding">
+        <h2 class="section-title">4. Diagnóstico rápido</h2>
+        <div id="diagnosticsBox" class="text-sm text-muted">Cargando diagnóstico...</div>
+        <div class="save-group">
+          <a class="btn btn-outline" href="/about">Ver soporte y diagnóstico</a>
+        </div>
+      </div>
+
+      <div class="card card-padding">
+        <h2 class="section-title">5. Sync offline y destinos</h2>
+        <p class="text-sm text-muted">Estos destinos quedan disponibles dentro del HTML autónomo para sincronizar inspecciones cuando el operario vuelva a tener conexión.</p>
+        <div class="save-group">
+          <button class="btn btn-primary btn-sm" id="btnOpenSyncDestinationModal">+ Agregar destino</button>
+        </div>
+        <div class="report-field mt-16">
+          <div class="grid" style="gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+            <div class="card card-padding">
+              <div class="text-sm"><b>Apps Script / Sheets</b></div>
+              <div class="text-xs text-muted mt-6">Buen punto de partida gratis para recibir inspecciones en línea.</div>
+            </div>
+            <div class="card card-padding">
+              <div class="text-sm"><b>Webhook JSON</b></div>
+              <div class="text-xs text-muted mt-6">Compatible con n8n, Make, ERP o cualquier endpoint propio.</div>
+            </div>
+            <div class="card card-padding">
+              <div class="text-sm"><b>Supabase / PocketBase</b></div>
+              <div class="text-xs text-muted mt-6">Escalado open source sin cambiar el formato del payload.</div>
+            </div>
+          </div>
+        </div>
+        <div id="syncDestinationsList" class="webhook-list mt-16"></div>
+      </div>
+
+      <!-- 5. Webhooks -->
       <div class="card card-padding">
         <h2 class="webhook-header">
           ⚡ Webhooks de salida
-          <button class="btn btn-primary btn-sm" onclick="openWebhookModal()">+ Agregar webhook</button>
+          <button class="btn btn-primary btn-sm" id="btnOpenWebhookModal">+ Agregar webhook</button>
         </h2>
         <div id="webhooksList" class="webhook-list"></div>
       </div>
@@ -114,7 +174,7 @@
   <div class="modal webhook-modal">
     <div class="modal-header webhook-modal-header">
       <h2 class="m-0" id="whModalTitle">Nuevo Webhook</h2>
-      <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('webhookModal').classList.add('hidden')">✕</button>
+      <button class="btn btn-ghost btn-icon ml-auto" id="btnCloseWebhookModal">✕</button>
     </div>
     <div class="modal-body webhook-modal-body">
       <input type="hidden" id="whId" class="hidden">
@@ -130,7 +190,7 @@
         <label>Secret (para firma HMAC SHA256)</label>
         <div class="flex gap-2">
           <input type="password" id="whSecret" class="input w-full" placeholder="mi_token_secreto">
-          <button class="btn btn-outline btn-sm" onclick="togglePassword('whSecret')">👁</button>
+          <button class="btn btn-outline btn-sm" id="btnToggleWebhookSecret">👁</button>
         </div>
       </div>
       
@@ -163,9 +223,68 @@
       </div>
     </div>
     <div class="modal-footer webhook-modal-footer">
-      <button class="btn btn-outline mr-auto" id="whTestBtn" onclick="testWebhook()">Enviar prueba</button>
-      <button class="btn btn-outline" onclick="document.getElementById('webhookModal').classList.add('hidden')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveWebhook()">Guardar webhook</button>
+      <button class="btn btn-outline mr-auto" id="whTestBtn">Enviar prueba</button>
+      <button class="btn btn-outline" id="btnCancelWebhook">Cancelar</button>
+      <button class="btn btn-primary" id="btnSaveWebhook">Guardar webhook</button>
+    </div>
+  </div>
+</div>
+
+<div id="syncDestinationModal" class="modal-overlay hidden webhook-modal-overlay">
+  <div class="modal webhook-modal">
+    <div class="modal-header webhook-modal-header">
+      <h2 class="m-0" id="syncModalTitle">Nuevo destino</h2>
+      <button class="btn btn-ghost btn-icon ml-auto" id="btnCloseSyncDestinationModal">&times;</button>
+    </div>
+    <div class="modal-body webhook-modal-body">
+      <input type="hidden" id="syncId" class="hidden">
+      <div class="report-field">
+        <label>Nombre</label>
+        <input type="text" id="syncName" class="input w-full" placeholder="Ej: Apps Script planta norte">
+      </div>
+      <div class="report-field">
+        <label>Tipo</label>
+        <select id="syncKind" class="input w-full">
+          <option value="apps_script">Apps Script / Google Sheets</option>
+          <option value="generic_webhook">Webhook JSON genérico</option>
+          <option value="github_gist">GitHub / Gist / JSON remoto</option>
+          <option value="supabase">Supabase / Edge Function</option>
+          <option value="pocketbase">PocketBase / endpoint propio</option>
+          <option value="openauditor_node">OPENAUDITOR remoto</option>
+        </select>
+      </div>
+      <div class="report-field">
+        <label>URL de destino</label>
+        <input type="url" id="syncUrl" class="input w-full" placeholder="https://...">
+      </div>
+      <div class="report-field">
+        <label>Headers adicionales (JSON válido)</label>
+        <textarea id="syncHeaders" class="input w-full font-mono min-h-80" placeholder='{"Authorization":"Bearer ..."}'></textarea>
+      </div>
+      <div class="report-field">
+        <label>Notas</label>
+        <textarea id="syncNotes" class="input w-full min-h-80" placeholder="Cómo se usa este destino"></textarea>
+      </div>
+      <div class="report-field mt-16">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="syncEnabled" checked> Habilitado
+        </label>
+      </div>
+      <div class="report-field mt-16">
+        <div class="card card-padding" id="syncKindHelper">
+          <div class="text-sm"><b>Recomendación</b></div>
+          <div class="text-xs text-muted mt-6" id="syncKindHelperText">Apps Script es la opción gratis más simple para arrancar y usa una hoja por plantilla.</div>
+          <div class="flex gap-2 mt-12" style="flex-wrap:wrap">
+            <a class="btn btn-outline btn-sm" href="/sync-guide.html" target="_blank" rel="noopener">Ver guía</a>
+            <a class="btn btn-outline btn-sm" href="/examples/apps-script-openauditor.gs" target="_blank" rel="noopener">Ejemplo Apps Script</a>
+            <a class="btn btn-outline btn-sm" href="/examples/pocketbase-openauditor.js" target="_blank" rel="noopener">Ejemplo PocketBase</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer webhook-modal-footer">
+      <button class="btn btn-outline" id="btnCancelSyncDestination">Cancelar</button>
+      <button class="btn btn-primary" id="btnSaveSyncDestination">Guardar destino</button>
     </div>
   </div>
 </div>
@@ -175,6 +294,7 @@
 <script>
 let currentConfig = {};
 let webhooks = [];
+let syncDestinations = [];
 
 async function loadSettings() {
   currentConfig = await api.get('/api/config');
@@ -182,12 +302,10 @@ async function loadSettings() {
   
   document.getElementById('dataPath').value = currentConfig.dataPath || '';
   
-  document.getElementById('appName').value = b.appName || 'OPEN AUDITOR';
+  document.getElementById('appName').value = b.appName || 'Auditor Libre';
   document.getElementById('primaryColor').value = b.primaryColor || '#4f46e5';
   document.getElementById('primaryColorHex').value = b.primaryColor || '#4f46e5';
-  document.getElementById('footerText').value = b.footerText || 'Generado con OPEN AUDITOR';
-  document.getElementById('pdfLogoPath').textContent = b.pdfLogoPath || '(Igual al logo de la app)';
-
+  document.getElementById('footerText').value = b.footerText || 'Generado con Auditor Libre';
   document.getElementById('primaryColor').addEventListener('input', e => {
     document.getElementById('primaryColorHex').value = e.target.value;
   });
@@ -195,7 +313,21 @@ async function loadSettings() {
     document.getElementById('primaryColor').value = e.target.value;
   });
   
+  await loadDiagnostics();
+  loadSyncDestinations();
   await loadWebhooks();
+}
+
+function hideOnLoadError(event) {
+  event.target.style.display = 'none';
+}
+
+function closeWebhookModal() {
+  document.getElementById('webhookModal').classList.add('hidden');
+}
+
+function closeSyncDestinationModal() {
+  document.getElementById('syncDestinationModal').classList.add('hidden');
 }
 
 async function uploadBrandingFile(type) {
@@ -204,7 +336,7 @@ async function uploadBrandingFile(type) {
   if (!file) return;
   try {
     const fd = new FormData();
-    fd.append(type === 'pdfLogo' ? 'pdfLogo' : type, file);
+    fd.append(type, file);
     const res = await fetch(`/api/config/${type}`, { method: 'POST', body: fd });
     if (!res.ok) throw new Error();
     const data = await res.json();
@@ -212,7 +344,6 @@ async function uploadBrandingFile(type) {
     document.getElementById(type + 'Preview').style.display = 'block';
     if (!currentConfig.branding) currentConfig.branding = {};
     currentConfig.branding[type + 'Path'] = data.path;
-    if (type === 'pdfLogo') document.getElementById('pdfLogoPath').textContent = data.path;
     toast('✅ Imagen actualizada', 'success');
   } catch(e) {
     toast('Error subiendo imagen', 'error');
@@ -222,12 +353,11 @@ async function uploadBrandingFile(type) {
 
 async function saveBranding() {
   const branding = {
-    appName: document.getElementById('appName').value.trim() || 'OPEN AUDITOR',
+    appName: document.getElementById('appName').value.trim() || 'Auditor Libre',
     primaryColor: document.getElementById('primaryColorHex').value || '#4f46e5',
-    footerText: document.getElementById('footerText').value.trim() || 'Generado con OPEN AUDITOR',
+    footerText: document.getElementById('footerText').value.trim() || 'Generado con Auditor Libre',
     logoPath: currentConfig.branding?.logoPath,
-    faviconPath: currentConfig.branding?.faviconPath,
-    pdfLogoPath: currentConfig.branding?.pdfLogoPath
+    faviconPath: currentConfig.branding?.faviconPath
   };
   
   try {
@@ -240,8 +370,220 @@ async function saveDataPath() {
   const dataPath = document.getElementById('dataPath').value.trim();
   try {
     await api.put('/api/config', { dataPath });
-    toast('✅ Ruta guardada. Por favor reiniciá el servidor de OPEN AUDITOR para aplicar.', 'success');
+    toast('✅ Ruta guardada. Por favor reiniciá el servidor de Auditor Libre para aplicar.', 'success');
   } catch(e) { toast('Error guardando', 'error'); }
+}
+
+async function importBackup() {
+  const input = document.getElementById('backupFile');
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const fd = new FormData();
+    fd.append('backup', file);
+    const res = await fetch('/api/system/backup/import', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(await res.text());
+    toast('Backup restaurado. Recargando...', 'success');
+    setTimeout(() => location.reload(), 1200);
+  } catch(e) {
+    toast('Error importando backup', 'error');
+  }
+  input.value = '';
+}
+
+async function loadDiagnostics() {
+  try {
+    const d = await api.get('/api/system/diagnostics');
+    document.getElementById('diagnosticsBox').innerHTML = `
+      <div><b>Version:</b> ${esc(d.version)}</div>
+      <div><b>Node:</b> ${esc(d.node)}</div>
+      <div><b>Plantillas:</b> ${d.templates}</div>
+      <div><b>Inspecciones:</b> ${d.inspections}</div>
+      <div><b>Backups:</b> ${d.backups}</div>
+      <div><b>Acceso:</b> ${esc(d.accessMode || 'open')}</div>
+      <div><b>Datos:</b> ${esc(d.dataDir)}</div>
+    `;
+  } catch(e) {
+    document.getElementById('diagnosticsBox').textContent = 'No se pudo cargar el diagnóstico.';
+  }
+}
+
+function loadSyncDestinations() {
+  syncDestinations = Array.isArray(currentConfig.syncDestinations) ? currentConfig.syncDestinations.slice() : [];
+  renderSyncDestinations();
+}
+
+function kindLabel(kind) {
+  return ({
+    apps_script: 'Apps Script / Sheets',
+    generic_webhook: 'Webhook JSON',
+    github_gist: 'GitHub / Gist',
+    supabase: 'Supabase',
+    pocketbase: 'PocketBase',
+    openauditor_node: 'OPENAUDITOR remoto'
+  })[kind] || kind || 'Destino';
+}
+
+function syncKindRecipe(kind) {
+  return {
+    apps_script: {
+      text: 'Usalo como puente gratis: recibe el JSON, crea una hoja por plantilla en Google Sheets y amplía columnas automáticamente cuando la plantilla cambia.',
+      links: [
+        ['/examples/apps-script-openauditor.gs', 'Ejemplo Apps Script'],
+        ['/sync-guide.html#apps-script', 'Pasos de despliegue']
+      ]
+    },
+    generic_webhook: {
+      text: 'Envía el payload JSON completo a cualquier webhook propio. Funciona bien con n8n, Make o un ERP.',
+      links: [
+        ['/sync-guide.html#webhook', 'Payload y ejemplo'],
+        ['/sync-guide.html#payload', 'Ver estructura JSON']
+      ]
+    },
+    github_gist: {
+      text: 'Útil como backup liviano o integración simple con la API de GitHub. No es lo ideal para producción intensiva.',
+      links: [
+        ['/sync-guide.html#github-gist', 'Guía GitHub / Gist'],
+        ['/sync-guide.html#payload', 'Ver estructura JSON']
+      ]
+    },
+    supabase: {
+      text: 'Buena opción para crecer: podés usar una Edge Function para guardar respuestas y adjuntos con lógica propia.',
+      links: [
+        ['/sync-guide.html#supabase', 'Guía Supabase'],
+        ['/sync-guide.html#payload', 'Ver estructura JSON']
+      ]
+    },
+    pocketbase: {
+      text: 'La opción open source más directa: endpoint propio, storage integrado y despliegue simple.',
+      links: [
+        ['/examples/pocketbase-openauditor.js', 'Ejemplo PocketBase'],
+        ['/sync-guide.html#pocketbase', 'Pasos de despliegue']
+      ]
+    },
+    openauditor_node: {
+      text: 'Permite usar otra instancia de OPENAUDITOR como receptor remoto con el mismo endpoint de importación standalone.',
+      links: [
+        ['/sync-guide.html#openauditor-node', 'Guía OPENAUDITOR remoto'],
+        ['/sync-guide.html#payload', 'Ver estructura JSON']
+      ]
+    }
+  }[kind] || {
+    text: 'Este destino recibe el mismo JSON generado por el HTML autónomo.',
+    links: [['/sync-guide.html', 'Ver guía']]
+  };
+}
+
+function handleSyncKindChange() {
+  const kind = document.getElementById('syncKind')?.value || 'apps_script';
+  const helperText = document.getElementById('syncKindHelperText');
+  const helper = document.getElementById('syncKindHelper');
+  const recipe = syncKindRecipe(kind);
+  if (helperText) helperText.textContent = recipe.text;
+  if (helper) {
+    const linksHtml = recipe.links.map(link => `<a class="btn btn-outline btn-sm" href="${link[0]}" target="_blank" rel="noopener">${link[1]}</a>`).join('');
+    helper.querySelector('.flex.gap-2.mt-12').innerHTML = linksHtml;
+  }
+}
+
+function renderSyncDestinations() {
+  const list = document.getElementById('syncDestinationsList');
+  if (!list) return;
+  if (!syncDestinations.length) {
+    list.innerHTML = '<div class="text-muted text-sm">No hay destinos configurados. El HTML autónomo quedará en modo exportación JSON solamente.</div>';
+    return;
+  }
+  list.innerHTML = syncDestinations.map(dest => `
+    <div class="webhook-item ${dest.enabled !== false ? 'webhook-enabled' : 'webhook-disabled'}">
+      <div class="webhook-item-header">
+        <div>
+          <span class="webhook-item-title">
+            <div class="webhook-status-dot" style="background:${dest.enabled !== false ? 'var(--success)' : 'var(--gray-400)'};"></div>
+            ${esc(dest.name || 'Destino')}
+          </span>
+          <div class="webhook-item-url">${esc(dest.url || '')}</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" data-edit-sync-id="${dest.id}">Editar</button>
+          <button class="btn btn-ghost btn-sm text-red" data-delete-sync-id="${dest.id}">&times;</button>
+        </div>
+      </div>
+      <div class="webhook-item-events"><b>Tipo:</b> ${esc(kindLabel(dest.kind))}</div>
+      <div class="webhook-item-last">${esc(dest.notes || 'Disponible para los HTML autónomos exportados desde esta instancia.')}</div>
+    </div>
+  `).join('');
+}
+
+function openSyncDestinationModal(id = null) {
+  const modal = document.getElementById('syncDestinationModal');
+  document.getElementById('syncId').value = '';
+  document.getElementById('syncName').value = '';
+  document.getElementById('syncKind').value = 'apps_script';
+  document.getElementById('syncUrl').value = '';
+  document.getElementById('syncHeaders').value = '';
+  document.getElementById('syncNotes').value = '';
+  document.getElementById('syncEnabled').checked = true;
+  document.getElementById('syncModalTitle').textContent = id ? 'Editar destino' : 'Nuevo destino';
+  if (id) {
+    const dest = syncDestinations.find(item => item.id === id);
+    if (dest) {
+      document.getElementById('syncId').value = dest.id || '';
+      document.getElementById('syncName').value = dest.name || '';
+      document.getElementById('syncKind').value = dest.kind || 'apps_script';
+      document.getElementById('syncUrl').value = dest.url || '';
+      document.getElementById('syncHeaders').value = dest.headers ? JSON.stringify(dest.headers, null, 2) : '';
+      document.getElementById('syncNotes').value = dest.notes || '';
+      document.getElementById('syncEnabled').checked = dest.enabled !== false;
+    }
+  }
+  handleSyncKindChange();
+  modal.classList.remove('hidden');
+}
+
+async function deleteSyncDestination(id) {
+  if (!confirm('¿Eliminar este destino de sincronización?')) return;
+  syncDestinations = syncDestinations.filter(item => item.id !== id);
+  await persistSyncDestinations();
+}
+
+async function persistSyncDestinations() {
+  try {
+    await api.put('/api/config', { syncDestinations });
+    currentConfig.syncDestinations = syncDestinations.slice();
+    renderSyncDestinations();
+    toast('Destinos de sincronización guardados', 'success');
+  } catch (e) {
+    toast('Error guardando destinos', 'error');
+  }
+}
+
+async function saveSyncDestination() {
+  const id = document.getElementById('syncId').value || ('sync-' + Date.now());
+  const url = document.getElementById('syncUrl').value.trim();
+  if (!url) return toast('Ingresá una URL', 'error');
+  let headers = {};
+  const rawHeaders = document.getElementById('syncHeaders').value.trim();
+  if (rawHeaders) {
+    try {
+      headers = JSON.parse(rawHeaders);
+    } catch (e) {
+      return toast('Los headers deben ser un JSON válido', 'error');
+    }
+  }
+  const payload = {
+    id,
+    name: document.getElementById('syncName').value.trim() || 'Destino sin nombre',
+    kind: document.getElementById('syncKind').value,
+    url,
+    headers,
+    notes: document.getElementById('syncNotes').value.trim(),
+    enabled: document.getElementById('syncEnabled').checked
+  };
+  const index = syncDestinations.findIndex(item => item.id === id);
+  if (index >= 0) syncDestinations[index] = payload;
+  else syncDestinations.push(payload);
+  document.getElementById('syncDestinationModal').classList.add('hidden');
+  await persistSyncDestinations();
 }
 
 async function loadWebhooks() {
@@ -272,8 +614,8 @@ async function loadWebhooks() {
             <div class="webhook-item-url">${esc(wh.url)}</div>
           </div>
           <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" onclick="editWebhook('${wh.id}')">✏️ Editar</button>
-            <button class="btn btn-ghost btn-sm text-red" onclick="deleteWebhook('${wh.id}')">✕</button>
+            <button class="btn btn-ghost btn-sm" data-edit-webhook-id="${wh.id}">✏️ Editar</button>
+            <button class="btn btn-ghost btn-sm text-red" data-delete-webhook-id="${wh.id}">✕</button>
           </div>
         </div>
         <div class="webhook-item-events">
@@ -323,18 +665,16 @@ function openWebhookModal(id = null) {
   m.classList.remove('hidden');
 }
 
-window.editWebhook = openWebhookModal;
-
-window.deleteWebhook = async function(id) {
+async function deleteWebhook(id) {
   if (!confirm('¿Eliminar este webhook?')) return;
   try {
     await api.del(`/api/webhooks/${id}`);
     toast('✅ Webhook eliminado', 'success');
     loadWebhooks();
   } catch(e) { toast('Error al eliminar', 'error'); }
-};
+}
 
-window.saveWebhook = async function() {
+async function saveWebhook() {
   const id = document.getElementById('whId').value;
   const events = Array.from(document.querySelectorAll('.wh-event-cb:checked')).map(cb => cb.value);
   
@@ -368,9 +708,9 @@ window.saveWebhook = async function() {
     document.getElementById('webhookModal').classList.add('hidden');
     loadWebhooks();
   } catch(e) { toast('Error guardando webhook', 'error'); }
-};
+}
 
-window.testWebhook = async function() {
+async function testWebhook() {
   const id = document.getElementById('whId').value;
   if (!id) return;
   try {
@@ -378,13 +718,47 @@ window.testWebhook = async function() {
     toast('📡 Ping de prueba enviado', 'info');
     setTimeout(loadWebhooks, 2000);
   } catch(e) { toast('Error enviando ping', 'error'); }
-};
+}
 
-window.togglePassword = function(id) {
+function togglePassword(id) {
   const el = document.getElementById(id);
   if (el.type === 'password') el.type = 'text';
   else el.type = 'password';
-};
+}
+
+document.getElementById('btnBrowseLogo')?.addEventListener('click', function() { document.getElementById('logoFile').click(); });
+document.getElementById('btnBrowseFavicon')?.addEventListener('click', function() { document.getElementById('faviconFile').click(); });
+document.getElementById('logoFile')?.addEventListener('change', function() { uploadBrandingFile('logo'); });
+document.getElementById('faviconFile')?.addEventListener('change', function() { uploadBrandingFile('favicon'); });
+document.getElementById('logoPreview')?.addEventListener('error', hideOnLoadError);
+document.getElementById('faviconPreview')?.addEventListener('error', hideOnLoadError);
+document.getElementById('btnSaveBranding')?.addEventListener('click', saveBranding);
+document.getElementById('btnSaveDataPath')?.addEventListener('click', saveDataPath);
+document.getElementById('btnRestoreBackup')?.addEventListener('click', function() { document.getElementById('backupFile').click(); });
+document.getElementById('backupFile')?.addEventListener('change', importBackup);
+document.getElementById('btnOpenSyncDestinationModal')?.addEventListener('click', function() { openSyncDestinationModal(); });
+document.getElementById('btnOpenWebhookModal')?.addEventListener('click', function() { openWebhookModal(); });
+document.getElementById('btnCloseWebhookModal')?.addEventListener('click', closeWebhookModal);
+document.getElementById('btnToggleWebhookSecret')?.addEventListener('click', function() { togglePassword('whSecret'); });
+document.getElementById('whTestBtn')?.addEventListener('click', testWebhook);
+document.getElementById('btnCancelWebhook')?.addEventListener('click', closeWebhookModal);
+document.getElementById('btnSaveWebhook')?.addEventListener('click', saveWebhook);
+document.getElementById('btnCloseSyncDestinationModal')?.addEventListener('click', closeSyncDestinationModal);
+document.getElementById('btnCancelSyncDestination')?.addEventListener('click', closeSyncDestinationModal);
+document.getElementById('btnSaveSyncDestination')?.addEventListener('click', saveSyncDestination);
+document.getElementById('syncKind')?.addEventListener('change', handleSyncKindChange);
+document.getElementById('syncDestinationsList')?.addEventListener('click', function(event) {
+  const editButton = event.target.closest('[data-edit-sync-id]');
+  if (editButton) return openSyncDestinationModal(editButton.dataset.editSyncId);
+  const deleteButton = event.target.closest('[data-delete-sync-id]');
+  if (deleteButton) return deleteSyncDestination(deleteButton.dataset.deleteSyncId);
+});
+document.getElementById('webhooksList')?.addEventListener('click', function(event) {
+  const editButton = event.target.closest('[data-edit-webhook-id]');
+  if (editButton) return openWebhookModal(editButton.dataset.editWebhookId);
+  const deleteButton = event.target.closest('[data-delete-webhook-id]');
+  if (deleteButton) return deleteWebhook(deleteButton.dataset.deleteWebhookId);
+});
 
 loadSettings();
 </script>

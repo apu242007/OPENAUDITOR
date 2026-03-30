@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditor Libre - Preparando inspección</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/colorized-selects.js"></script>
+</head>
+<body>
+<a href="#inspectMain" class="skip-link">Saltar al contenido</a>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">Auditor <span>Libre</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Acceso por plantilla</span>
+</nav>
+
+<main class="index-main inspect-shell" id="inspectMain">
+  <div class="card card-padding card-elevated inspect-card">
+    <h1 class="inspect-title">Preparando inspección</h1>
+    <p class="text-sm text-muted" id="inspectStatus">Cargando plantilla...</p>
+    <div class="progress-container inspect-progress-wrap">
+      <div class="progress-bar" id="inspectProgress" style="width:22%;"></div>
+    </div>
+    <div class="save-group">
+      <a class="btn btn-outline" href="/">Volver al inicio</a>
+      <button class="btn btn-outline hidden" id="retryBtn" type="button">Reintentar</button>
+    </div>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const templateId = location.pathname.split('/').pop();
+const templateCacheKey = 'oa-template-cache-' + templateId;
+const templateDraftMapKey = 'oa-template-draft-map';
+
+function setStatus(message, pct) {
+  document.getElementById('inspectStatus').textContent = message;
+  document.getElementById('inspectProgress').style.width = pct + '%';
+}
+
+function getDraftMap() {
+  try { return JSON.parse(localStorage.getItem(templateDraftMapKey) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function setDraftMap(map) {
+  try { localStorage.setItem(templateDraftMapKey, JSON.stringify(map)); } catch (e) {}
+}
+
+async function loadTemplate() {
+  try {
+    const template = await api.get('/api/plantilla/' + templateId);
+    try { localStorage.setItem(templateCacheKey, JSON.stringify(template)); } catch (e) {}
+    return template;
+  } catch (e) {
+    const cached = localStorage.getItem(templateCacheKey);
+    if (!cached) throw e;
+    return JSON.parse(cached);
+  }
+}
+
+async function ensureInspection(template) {
+  const draftMap = getDraftMap();
+  const existingInspectionId = draftMap[templateId];
+  if (existingInspectionId) {
+    window.location.href = '/inspector/' + existingInspectionId;
+    return;
+  }
+
+  if (!navigator.onLine) {
+    throw new Error('Sin conexión y sin borrador local para esta plantilla.');
+  }
+
+  const created = await api.post('/api/inspections', { templateId: template.id });
+  draftMap[templateId] = created.id;
+  setDraftMap(draftMap);
+  window.location.href = '/inspector/' + created.id;
+}
+
+async function boot() {
+  const retryBtn = document.getElementById('retryBtn');
+  retryBtn.classList.add('hidden');
+  try {
+    setStatus('Descargando plantilla...', 28);
+    const template = await loadTemplate();
+    setStatus(navigator.onLine ? 'Plantilla lista. Abriendo inspección...' : 'Plantilla cacheada. Buscando borrador local...', 64);
+    await ensureInspection(template);
+  } catch (e) {
+    setStatus('No se pudo abrir la inspección: ' + e.message, 100);
+    retryBtn.classList.remove('hidden');
+  }
+}
+
+document.getElementById('retryBtn').addEventListener('click', boot);
+boot();
+</script>
+</body>
+</html>

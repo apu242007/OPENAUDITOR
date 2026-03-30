@@ -1,0 +1,104 @@
+{
+  "name": "Checklist de Orden y Limpieza",
+  "description": "Plantilla comunitaria para revisar orden operativo, limpieza, almacenamiento basico y condiciones generales que impactan seguridad e higiene.",
+  "tags": ["safety", "orden", "limpieza", "ley-19587", "higiene"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-order",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-order",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-site-order", "text": "Establecimiento", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-area-order", "text": "Sector inspeccionado", "responseType": "location", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-order", "text": "Fecha de inspeccion", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-order-order",
+      "name": "Orden operativo",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-order-order",
+          "title": "Orden general",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-workstations-order", "text": "Puestos de trabajo ordenados y sin acumulacion innecesaria", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-waste-order", "text": "Residuos retirados o contenidos de manera adecuada", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        },
+        {
+          "id": "sec-circulation-order",
+          "title": "Pasillos y circulacion",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-paths-order", "text": "Pasillos libres y demarcaciones visibles cuando aplica", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-slip-order", "text": "No se observan superficies con riesgo de resbalon o tropiezo", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-storage-order",
+      "name": "Limpieza y almacenamiento",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-storage-order",
+          "title": "Almacenamiento simple",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-storage-order", "text": "Materiales almacenados de manera estable y segura", "responseType": "yesno", "required": true, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-clean-tools-order", "text": "Herramientas y elementos guardados en forma ordenada", "responseType": "yesno", "required": false, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        },
+        {
+          "id": "sec-hygiene-order",
+          "title": "Limpieza visible",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-dust-order", "text": "No se observa suciedad excesiva o acumulacion incompatible con la tarea", "responseType": "yesno", "required": false, "allowNote": true, "allowMedia": true, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] },
+            { "id": "q-cleaning-order", "text": "Rutina de limpieza visible o conocida por el sector", "responseType": "yesno", "required": false, "allowNote": true, "allowMedia": false, "allowAction": true, "score": 10, "conditionalLogic": null, "options": [{ "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 }, { "id": "no", "label": "No", "color": "#dc2626", "score": 0 }, { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }] }
+          ]
+        }
+      ]
+    }
+  ]
+}

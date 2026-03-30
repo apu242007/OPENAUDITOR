@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 64">
+  <defs>
+    <linearGradient id="bgAL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#6d66ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon AL -->
+  <rect x="0" y="8" width="48" height="48" rx="12" fill="url(#bgAL)"/>
+  <text x="24" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="-1">AL</text>
+  
+  <!-- Text: Auditor Libre -->
+  <text x="60" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="800" fill="#1f2937">
+    Auditor <tspan fill="#4f46e5">Libre</tspan>
+  </text>
+</svg>

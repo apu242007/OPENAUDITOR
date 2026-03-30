@@ -1,23 +1,37 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPEN AUDITOR - Inspección</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>Auditor Libre - Inspección</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>  <link rel="stylesheet" href="/style.css">
+  <script defer src="/colorized-selects.js"></script>
 </head>
 <body>
+<a href="#insContent" class="skip-link">Saltar al contenido</a>
 <nav class="inspector-topbar">
-  <a href="/" class="btn btn-ghost btn-icon">⬅️</a>
+  <a href="/" class="btn btn-ghost">Volver</a>
   <span class="fw-600 truncate max-w-200" id="insTitle"></span>
   <div class="progress-container">
-    <div class="progress-bar" id="progressBar"></div>
+    <div class="progress-bar ui-progress-live" id="progressBar"></div>
   </div>
   <span class="text-sm text-muted" id="progressText">0/0</span>
-  <button class="btn btn-ghost" id="btnKiosk" title="Modo Kiosco">&#x26F6;</button>
+  <div class="sync-pill online ui-sync-live" id="syncStatus" aria-live="polite">Listo</div>
+  <button class="btn btn-ghost" id="btnKiosk" title="Modo kiosco" data-t="inspector.kiosk_mode">Kiosco</button>
+  <button class="btn btn-outline" id="btnNextPending" type="button">Siguiente pendiente</button>
+  <button class="btn btn-outline" id="btnNextRequired" type="button">Siguiente requerida</button>
+  <button class="btn btn-ghost" id="btnPendingOnly" type="button" aria-pressed="false">Solo pendientes</button>
+  <button class="btn btn-ghost" id="btnRequiredOnly" type="button" aria-pressed="false">Solo requeridas</button>
+  <button class="btn btn-ghost" id="btnEvidenceOnly" type="button" aria-pressed="false">Con evidencia</button>
+  <button class="btn btn-ghost" id="btnCompactInspector" type="button" aria-pressed="false">Compacto</button>
+  <button class="btn btn-ghost" id="btnCollapseAnswered" type="button" aria-pressed="false">Colapsar respondidas</button>
   <div class="ml-auto nav-actions">
     <button class="btn btn-outline" id="btnSave">Guardar</button>
-    <button class="btn btn-primary" id="btnComplete">Finalizar inspección</button>
+    <button class="btn btn-primary" id="btnComplete" data-t="inspector.complete_inspection">Finalizar inspección</button><div class="lang-switcher-inspector"><button class="btn btn-ghost btn-sm" data-action="switch-language" data-lang="es">ES</button><button class="btn btn-ghost btn-sm" data-action="switch-language" data-lang="en">EN</button></div>
   </div>
 </nav>
 
@@ -25,30 +39,235 @@
   <div class="inspector-body">
     <aside class="inspector-nav" id="pageNav"></aside>
     <main class="inspector-content" id="insContent"></main>
+    <aside class="inspector-findings" id="findingsPanel"></aside>
   </div>
 </div>
 
 <div class="report-view hidden" id="reportView"></div>
+<div class="inspector-mobile-bar">
+  <button class="btn btn-outline btn-sm" data-action="quick-save">Guardar</button>
+  <button class="btn btn-outline btn-sm" data-action="quick-next-pending">Siguiente</button>
+  <button class="btn btn-primary btn-sm" data-action="quick-complete">Finalizar</button>
+</div>
 
 <div class="toast-container" id="toastContainer"></div>
+<script src="/js/db.js"></script>
+<script src="/js/compress.js"></script>
 <script src="/app.js"></script>
 
 <script>
 let ins = null;
 let tmpl = null;
 let currentPageId = null;
+let showPendingOnly = false;
+let compactInspector = false;
+let showRequiredOnly = false;
+let showEvidenceOnly = false;
+let collapseAnswered = false;
 const id = location.pathname.split('/').pop();
 var activityBuffer = [];
+const draftKey = 'oa-inspection-draft-' + id;
+const inspectionCacheKey = 'oa-inspection-cache-' + id;
+const syncTagName = 'sync-inspections';
+
+async function persistIndexedDraft() {
+  if (!window.auditDb || !ins) return;
+  try {
+    var templateId = ins.templateId || (tmpl && tmpl.id) || '';
+    await window.auditDb.guardarBorrador(id, templateId, ins.answers || {}, ins.repeatableAnswers || {});
+  } catch (e) {}
+}
+
+async function restoreIndexedDraft() {
+  if (!window.auditDb) return;
+  try {
+    var draft = await window.auditDb.obtenerBorrador(id);
+    if (!draft) return;
+    if (draft.respuestas) ins.answers = draft.respuestas;
+    if (draft.repeatableAnswers) ins.repeatableAnswers = draft.repeatableAnswers;
+    setSyncStatus(navigator.onLine ? 'saved' : 'offline', navigator.onLine ? 'Borrador recuperado' : 'Borrador local');
+  } catch (e) {}
+}
+
+async function removeIndexedDraft() {
+  if (!window.auditDb) return;
+  try { await window.auditDb.eliminarBorrador(id); } catch (e) {}
+}
+
+async function queueInspectionSync(kind) {
+  if (!window.auditDb || !ins) return;
+  try {
+    await window.auditDb.encolar({
+      tipo: kind || 'inspection-save',
+      inspeccionId: id,
+      complete: kind === 'inspection-complete',
+      _updatedAt: ins.updatedAt || null,
+      answers: ins.answers || {},
+      repeatableAnswers: ins.repeatableAnswers || {},
+      payload: {
+        inspectionId: id,
+        complete: kind === 'inspection-complete',
+        _updatedAt: ins.updatedAt || null,
+        answers: ins.answers || {},
+        repeatableAnswers: ins.repeatableAnswers || {}
+      }
+    });
+    if ('serviceWorker' in navigator) {
+      var reg = await navigator.serviceWorker.ready;
+      if ('sync' in reg) await reg.sync.register(syncTagName);
+    }
+  } catch (e) {}
+}
+
+function setSyncStatus(state, text) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.className = 'sync-pill ' + state;
+  el.textContent = text;
+}
+
+function buildInspectionPayload(extra) {
+  return Object.assign({
+    answers: ins.answers || {},
+    repeatableAnswers: ins.repeatableAnswers || {},
+    _updatedAt: ins.updatedAt || null
+  }, extra || {});
+}
+
+function handleInspectionConflict(error) {
+  if (!isConflictError(error)) return false;
+  setSyncStatus('error', 'Conflicto detectado');
+  if (error.data && error.data.serverVersion) {
+    ins = error.data.serverVersion;
+    tmpl = ins.snapshot;
+    persistInspectionCache();
+    renderNav();
+    renderContent();
+    updateProgress();
+  }
+  toast((error.data && error.data.message) || 'La inspeccion fue modificada por otro usuario.', 'error');
+  return true;
+}
+
+function persistLocalDraft() {
+  try {
+    localStorage.setItem(draftKey, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      answers: ins.answers || {},
+      repeatableAnswers: ins.repeatableAnswers || {}
+    }));
+  } catch (e) {}
+  persistIndexedDraft();
+}
+
+function restoreLocalDraft() {
+  try {
+    const raw = localStorage.getItem(draftKey);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (draft.answers) ins.answers = draft.answers;
+    if (draft.repeatableAnswers) ins.repeatableAnswers = draft.repeatableAnswers;
+    setSyncStatus(navigator.onLine ? 'saved' : 'offline', navigator.onLine ? 'Borrador recuperado' : 'Borrador local');
+  } catch (e) {}
+}
+
+function clearLocalDraft() {
+  try { localStorage.removeItem(draftKey); } catch (e) {}
+  removeIndexedDraft();
+}
+
+function persistInspectionCache() {
+  try {
+    localStorage.setItem(inspectionCacheKey, JSON.stringify(ins));
+  } catch (e) {}
+}
+
+function restoreInspectionCache() {
+  try {
+    const raw = localStorage.getItem(inspectionCacheKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function mediaPreviewMarkup(mediaId, className, inlineStyle) {
+  if (String(mediaId).indexOf('local:') === 0) {
+    return '<img src="" data-local-media="' + esc(mediaId.replace('local:', '')) + '" data-foto-id="' + esc(mediaId.replace('local:', '')) + '"' + (className ? ' class="' + className + '"' : '') + (inlineStyle ? ' style="' + inlineStyle + '"' : '') + '>';
+  }
+  return '<img src="/uploads/' + esc(mediaId) + '"' + (className ? ' class="' + className + '"' : '') + (inlineStyle ? ' style="' + inlineStyle + '"' : '') + '>';
+}
+
+async function hydrateLocalMediaPreviews(root) {
+  if (!window.auditDb) return;
+  var scope = root || document;
+  var nodes = scope.querySelectorAll('[data-local-media]');
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    var photoId = node.getAttribute('data-local-media');
+    if (!photoId) continue;
+    try {
+      var photo = await window.auditDb.obtenerFoto(photoId);
+      if (photo && photo.blob) node.src = URL.createObjectURL(photo.blob);
+    } catch (e) {}
+  }
+}
+
+window.addEventListener('online', function() {
+  setSyncStatus('online', 'En linea');
+});
+window.addEventListener('offline', function() {
+  setSyncStatus('offline', 'Sin conexion');
+});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function(event) {
+    const data = event.data || {};
+    const type = data.type;
+    const inspeccionId = data.inspeccionId;
+    const fileMap = data.fileMap;
+    if (!type) return;
+
+    if (type === 'SYNC_COMPLETE' && inspeccionId === id) {
+      setSyncStatus('saved', 'Sincronizado');
+      toast('Inspección sincronizada', 'success');
+
+      if (fileMap) {
+        document.querySelectorAll('img.media-preview-item[data-foto-id]').forEach(function(img) {
+          var fotoId = img.dataset.fotoId;
+          var key = 'local:' + fotoId;
+          if (fileMap[key]) {
+            img.src = '/uploads/' + fileMap[key];
+            img.removeAttribute('data-foto-id');
+            img.removeAttribute('data-local-media');
+          }
+        });
+      }
+
+      api.get('/api/inspections/' + id).then(function(updated) {
+        ins = updated;
+        persistInspectionCache();
+      }).catch(function() {});
+    }
+    if (type === 'SYNC_ERROR' && inspeccionId === id) {
+      setSyncStatus('error', 'Pendiente');
+    }
+  });
+}
 
 (async () => {
   try {
-    ins = await api.get('/api/inspections/' + id);
+    await initI18n(); translateUI(); ins = await api.get('/api/inspections/' + id);
+    persistInspectionCache();
     if (!ins.repeatableAnswers) ins.repeatableAnswers = {};
     if (!ins.answers) ins.answers = {};
+    restoreLocalDraft();
+    await restoreIndexedDraft();
     tmpl = ins.snapshot;
     if (ins.status === 'completed') {
+      clearLocalDraft();
       renderReport();
     } else {
+      setSyncStatus(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'En linea' : 'Sin conexion');
       currentPageId = tmpl.pages[0]?.id;
       renderNav();
       renderContent();
@@ -57,31 +276,214 @@ var activityBuffer = [];
       setInterval(saveSilent, 30000);
     }
   } catch(e) {
+    const cachedInspection = restoreInspectionCache();
+    if (cachedInspection) {
+      ins = cachedInspection;
+      if (!ins.repeatableAnswers) ins.repeatableAnswers = {};
+      if (!ins.answers) ins.answers = {};
+      restoreLocalDraft();
+      tmpl = ins.snapshot;
+      currentPageId = tmpl.pages[0]?.id;
+      setSyncStatus('offline', 'Modo offline');
+      renderNav();
+      renderContent();
+      updateProgress();
+      return;
+    }
     document.body.innerHTML = '<div style="padding:40px;text-align:center;color:red;">Error: ' + e.message + '</div>';
   }
 })();
 
-document.getElementById('btnSave').onclick = async () => {
-  await api.put('/api/inspections/' + id, { answers: ins.answers });
-  toast('Progreso guardado', 'success');
-};
-
-document.getElementById('btnComplete').onclick = async () => {
-  if (!confirm('¿Seguro que deseas finalizar la inspección? No podrás modificarla después.')) return;
+async function saveInspectionProgress() {
+  setSyncStatus('saving', navigator.onLine ? 'Guardando...' : 'Guardado local');
+  persistLocalDraft();
+  if (!navigator.onLine) {
+    await queueInspectionSync('inspection-save');
+    setSyncStatus('offline', 'Guardado local');
+    toast('Guardado localmente. Se sincronizará al volver la conexión.', 'success');
+    return;
+  }
   try {
-    ins = await api.post('/api/inspections/' + id + '/complete', { answers: ins.answers });
+    ins = await api.put('/api/inspections/' + id, buildInspectionPayload());
+    persistInspectionCache();
+    setSyncStatus('saved', 'Sincronizado');
+    toast('Progreso guardado', 'success');
+  } catch (e) {
+    if (!handleInspectionConflict(e)) {
+      setSyncStatus('error', 'Pendiente');
+      toast('Error: ' + e.message, 'error');
+    }
+  }
+}
+
+function syncToggleButton(id, enabled) {
+  const button = document.getElementById(id);
+  if (!button) return;
+  button.classList.toggle('active', enabled);
+  button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+}
+
+function applyInspectorFilters() {
+  syncToggleButton('btnPendingOnly', showPendingOnly);
+  syncToggleButton('btnNextRequired', false);
+  syncToggleButton('btnRequiredOnly', showRequiredOnly);
+  syncToggleButton('btnEvidenceOnly', showEvidenceOnly);
+  syncToggleButton('btnCompactInspector', compactInspector);
+  syncToggleButton('btnCollapseAnswered', collapseAnswered);
+  document.body.classList.toggle('inspector-compact-mode', compactInspector);
+  renderContent();
+}
+
+document.getElementById('btnSave')?.addEventListener('click', saveInspectionProgress);
+
+document.getElementById('btnNextPending')?.addEventListener('click', jumpToNextPending);
+document.getElementById('btnNextRequired')?.addEventListener('click', jumpToNextRequired);
+document.getElementById('btnPendingOnly')?.addEventListener('click', function() {
+  showPendingOnly = !showPendingOnly;
+  applyInspectorFilters();
+});
+document.getElementById('btnRequiredOnly')?.addEventListener('click', function() {
+  showRequiredOnly = !showRequiredOnly;
+  applyInspectorFilters();
+});
+document.getElementById('btnEvidenceOnly')?.addEventListener('click', function() {
+  showEvidenceOnly = !showEvidenceOnly;
+  applyInspectorFilters();
+});
+document.getElementById('btnCompactInspector')?.addEventListener('click', function() {
+  compactInspector = !compactInspector;
+  applyInspectorFilters();
+});
+document.getElementById('btnCollapseAnswered')?.addEventListener('click', function() {
+  collapseAnswered = !collapseAnswered;
+  applyInspectorFilters();
+});
+
+async function completeInspection() {
+  const summary = computeInspectionSummary();
+  if (summary.requiredPending > 0) {
+    currentPageId = summary.firstRequiredPageId || currentPageId;
+    renderNav();
+    renderContent();
+    toast('No se puede finalizar: quedan ' + summary.requiredPending + ' respuesta(s) requerida(s) pendiente(s).', 'error');
+    setTimeout(jumpToNextRequired, 50);
+    return;
+  }
+  const confirmMessage = [
+    'Resumen antes de finalizar:',
+    '- Respondidas: ' + summary.answered + '/' + summary.total,
+    '- Señaladas: ' + summary.flagged,
+    '- Con evidencia: ' + summary.evidence,
+    '',
+    '¿Deseas cerrar la inspección? No podrás modificarla después.'
+  ].join('\n');
+  if (!confirm(confirmMessage)) return;
+  try {
+    setSyncStatus('saving', 'Finalizando...');
+    if (!navigator.onLine) {
+      await queueInspectionSync('inspection-complete');
+      persistInspectionCache();
+      setSyncStatus('offline', 'Cierre pendiente');
+      toast('Inspección guardada localmente. Se finalizará al volver la conexión.', 'success');
+      return;
+    }
+    ins = await api.post('/api/inspections/' + id + '/complete', buildInspectionPayload());
+    persistInspectionCache();
+    clearLocalDraft();
+    setSyncStatus('saved', 'Inspeccion cerrada');
     toast('Inspección finalizada', 'success');
     renderReport();
-  } catch(e) { toast('Error: ' + e.message, 'error'); }
-};
+  } catch(e) {
+    if (!handleInspectionConflict(e)) toast('Error: ' + e.message, 'error');
+  }
+}
 
+document.getElementById('btnComplete')?.addEventListener('click', completeInspection);
+
+document.addEventListener('click', function(event) {
+  const langButton = event.target.closest('[data-action="switch-language"]');
+  if (langButton) {
+    return switchLanguage(langButton.dataset.lang);
+  }
+});
+
+document.getElementById('insContent')?.addEventListener('click', function(event) {
+  const actionButton = event.target.closest('[data-action]');
+  if (!actionButton) return;
+  const action = actionButton.dataset.action;
+  if (action === 'quick-save') return saveInspectionProgress();
+  if (action === 'quick-next-pending') return jumpToNextPending();
+  if (action === 'quick-complete') return completeInspection();
+  if (action === 'jump-to-question') {
+    const target = document.getElementById(actionButton.dataset.targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('question-attention');
+      setTimeout(function() { target.classList.remove('question-attention'); }, 1200);
+    }
+    return;
+  }
+  if (action === 'toggle-pending-view') {
+    showPendingOnly = !showPendingOnly;
+    applyInspectorFilters();
+    return;
+  }
+  const qid = actionButton.dataset.qid;
+  const secId = actionButton.dataset.secid || null;
+  const instIdx = actionButton.dataset.instidx === '' || actionButton.dataset.instidx === undefined ? null : parseInt(actionButton.dataset.instidx, 10);
+  if (action === 'remove-repeatable-instance') return removeRepInstance(actionButton.dataset.secid, parseInt(actionButton.dataset.instidx, 10));
+  if (action === 'add-repeatable-instance') return addRepInstance(actionButton.dataset.secid);
+  if (action === 'set-answer-option') return setAns(qid, actionButton.dataset.value, instIdx, secId);
+  if (action === 'toggle-extra') return toggleExtra(qid, actionButton.dataset.extraType, instIdx, secId);
+  if (action === 'toggle-flag') return toggleFlag(qid, instIdx, secId);
+  if (action === 'browse-media-upload') return document.getElementById(actionButton.dataset.fileInput)?.click();
+  if (action === 'toggle-help-visibility') {
+    const target = document.getElementById(actionButton.dataset.targetId);
+    if (target) target.style.display = target.style.display === 'none' ? 'block' : 'none';
+  }
+});
+
+document.getElementById('reportView')?.addEventListener('click', function(event) {
+  const actionButton = event.target.closest('[data-action]');
+  if (!actionButton) return;
+  if (actionButton.dataset.action === 'open-signature') return openSignature();
+  if (actionButton.dataset.action === 'send-report-email') {
+    const mailBody = 'Inspeccion: ' + ins.templateName + ' | Score: ' + (ins.maxScore > 0 ? ins.score + '/' + ins.maxScore : 'N/A');
+    window.location = 'mailto:?subject=' + encodeURIComponent(ins.templateName) + '&body=' + encodeURIComponent(mailBody);
+    return;
+  }
+  if (actionButton.dataset.action === 'toggle-activity-log') return toggleActivityLog();
+});
+
+function translateUI() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.dataset.t;
+    el.textContent = t(key);
+  });
+}
 async function saveSilent() {
   if (ins.status === 'completed') return;
   try {
-    var payload = { answers: ins.answers };
-    if (activityBuffer.length > 0) { payload.activityLog = activityBuffer.slice(); activityBuffer = []; }
-    await api.put('/api/inspections/' + id, payload);
-  } catch(e){}
+    persistLocalDraft();
+    setSyncStatus(navigator.onLine ? 'saving' : 'offline', navigator.onLine ? 'Sincronizando...' : 'Borrador local');
+    if (!navigator.onLine) {
+      await queueInspectionSync('inspection-save');
+      return;
+    }
+    var payload = buildInspectionPayload();
+    var pendingActivityLog = null;
+    if (activityBuffer.length > 0) {
+      pendingActivityLog = activityBuffer.slice();
+      payload.activityLog = pendingActivityLog;
+    }
+    ins = await api.put('/api/inspections/' + id, payload);
+    if (pendingActivityLog) activityBuffer = activityBuffer.slice(pendingActivityLog.length);
+    persistInspectionCache();
+    setSyncStatus('saved', 'Sincronizado');
+  } catch(e){
+    if (handleInspectionConflict(e)) return;
+    setSyncStatus(navigator.onLine ? 'error' : 'offline', navigator.onLine ? 'Pendiente' : 'Sin conexion');
+  }
 }
 
 function updateProgress() {
@@ -126,16 +528,349 @@ function shouldShow(q, instIdx = null, secId = null) {
   return true;
 }
 
+function getAnswerObjSafe(qid, instIdx = null, secId = null) {
+  if (instIdx !== null && secId !== null) {
+    const sectionInstances = ins.repeatableAnswers[secId] || [];
+    const instance = sectionInstances[instIdx] || {};
+    return instance[qid] || null;
+  }
+  return ins.answers[qid] || null;
+}
+
+function isAnsweredValue(value) {
+  return value !== null && value !== undefined && value !== '';
+}
+
+function classifyFindingSeverity(question, answer) {
+  const hasMedia = !!(answer && answer.mediaFiles && answer.mediaFiles.length);
+  const hasAction = !!(answer && answer.action && String(answer.action).trim());
+  const hasNote = !!(answer && answer.note && String(answer.note).trim());
+  const flagged = !!(answer && answer.flagged);
+  if (flagged && question.required) return 'critical';
+  if (flagged || hasAction) return 'high';
+  if (hasMedia) return 'medium';
+  if (hasNote) return 'low';
+  return 'low';
+}
+
+function severityRank(severity) {
+  return ({ critical: 4, high: 3, medium: 2, low: 1 })[severity] || 0;
+}
+
+function severityLabel(severity) {
+  return ({ critical: 'Crítica', high: 'Alta', medium: 'Media', low: 'Leve' })[severity] || 'Leve';
+}
+
+function computeInspectionSummary() {
+  const summary = {
+    total: 0,
+    answered: 0,
+    flagged: 0,
+    requiredPending: 0,
+    evidence: 0,
+    findings: { critical: 0, high: 0, medium: 0, low: 0 },
+    firstRequiredPageId: null
+  };
+
+  (tmpl.pages || []).forEach(function(page) {
+    let pageHasRequiredPending = false;
+    (page.sections || []).forEach(function(section) {
+      if (section.repeatable) {
+        const instances = ins.repeatableAnswers[section.id] || [];
+        instances.forEach(function(instance, instIdx) {
+          (section.questions || []).forEach(function(question) {
+            if (!shouldShow(question, instIdx, section.id)) return;
+            summary.total += 1;
+            const answer = instance[question.id] || null;
+            const answered = !!(answer && isAnsweredValue(answer.value));
+            const hasEvidence = !!(
+              answer &&
+              (
+                (answer.note && String(answer.note).trim()) ||
+                (answer.action && String(answer.action).trim()) ||
+                (answer.mediaFiles && answer.mediaFiles.length) ||
+                answer.flagged
+              )
+            );
+            if (answered) summary.answered += 1;
+            if (answer && answer.flagged) summary.flagged += 1;
+            if (question.required && !answered) {
+              summary.requiredPending += 1;
+              pageHasRequiredPending = true;
+            }
+            if (hasEvidence) {
+              summary.evidence += 1;
+              summary.findings[classifyFindingSeverity(question, answer || {})] += 1;
+            }
+          });
+        });
+      } else {
+        (section.questions || []).forEach(function(question) {
+          if (!shouldShow(question)) return;
+          summary.total += 1;
+          const answer = ins.answers[question.id] || null;
+          const answered = !!(answer && isAnsweredValue(answer.value));
+          const hasEvidence = !!(
+            answer &&
+            (
+              (answer.note && String(answer.note).trim()) ||
+              (answer.action && String(answer.action).trim()) ||
+              (answer.mediaFiles && answer.mediaFiles.length) ||
+              answer.flagged
+            )
+          );
+          if (answered) summary.answered += 1;
+          if (answer && answer.flagged) summary.flagged += 1;
+          if (question.required && !answered) {
+            summary.requiredPending += 1;
+            pageHasRequiredPending = true;
+          }
+          if (hasEvidence) {
+            summary.evidence += 1;
+            summary.findings[classifyFindingSeverity(question, answer || {})] += 1;
+          }
+        });
+      }
+    });
+    if (pageHasRequiredPending && !summary.firstRequiredPageId) summary.firstRequiredPageId = page.id;
+  });
+
+  return summary;
+}
+
+function computePageProgress(page) {
+  let total = 0;
+  let answered = 0;
+  let flagged = 0;
+  let requiredPending = 0;
+  (page.sections || []).forEach(function(section) {
+    if (section.repeatable) {
+      const instances = ins.repeatableAnswers[section.id] || [];
+      instances.forEach(function(instance, instIdx) {
+        (section.questions || []).forEach(function(question) {
+          if (!shouldShow(question, instIdx, section.id)) return;
+          total++;
+          const ans = instance[question.id] || null;
+          if (ans && isAnsweredValue(ans.value)) answered++;
+          if (ans && ans.flagged) flagged++;
+          if (question.required && !(ans && isAnsweredValue(ans.value))) requiredPending++;
+        });
+      });
+    } else {
+      (section.questions || []).forEach(function(question) {
+        if (!shouldShow(question)) return;
+        total++;
+        const ans = ins.answers[question.id] || null;
+        if (ans && isAnsweredValue(ans.value)) answered++;
+        if (ans && ans.flagged) flagged++;
+        if (question.required && !(ans && isAnsweredValue(ans.value))) requiredPending++;
+      });
+    }
+  });
+  return { total, answered, flagged, requiredPending, remaining: Math.max(total - answered, 0) };
+}
+
+function jumpToNextPending() {
+  const currentPage = tmpl.pages.find(function(page) { return page.id === currentPageId; });
+  if (!currentPage) return;
+  const pending = document.querySelector('.exec-question.is-pending, .exec-question.is-required-pending');
+  if (pending) {
+    pending.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    pending.classList.add('question-attention');
+    setTimeout(function() { pending.classList.remove('question-attention'); }, 1200);
+    return;
+  }
+  const nextPage = tmpl.pages.find(function(page) {
+    if (page.id === currentPage.id) return false;
+    const stats = computePageProgress(page);
+    return stats.answered < stats.total;
+  });
+  if (nextPage) {
+    currentPageId = nextPage.id;
+    renderNav();
+    renderContent();
+    setTimeout(jumpToNextPending, 50);
+  } else {
+    toast('No quedan preguntas pendientes visibles', 'success');
+  }
+}
+
+function jumpToNextRequired() {
+  const currentPage = tmpl.pages.find(function(page) { return page.id === currentPageId; });
+  if (!currentPage) return;
+  const requiredPending = document.querySelector('.exec-question.is-required-pending');
+  if (requiredPending) {
+    requiredPending.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    requiredPending.classList.add('question-attention');
+    setTimeout(function() { requiredPending.classList.remove('question-attention'); }, 1200);
+    return;
+  }
+  const nextPage = tmpl.pages.find(function(page) {
+    if (page.id === currentPage.id) return false;
+    const stats = computePageProgress(page);
+    return stats.requiredPending > 0;
+  });
+  if (nextPage) {
+    currentPageId = nextPage.id;
+    renderNav();
+    renderContent();
+    setTimeout(jumpToNextRequired, 50);
+  } else {
+    toast('No quedan preguntas requeridas pendientes', 'success');
+  }
+}
+
+function collectVisibleFindings() {
+  const findings = [];
+  const page = tmpl.pages.find(function(p) { return p.id === currentPageId; });
+  if (!page) return findings;
+
+  page.sections.forEach(function(section) {
+    if (section.repeatable) {
+      const instances = ins.repeatableAnswers[section.id] || [];
+      instances.forEach(function(instance, instIdx) {
+        (section.questions || []).forEach(function(question) {
+          if (!shouldShow(question, instIdx, section.id)) return;
+          const answer = getAnswerObjSafe(question.id, instIdx, section.id);
+          if (!shouldRenderQuestionInView(question, answer)) return;
+          const hasEvidence = !!(
+            (answer.note && String(answer.note).trim()) ||
+            (answer.action && String(answer.action).trim()) ||
+            (answer.mediaFiles && answer.mediaFiles.length) ||
+            answer.flagged
+          );
+          if (!hasEvidence) return;
+          const severity = classifyFindingSeverity(question, answer || {});
+          findings.push({
+            id: 'eq-' + (section.id || '') + '-' + instIdx + '-' + question.id,
+            title: question.text,
+            section: (section.title || 'Sección') + ' ' + (instIdx + 1),
+            severity,
+            severityRank: severityRank(severity),
+            required: !!question.required,
+            flagged: !!answer.flagged,
+            note: !!(answer.note && String(answer.note).trim()),
+            action: !!(answer.action && String(answer.action).trim()),
+            media: answer.mediaFiles ? answer.mediaFiles.length : 0
+          });
+        });
+      });
+    } else {
+      (section.questions || []).forEach(function(question) {
+        if (!shouldShow(question)) return;
+        const answer = getAnswerObjSafe(question.id, null, null);
+        if (!shouldRenderQuestionInView(question, answer)) return;
+        const hasEvidence = !!(
+          (answer.note && String(answer.note).trim()) ||
+          (answer.action && String(answer.action).trim()) ||
+          (answer.mediaFiles && answer.mediaFiles.length) ||
+          answer.flagged
+        );
+        if (!hasEvidence) return;
+        const severity = classifyFindingSeverity(question, answer || {});
+        findings.push({
+          id: 'eq---' + question.id,
+          title: question.text,
+          section: section.title || 'Sección',
+          severity,
+          severityRank: severityRank(severity),
+          required: !!question.required,
+          flagged: !!answer.flagged,
+          note: !!(answer.note && String(answer.note).trim()),
+          action: !!(answer.action && String(answer.action).trim()),
+          media: answer.mediaFiles ? answer.mediaFiles.length : 0
+        });
+      });
+    }
+  });
+  findings.sort(function(a, b) {
+    if (b.severityRank !== a.severityRank) return b.severityRank - a.severityRank;
+    if ((b.flagged ? 1 : 0) !== (a.flagged ? 1 : 0)) return (b.flagged ? 1 : 0) - (a.flagged ? 1 : 0);
+    return a.title.localeCompare(b.title, 'es');
+  });
+  return findings;
+}
+
+function renderFindingsPanel() {
+  const panel = document.getElementById('findingsPanel');
+  if (!panel) return;
+  const findings = collectVisibleFindings();
+  const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach(function(item) { severityCounts[item.severity] += 1; });
+  let html = '<div class="inspector-findings-head">' +
+    '<div>' +
+      '<div class="inspector-findings-kicker">Hallazgos en vivo</div>' +
+      '<div class="inspector-findings-title">' + findings.length + ' con evidencia</div>' +
+      '<div class="inspector-findings-summary">' +
+        (severityCounts.critical ? '<span class="inspector-severity-chip is-critical">' + severityCounts.critical + ' crítica(s)</span>' : '') +
+        (severityCounts.high ? '<span class="inspector-severity-chip is-high">' + severityCounts.high + ' alta(s)</span>' : '') +
+        (severityCounts.medium ? '<span class="inspector-severity-chip is-medium">' + severityCounts.medium + ' media(s)</span>' : '') +
+        (!severityCounts.critical && !severityCounts.high && !severityCounts.medium && findings.length ? '<span class="inspector-severity-chip is-low">' + findings.length + ' leve(s)</span>' : '') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  if (!findings.length) {
+    html += '<div class="inspector-findings-empty">Las preguntas con nota, acción, archivo o señalamiento aparecerán acá para que puedas revisarlas sin recorrer toda la página.</div>';
+    panel.innerHTML = html;
+    return;
+  }
+
+  html += '<div class="inspector-findings-list">';
+  findings.forEach(function(item) {
+    html += '<button class="inspector-finding-card severity-' + esc(item.severity) + '" data-action="jump-to-question" data-target-id="' + esc(item.id) + '">' +
+      '<div class="inspector-finding-title">' + esc(item.title) + '</div>' +
+      '<div class="inspector-finding-section">' + esc(item.section) + '</div>' +
+      '<div class="inspector-finding-tags">' +
+        '<span class="inspector-severity-chip is-' + esc(item.severity) + '">' + severityLabel(item.severity) + '</span>' +
+        (item.required ? '<span class="inspector-finding-tag">Requerida</span>' : '') +
+        (item.flagged ? '<span class="inspector-finding-tag is-flagged">Señalada</span>' : '') +
+        (item.note ? '<span class="inspector-finding-tag">Nota</span>' : '') +
+        (item.action ? '<span class="inspector-finding-tag">Acción</span>' : '') +
+        (item.media ? '<span class="inspector-finding-tag">Archivo x' + item.media + '</span>' : '') +
+      '</div>' +
+    '</button>';
+  });
+  html += '</div>';
+  panel.innerHTML = html;
+}
+
+function shouldRenderQuestionInView(question, answer) {
+  const answered = isAnsweredValue(answer && answer.value);
+  const hasEvidence = !!(
+    answer &&
+    (
+      (answer.note && String(answer.note).trim()) ||
+      (answer.action && String(answer.action).trim()) ||
+      (answer.mediaFiles && answer.mediaFiles.length) ||
+      answer.flagged
+    )
+  );
+  if (showPendingOnly && answered) return false;
+  if (showRequiredOnly && !question.required) return false;
+  if (showEvidenceOnly && !hasEvidence) return false;
+  return true;
+}
+
 function renderNav() {
   const codeBadge = ins.code ? `<span class="badge" style="background:var(--indigo); color:#fff; font-family:monospace; margin-right:8px; font-size: 0.8rem; padding: 2px 6px;">${esc(ins.code)}</span>` : '';
-  document.getElementById('insTitle').innerHTML = codeBadge + esc(tmpl.name);
+  const testBadge = ins.sourceMeta && ins.sourceMeta.mode === 'template-test'
+    ? '<span class="badge badge-test" style="margin-right:8px;">Prueba</span>'
+    : '';
+  document.getElementById('insTitle').innerHTML = codeBadge + testBadge + esc(tmpl.name);
   const nav = document.getElementById('pageNav');
   nav.innerHTML = '';
   tmpl.pages.forEach(p => {
+    const stats = computePageProgress(p);
     const d = document.createElement('div');
     d.className = 'inspector-nav-item' + (p.id === currentPageId ? ' active' : '');
-    d.textContent = p.name;
-    d.onclick = () => { currentPageId = p.id; renderNav(); renderContent(); };
+    d.innerHTML = '<div class="inspector-nav-main"><span class="inspector-nav-title">' + esc(p.name) + '</span><span class="inspector-nav-meta">' + stats.answered + '/' + stats.total + ' respondidas · ' + stats.remaining + ' restantes</span></div>' +
+      '<div class="inspector-nav-side">' +
+        (stats.requiredPending ? '<span class="inspector-nav-required">' + stats.requiredPending + ' requeridas</span>' : '') +
+        (stats.flagged ? '<span class="badge badge-test inspector-nav-flagged">' + stats.flagged + ' señalada(s)</span>' : '') +
+        '<span class="inspector-nav-progress">' + (stats.total ? Math.round((stats.answered / stats.total) * 100) : 100) + '%</span>' +
+      '</div>';
+    d.addEventListener('click', () => { currentPageId = p.id; renderNav(); renderContent(); });
     nav.appendChild(d);
   });
 }
@@ -144,9 +879,60 @@ function renderContent() {
   const content = document.getElementById('insContent');
   const page = tmpl.pages.find(p => p.id === currentPageId);
   if (!page) return;
+  const pageStats = computePageProgress(page);
+  const summary = computeInspectionSummary();
+  let questionNumber = 0;
+  let visibleQuestions = 0;
+  let visibleEvidence = 0;
   
-  let html = '';
+  let html = '<section class="inspector-summary-card ui-feature-card">' +
+    '<div class="inspector-summary-head">' +
+      '<div>' +
+        '<div class="inspector-summary-kicker">Resumen ejecutivo</div>' +
+        '<div class="inspector-summary-title">Estado global de esta inspección</div>' +
+      '</div>' +
+      '<div class="inspector-summary-stats">' +
+        '<span><strong>' + summary.answered + '/' + summary.total + '</strong> respondidas</span>' +
+        '<span><strong>' + summary.flagged + '</strong> señaladas</span>' +
+        '<span><strong>' + summary.evidence + '</strong> con evidencia</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="inspector-summary-severity">' +
+      '<span class="inspector-severity-chip is-critical">' + summary.findings.critical + ' crítica(s)</span>' +
+      '<span class="inspector-severity-chip is-high">' + summary.findings.high + ' alta(s)</span>' +
+      '<span class="inspector-severity-chip is-medium">' + summary.findings.medium + ' media(s)</span>' +
+      '<span class="inspector-severity-chip is-low">' + summary.findings.low + ' leve(s)</span>' +
+    '</div>' +
+    (summary.requiredPending > 0
+      ? '<div class="inspector-blocker-card">' +
+          '<div class="inspector-blocker-title">No podés finalizar todavía</div>' +
+          '<div class="inspector-blocker-copy">Quedan <strong>' + summary.requiredPending + '</strong> respuesta(s) requerida(s) pendiente(s). Completalas antes de cerrar la inspección.</div>' +
+          '<div class="inspector-blocker-actions"><button class="btn btn-outline btn-sm" id="btnJumpRequiredInline" type="button">Ir a la siguiente requerida</button></div>' +
+        '</div>'
+      : '<div class="inspector-ready-card">Todo lo requerido ya está respondido. Podés cerrar la inspección cuando quieras.</div>') +
+  '</section>' +
+  '<section class="inspector-page-hero ui-feature-card">' +
+    '<div class="inspector-page-kicker">Página activa</div>' +
+    '<div class="inspector-page-head">' +
+      '<div><h2 class="inspector-page-title">' + esc(page.name) + '</h2><p class="inspector-page-copy">Completá esta página con foco en hallazgos, evidencia y acciones correctivas cuando corresponda.</p></div>' +
+      '<div class="inspector-page-stats">' +
+        '<span><strong>' + pageStats.answered + '/' + pageStats.total + '</strong> respondidas</span>' +
+        '<span><strong>' + pageStats.remaining + '</strong> restantes</span>' +
+        '<span><strong>' + pageStats.requiredPending + '</strong> requeridas pendientes</span>' +
+        '<span><strong>' + pageStats.flagged + '</strong> señaladas</span>' +
+        '<span><strong>__VISIBLE_EVIDENCE__</strong> con evidencia</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="inspector-page-toolbar">' +
+      '<button class="btn btn-ghost btn-sm ' + (showPendingOnly ? 'active' : '') + '" data-action="toggle-pending-view">' + (showPendingOnly ? 'Ver todas' : 'Mostrar solo pendientes') + '</button>' +
+      '<div class="inspector-page-toolbar-note">Activá esta vista para revisar rápido los puntos que todavía faltan.</div>' +
+    '</div>' +
+  '</section>';
   page.sections.forEach(s => {
+    let sectionTotal = 0;
+    let sectionAnswered = 0;
+    let sectionFlagged = 0;
+    let sectionRequiredPending = 0;
     if (s.repeatable) {
       if (!ins.repeatableAnswers[s.id]) ins.repeatableAnswers[s.id] = [];
       const instances = ins.repeatableAnswers[s.id];
@@ -158,72 +944,148 @@ function renderContent() {
         let qHtml = '';
         s.questions.forEach(q => {
           if (!shouldShow(q, instIdx, s.id)) return;
-          qHtml += renderQuestionEditorHtml(q, inst, instIdx, s.id);
+          const answer = getAnswerObjSafe(q.id, instIdx, s.id);
+          if (!shouldRenderQuestionInView(q, answer)) return;
+          const answered = isAnsweredValue(answer.value);
+          questionNumber += 1;
+          visibleQuestions += 1;
+          if ((answer.note && String(answer.note).trim()) || (answer.action && String(answer.action).trim()) || (answer.mediaFiles && answer.mediaFiles.length) || answer.flagged) visibleEvidence += 1;
+          sectionTotal += 1;
+          if (answered) sectionAnswered += 1;
+          if (answer.flagged) sectionFlagged += 1;
+          if (q.required && !answered) sectionRequiredPending += 1;
+          qHtml += renderQuestionEditorHtml(q, inst, instIdx, s.id, questionNumber);
         });
+        if (!qHtml) return;
         
-        let headerHtml = `<div class="exec-section-title" style="display:flex; align-items:center; margin-bottom:12px; font-style:italic">
-          <span style="flex:1">${esc(s.title || 'Sección')} ${instIdx + 1}</span>
-          ${instances.length > minInstances ? `<button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeRepInstance('${s.id}', ${instIdx})">✕ Eliminar</button>` : ''}
+        let headerHtml = `<div class="exec-section-instance-head">
+          <span class="exec-section-instance-title">${esc(s.title || 'Sección')} ${instIdx + 1}</span>
+          ${instances.length > minInstances ? `<button class="btn btn-ghost btn-sm exec-remove-instance-btn" data-action="remove-repeatable-instance" data-secid="${s.id}" data-instidx="${instIdx}">Eliminar</button>` : ''}
         </div>`;
         
-        sHtml += `<div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px dashed #e9e8e6">${headerHtml}${qHtml}</div>`;
+        sHtml += `<div class="exec-repeatable-instance">${headerHtml}${qHtml}</div>`;
       });
       
       const maxInstances = s.maxInstances || null;
       if (maxInstances === null || instances.length < maxInstances) {
-        sHtml += `<button class="btn btn-outline btn-sm" onclick="addRepInstance('${s.id}')">${esc(s.addButtonLabel || '+ Añadir instancia')}</button>`;
+        sHtml += `<button class="btn btn-outline btn-sm" data-action="add-repeatable-instance" data-secid="${s.id}">${esc(s.addButtonLabel || '+ Añadir instancia')}</button>`;
       }
       
-      html += `<div class="exec-section">${sHtml}</div>`;
+      if (sHtml) {
+        html += `<div class="exec-section">
+          <div class="exec-section-head">
+            <div>
+              ${s.title ? `<div class="exec-section-title">${esc(s.title)}</div>` : ''}
+              ${s.description ? `<div class="exec-section-copy">${esc(s.description)}</div>` : ''}
+            </div>
+            <div class="exec-section-stats">
+              <span>${sectionAnswered}/${sectionTotal} respondidas</span>
+              <span>${sectionRequiredPending} requeridas</span>
+              <span>${sectionFlagged} señaladas</span>
+            </div>
+          </div>
+          ${sHtml}
+        </div>`;
+      }
     } else {
       let qHtml = '';
       s.questions.forEach(q => {
         if (!shouldShow(q)) return;
-        qHtml += renderQuestionEditorHtml(q, ins.answers, null, null);
+        const answer = getAnswerObjSafe(q.id, null, null);
+        if (!shouldRenderQuestionInView(q, answer)) return;
+        const answered = isAnsweredValue(answer.value);
+        questionNumber += 1;
+        visibleQuestions += 1;
+        if ((answer.note && String(answer.note).trim()) || (answer.action && String(answer.action).trim()) || (answer.mediaFiles && answer.mediaFiles.length) || answer.flagged) visibleEvidence += 1;
+        sectionTotal += 1;
+        if (answered) sectionAnswered += 1;
+        if (answer.flagged) sectionFlagged += 1;
+        if (q.required && !answered) sectionRequiredPending += 1;
+        qHtml += renderQuestionEditorHtml(q, ins.answers, null, null, questionNumber);
       });
       if (qHtml) {
         html += `<div class="exec-section">
-          ${s.title ? `<div class="exec-section-title">${esc(s.title)}</div>` : ''}
+          <div class="exec-section-head">
+            <div>
+              ${s.title ? `<div class="exec-section-title">${esc(s.title)}</div>` : ''}
+              ${s.description ? `<div class="exec-section-copy">${esc(s.description)}</div>` : ''}
+            </div>
+            <div class="exec-section-stats">
+              <span>${sectionAnswered}/${sectionTotal} respondidas</span>
+              <span>${sectionRequiredPending} requeridas</span>
+              <span>${sectionFlagged} señaladas</span>
+            </div>
+          </div>
           ${qHtml}
         </div>`;
       }
     }
   });
   
-  if (!html) html = '<div class="text-muted text-center" style="padding:40px">No hay preguntas visibles en esta página.</div>';
+  if (visibleQuestions === 0) html += '<div class="exec-empty-state">No hay preguntas visibles con el filtro actual. Probá volver a mostrar todas.</div>';
+  html = html.replace('__VISIBLE_EVIDENCE__', String(visibleEvidence));
   content.innerHTML = html;
+  hydrateLocalMediaPreviews(content);
+  bindInspectorInputHandlers(content);
+  document.getElementById('btnJumpRequiredInline')?.addEventListener('click', jumpToNextRequired);
+  renderFindingsPanel();
 }
 
-function renderQuestionEditorHtml(q, answerStore, instIdx, secId) {
+function bindInspectorInputHandlers(container) {
+  container.querySelectorAll('.ans-checkbox').forEach(el => {
+    el.addEventListener('change', () => setAns(el.dataset.qid, el.checked ? 'true' : '', el.dataset.instidx === '' ? null : parseInt(el.dataset.instidx, 10), el.dataset.secid || null));
+  });
+  container.querySelectorAll('.ans-input').forEach(el => {
+    const handler = () => setAns(el.dataset.qid, el.value, el.dataset.instidx === '' ? null : parseInt(el.dataset.instidx, 10), el.dataset.secid || null);
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  });
+  container.querySelectorAll('.ans-meta-input').forEach(el => {
+    el.addEventListener('input', () => setAnsMeta(el.dataset.qid, el.dataset.metaType, el.value, el.dataset.instidx === '' ? null : parseInt(el.dataset.instidx, 10), el.dataset.secid || null));
+  });
+  container.querySelectorAll('.media-upload-input').forEach(el => {
+    el.addEventListener('change', () => uploadMedia(el.dataset.qid, el, el.dataset.instidx === '' ? null : parseInt(el.dataset.instidx, 10), el.dataset.secid || null));
+  });
+}
+
+function optionColor(index) {
+  return ['#16a34a', '#dc2626', '#6b7280', '#2563eb', '#d97706', '#7c3aed'][index % 6];
+}
+
+function renderQuestionEditorHtml(q, answerStore, instIdx, secId, questionNumber) {
   const ans = answerStore[q.id] || { value: '', note: '', mediaFiles: [], flagged: false, action: '' };
   if (!answerStore[q.id]) answerStore[q.id] = ans; // init
   
   const val = ans.value || '';
+  const answered = isAnsweredValue(val);
+  const stateClass = answered ? 'is-answered' : (q.required ? 'is-required-pending' : 'is-pending');
+  const flaggedClass = ans.flagged ? 'is-flagged' : '';
+  const collapsedClass = collapseAnswered && answered ? 'is-collapsed' : '';
   let inputHtml = '';
   const qArgs = instIdx !== null ? `'${q.id}', this.value, ${instIdx}, '${secId}'` : `'${q.id}', this.value`;
   const qArgsCk = instIdx !== null ? `'${q.id}', this.checked?'true':'', ${instIdx}, '${secId}'` : `'${q.id}', this.checked?'true':''`;
   
   if (q.responseType === 'multiple_choice' || q.responseType === 'yesno') {
     let opts = q.options;
-    if (!opts) opts = [{id:'yes',label:'Sí'},{id:'no',label:'No'},{id:'na',label:'N.A.'}];
+    if (!opts) opts = [{id:'yes',label:'Si',color:'#16a34a'},{id:'no',label:'No',color:'#dc2626'},{id:'na',label:'N.A.',color:'#6b7280'}];
     
     inputHtml = `
       <div class="exec-yesno-group">
-        ${opts.map(o => `
-          <button class="btn-yn ${val===String(o.id)?'active':''}" data-val="${o.id}" onclick="setAns('${q.id}','${o.id}', ${instIdx !== null ? instIdx : 'null'}, ${secId ? `'${secId}'` : 'null'})">${esc(o.label)}</button>
+        ${opts.map((o, idx) => `
+          <button class="btn-yn ${val===String(o.id)?'active':''}" data-action="set-answer-option" data-qid="${q.id}" data-value="${o.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" style="--opt-color:${o.color||optionColor(idx)}">${esc(o.label)}</button>
         `).join('')}
       </div>
     `;
   } else if (q.responseType === 'checkbox') {
-    inputHtml = `<label style="display:flex;align-items:center;gap:8px;font-size:1rem;cursor:pointer"><input type="checkbox" style="width:20px;height:20px" ${val==='true'?'checked':''} onchange="setAns(${qArgsCk})"> Marcar opción</label>`;
+    inputHtml = `<label style="display:flex;align-items:center;gap:8px;font-size:1rem;cursor:pointer"><input type="checkbox" class="ans-checkbox" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" style="width:20px;height:20px" ${val==='true'?'checked':''}> Marcar opción</label>`;
   } else if (q.responseType === 'text') {
-    inputHtml = `<textarea class="textarea" oninput="setAns(${qArgs})">${esc(val)}</textarea>`;
+    inputHtml = `<textarea class="textarea ans-input" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" id="q_${q.id}_textarea" name="q_${q.id}">${esc(val)}</textarea>`;
   } else if (q.responseType === 'date') {
-    inputHtml = `<input type="datetime-local" class="input" value="${val}" onchange="setAns(${qArgs})">`;
+    inputHtml = `<input type="datetime-local" class="input ans-input" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" id="q_${q.id}_input" name="q_${q.id}" value="${val}">`;
   } else if (q.responseType === 'number') {
-    inputHtml = `<input type="number" class="input" value="${esc(val)}" oninput="setAns(${qArgs})">`;
+    inputHtml = `<input type="number" class="input ans-input" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" id="q_${q.id}_input" name="q_${q.id}" value="${esc(val)}">`;
   } else {
-    inputHtml = `<input type="text" class="input" placeholder="Ingresa texto..." value="${esc(val)}" oninput="setAns(${qArgs})">`;
+    inputHtml = `<input type="text" class="input ans-input" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" id="q_${q.id}_input" name="q_${q.id}" placeholder="Ingresa texto..." value="${esc(val)}">`;
   }
   
   let helpTextHtml = '';
@@ -241,41 +1103,53 @@ function renderQuestionEditorHtml(q, answerStore, instIdx, secId) {
     const extId = `eb-${secId||''}-${instIdx||''}-${q.id}`;
     const tArgs = instIdx !== null ? `'${q.id}', '{type}', ${instIdx}, '${secId}'` : `'${q.id}', '{type}'`;
     extrasHtml += `<div class="exec-extras"><div class="exec-extra-btns">`;
-    if (q.allowNote) extrasHtml += `<button class="exec-extra-btn ${ans.note?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','note')})">📝 Nota</button>`;
-    if (q.allowMedia) extrasHtml += `<button class="exec-extra-btn ${(ans.mediaFiles&&ans.mediaFiles.length>0)?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','media')})">📷 Foto/Media</button>`;
+    if (q.allowNote) extrasHtml += `<button class="exec-extra-btn ${(ans.note || ans._showNote)?'active':''}" data-action="toggle-extra" data-extra-type="note" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}">Nota</button>`;
+    if (q.allowMedia) extrasHtml += `<button class="exec-extra-btn ${((ans.mediaFiles&&ans.mediaFiles.length>0) || ans._showMedia)?'active':''}" data-action="toggle-extra" data-extra-type="media" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}">Foto</button>`;
     if (q.allowAction) {
-      extrasHtml += `<button class="exec-extra-btn ${ans.action?'active':''}" onclick="toggleExtra(${tArgs.replace('{type}','action')})">⚡ Acción</button>`;
-      extrasHtml += `<button class="exec-extra-btn ${ans.flagged?'active':''}" style="${ans.flagged?'color:red;border-color:red':''}" onclick="toggleFlag(${tArgs.replace('{type}','')})">🚩 Señalar</button>`;
+      extrasHtml += `<button class="exec-extra-btn ${(ans.action || ans._showAction)?'active':''}" data-action="toggle-extra" data-extra-type="action" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}">Acción</button>`;
+      extrasHtml += `<button class="exec-extra-btn ${ans.flagged?'active':''}" style="${ans.flagged?'color:red;border-color:red':''}" data-action="toggle-flag" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}">Señalar</button>`;
     }
     extrasHtml += `</div>`;
     
     const setMetaArgs = instIdx !== null ? `'${q.id}', '{type}', this.value, ${instIdx}, '${secId}'` : `'${q.id}', '{type}', this.value`;
     extrasHtml += `<div id="note-${extId}" class="exec-note-box ${ans.note?'active':''}">
-      <textarea class="textarea" style="min-height:50px" placeholder="Escribe una nota..." oninput="setAnsMeta(${setMetaArgs.replace('{type}','note')})">${esc(ans.note)}</textarea>
+      <textarea class="textarea ans-meta-input" data-meta-type="note" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" style="min-height:50px" placeholder="Escribe una nota...">${esc(ans.note)}</textarea>
     </div>`;
     extrasHtml += `<div id="action-${extId}" class="exec-action-box ${ans.action?'active':''}">
-      <textarea class="textarea" style="min-height:50px" placeholder="Describe la acción correctiva..." oninput="setAnsMeta(${setMetaArgs.replace('{type}','action')})">${esc(ans.action)}</textarea>
+      <textarea class="textarea ans-meta-input" data-meta-type="action" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" style="min-height:50px" placeholder="Describe la acción correctiva...">${esc(ans.action)}</textarea>
     </div>`;
     const fId = `fi-${extId}`;
     const upArgs = instIdx !== null ? `'${q.id}', this, ${instIdx}, '${secId}'` : `'${q.id}', this`;
     extrasHtml += `<div id="media-${extId}" class="exec-media-box ${(ans.mediaFiles&&ans.mediaFiles.length>0)?'active':''}">
-      <input type="file" id="${fId}" style="display:none" accept="image/*,video/*" onchange="uploadMedia(${upArgs})">
-      <button class="btn btn-outline btn-sm" onclick="document.getElementById('${fId}').click()">+ Subir archivo</button>
+      <input type="file" id="${fId}" name="media_${q.id}" class="media-upload-input" data-qid="${q.id}" data-instidx="${instIdx !== null ? instIdx : ''}" data-secid="${secId || ''}" style="display:none" accept="image/*,video/*" capture="environment">
+      <button class="btn btn-outline btn-sm" data-action="browse-media-upload" data-file-input="${fId}">+ Subir archivo</button>
       <div class="media-preview-list">
-        ${(ans.mediaFiles||[]).map(m => `<img src="/uploads/${m}" class="media-preview-item">`).join('')}
+        ${(ans.mediaFiles||[]).map(m => mediaPreviewMarkup(m, 'media-preview-item', '')).join('')}
       </div>
     </div>`;
     extrasHtml += `</div>`;
   }
   
-  let qTitleHtml = `<div class="exec-q-text" style="display:flex; align-items:center;">
-    <span style="flex:1">${esc(q.text)}${q.required?'<span class="req">*</span>':''}</span>
-    ${(q.helpText && q.helpTextVisible === 'on_demand') ? `<button class="btn-icon" style="color:var(--indigo); padding:4px;" onclick="document.getElementById('${htId}').style.display = document.getElementById('${htId}').style.display === 'none' ? 'block' : 'none'" title="Ver instrucciones">ℹ️</button>` : ''}
+  let qTitleHtml = `<div class="exec-q-head">
+    <div class="exec-q-order-wrap">
+      <span class="exec-q-order">${questionNumber}</span>
+      <div class="exec-q-text">
+        <span class="exec-q-label">${esc(q.text)}${q.required?'<span class="req">*</span>':''}</span>
+        <div class="exec-q-meta">
+          <span class="exec-q-type">${esc(responseTypeLabel(q.responseType || 'text'))}</span>
+          ${q.score ? `<span class="exec-q-score">${esc(String(q.score))} pts</span>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="exec-q-head-actions">
+      <span class="exec-q-state">${ans.flagged ? 'Señalada' : answered ? 'Respondida' : q.required ? 'Requerida' : 'Pendiente'}</span>
+      ${(q.helpText && q.helpTextVisible === 'on_demand') ? `<button class="btn-icon exec-help-btn" data-action="toggle-help-visibility" data-target-id="${htId}" title="Ver instrucciones">Info</button>` : ''}
+    </div>
   </div>`;
 
   const eqId = `eq-${secId||''}-${instIdx||''}-${q.id}`;
   return `
-    <div class="exec-question" id="${eqId}">
+    <div class="exec-question ui-question-focus ${stateClass} ${flaggedClass} ${collapsedClass}" id="${eqId}">
       ${qTitleHtml}
       ${helpTextHtml}
       <div class="exec-answer-area">${inputHtml}</div>
@@ -287,6 +1161,7 @@ function renderQuestionEditorHtml(q, answerStore, instIdx, secId) {
 function addRepInstance(secId) {
   if (!ins.repeatableAnswers[secId]) ins.repeatableAnswers[secId] = [];
   ins.repeatableAnswers[secId].push({});
+  persistLocalDraft();
   renderContent();
   updateProgress();
 }
@@ -294,6 +1169,7 @@ function addRepInstance(secId) {
 function removeRepInstance(secId, idx) {
   if (confirm('¿Eliminar esta instancia? Se perderán las respuestas.')) {
     ins.repeatableAnswers[secId].splice(idx, 1);
+    persistLocalDraft();
     renderContent();
     updateProgress();
   }
@@ -313,6 +1189,7 @@ function getAnswerObj(qid, instIdx, secId) {
 function setAns(qid, val, instIdx = null, secId = null) {
   let ans = getAnswerObj(qid, instIdx, secId);
   ans.value = val;
+  persistLocalDraft();
   activityBuffer.push({ type: 'answer', qid: qid, val: val, ts: new Date().toISOString() });
   updateProgress();
   
@@ -324,7 +1201,7 @@ function setAns(qid, val, instIdx = null, secId = null) {
     const el = document.getElementById(eqId);
     if (el) {
       el.querySelectorAll('.btn-yn').forEach(b => {
-        b.classList.toggle('active', b.dataset.val === val);
+        b.classList.toggle('active', b.dataset.value === val);
       });
     }
   }
@@ -333,33 +1210,63 @@ function setAns(qid, val, instIdx = null, secId = null) {
 function setAnsMeta(qid, key, val, instIdx = null, secId = null) {
   let ans = getAnswerObj(qid, instIdx, secId);
   ans[key] = val;
+  persistLocalDraft();
 }
 
 function toggleFlag(qid, instIdx = null, secId = null) {
   let a = getAnswerObj(qid, instIdx, secId);
   a.flagged = !a.flagged;
+  persistLocalDraft();
   renderContent(); 
 }
 
 function toggleExtra(qid, type, instIdx = null, secId = null) {
-  const extId = `eb-${secId||''}-${instIdx||''}-${qid}`;
-  const el = document.getElementById(`${type}-${extId}`);
-  if (el) {
-    el.classList.toggle('active');
-    renderContent();
-  }
+  let ans = getAnswerObj(qid, instIdx, secId);
+  const key = type === 'note' ? '_showNote' : (type === 'media' ? '_showMedia' : '_showAction');
+  ans[key] = !ans[key];
+  persistLocalDraft();
+  renderContent();
 }
 
 async function uploadMedia(qid, input, instIdx = null, secId = null) {
   const file = input.files[0];
   if (!file) return;
   try {
-    const res = await api.upload('/api/inspections/' + id + '/upload', file);
+    setSyncStatus(navigator.onLine ? 'saving' : 'offline', navigator.onLine ? 'Subiendo archivo...' : 'Borrador local');
+    const blob = window.auditCompress ? await window.auditCompress.comprimirImagen(file, 0.5) : file;
+    const fotoId = crypto.randomUUID();
+    if (window.auditDb) {
+      await window.auditDb.guardarFoto(fotoId, id, qid, blob);
+    }
     let ans = getAnswerObj(qid, instIdx, secId);
     if (!ans.mediaFiles) ans.mediaFiles = [];
-    ans.mediaFiles.push(res.filename);
+    if (navigator.onLine) {
+      var uploadBlob = blob instanceof Blob ? blob : file;
+      var uploadFile = uploadBlob instanceof File ? uploadBlob : new File([uploadBlob], fotoId + '.webp', { type: uploadBlob.type || 'image/webp' });
+      const res = await api.upload('/api/inspections/' + id + '/upload', uploadFile);
+      ans.mediaFiles.push(res.filename);
+      if (window.auditDb) await window.auditDb.marcarFotoSubida(fotoId, res.filename);
+    } else {
+      ans.mediaFiles.push('local:' + fotoId);
+      await queueInspectionSync('inspection-save');
+    }
+    persistLocalDraft();
+    if (navigator.onLine) {
+      ins = await api.put('/api/inspections/' + id, buildInspectionPayload());
+    }
+    persistInspectionCache();
+    setSyncStatus(navigator.onLine ? 'saved' : 'offline', navigator.onLine ? 'Archivo sincronizado' : 'Foto guardada localmente');
     renderContent();
-  } catch(e) { toast('Error subiendo', 'error'); }
+    toast('Archivo agregado', 'success');
+  } catch(e) {
+    if (handleInspectionConflict(e)) {
+      input.value = '';
+      return;
+    }
+    setSyncStatus(navigator.onLine ? 'error' : 'offline', navigator.onLine ? 'Pendiente' : 'Sin conexion');
+    toast('Error subiendo', 'error');
+  }
+  input.value = '';
 }
 
 function renderReport() {
@@ -389,20 +1296,20 @@ function renderReport() {
     <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/pdf-findings">Hallazgos PDF</a>
     <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/xlsx">Excel</a>
     <a class="btn btn-outline" href="/api/inspections/${ins.id}/export/csv">CSV</a>
-    <button class="btn btn-outline" onclick="openSignature()">Firma Digital</button>
-    <button class="btn btn-ghost" onclick="window.location='mailto:?subject='+encodeURIComponent(ins.templateName)+'&body='+encodeURIComponent(mailBody)">Enviar por Email</button>
-    ${ins.activityLog && ins.activityLog.length > 0 ? '<button class="btn btn-ghost" onclick="toggleActivityLog()">Ver Actividad (' + ins.activityLog.length + ')</button>' : ''}
+    <button class="btn btn-outline" data-action="open-signature">Firma Digital</button>
+    <button class="btn btn-ghost" data-action="send-report-email">Enviar por Email</button>
+    ${ins.activityLog && ins.activityLog.length > 0 ? '<button class="btn btn-ghost" data-action="toggle-activity-log">Ver Actividad (' + ins.activityLog.length + ')</button>' : ''}
   </div>`;
   
   const renderAnsContent = (q, a) => {
     if (!a || (a.value==='' && !a.note && !a.mediaFiles?.length && !a.action)) return '';
     return `<div style="margin-bottom:16px;border-bottom:1px solid var(--gray-200);padding-bottom:16px;">
       <div style="font-weight:600;margin-bottom:8px;">${esc(q.text)}</div>
-      ${a.flagged ? '<div style="color:var(--red);font-size:.85rem;font-weight:600;margin-bottom:4px;">🚩 Elemento señalado</div>' : ''}
+      ${a.flagged ? '<div style="color:var(--red);font-size:.85rem;font-weight:600;margin-bottom:4px;">Elemento señalado</div>' : ''}
       <div style="color:var(--gray-600);margin-bottom:4px;">Respuesta: <span style="color:var(--gray-800);font-weight:500">${esc(a.value)||'-'}</span></div>
       ${a.note ? `<div style="font-size:.85rem;color:var(--gray-500);margin-bottom:4px;">Nota: ${esc(a.note)}</div>` : ''}
       ${a.action ? `<div style="font-size:.85rem;color:var(--indigo);margin-bottom:4px;">Acción: ${esc(a.action)}</div>` : ''}
-      ${(a.mediaFiles&&a.mediaFiles.length>0) ? `<div style="display:flex;gap:8px;margin-top:8px">${a.mediaFiles.map(m=>`<img src="/uploads/${m}" style="height:60px;border-radius:4px;border:1px solid var(--gray-200)">`).join('')}</div>` : ''}
+      ${(a.mediaFiles&&a.mediaFiles.length>0) ? `<div style="display:flex;gap:8px;margin-top:8px">${a.mediaFiles.map(m=>mediaPreviewMarkup(m, '', 'height:60px;border-radius:4px;border:1px solid var(--gray-200)')).join('')}</div>` : ''}
     </div>`;
   };
 
@@ -429,6 +1336,7 @@ function renderReport() {
   });
   
   v.innerHTML = rHtml;
+  hydrateLocalMediaPreviews(v);
 }
 function toggleActivityLog() {
   var existing = document.getElementById('activityLogPanel');
@@ -445,48 +1353,127 @@ function toggleActivityLog() {
 
 // Kiosk mode
 var kioskMode = false;
-document.getElementById('btnKiosk').onclick = function() {
+document.getElementById('btnKiosk')?.addEventListener('click', function() {
   kioskMode = !kioskMode;
   document.querySelector('.inspector-topbar').classList.toggle('kiosk-hidden', kioskMode);
   document.body.classList.toggle('kiosk-mode', kioskMode);
-};
+});
 
 // Signature
 var sigCanvas = null; var sigCtx = null; var sigDrawing = false;
+let sigPoints = [];
+
+function getSigPos(e) {
+  const rect = sigCanvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
 function openSignature() {
   document.getElementById('sigModal').classList.remove('hidden');
   sigCanvas = document.getElementById('sigPad');
   sigCtx = sigCanvas.getContext('2d');
-  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-  sigCtx.strokeStyle = '#1f2937'; sigCtx.lineWidth = 2; sigCtx.lineCap = 'round';
-  sigCanvas.onmousedown = function(e) { sigDrawing = true; sigCtx.beginPath(); sigCtx.moveTo(e.offsetX, e.offsetY); };
-  sigCanvas.onmousemove = function(e) { if (!sigDrawing) return; sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke(); };
-  sigCanvas.onmouseup = function() { sigDrawing = false; };
-  sigCanvas.onmouseleave = function() { sigDrawing = false; };
+  
+  const ratio = window.devicePixelRatio || 1;
+  const w = sigCanvas.offsetWidth;
+  const h = sigCanvas.offsetHeight;
+  sigCanvas.width = w * ratio;
+  sigCanvas.height = h * ratio;
+  sigCtx.scale(ratio, ratio);
+  
+  clearSignature();
+  sigCtx.strokeStyle = '#1a1a1b';
+  sigCtx.lineWidth = 2.5; 
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  const start = (e) => {
+    e.preventDefault();
+    sigDrawing = true;
+    const pos = getSigPos(e);
+    sigCtx.beginPath();
+    sigCtx.moveTo(pos.x, pos.y);
+    sigPoints = [pos];
+  };
+
+  const move = (e) => {
+    if (!sigDrawing) return;
+    e.preventDefault();
+    const pos = getSigPos(e);
+    sigPoints.push(pos);
+    
+    if (sigPoints.length > 2) {
+      const lastTwo = sigPoints.slice(-3);
+      const midPoint = {
+        x: (lastTwo[1].x + lastTwo[2].x) / 2,
+        y: (lastTwo[1].y + lastTwo[2].y) / 2
+      };
+      sigCtx.quadraticCurveTo(lastTwo[1].x, lastTwo[1].y, midPoint.x, midPoint.y);
+      sigCtx.stroke();
+    }
+  };
+
+  const stop = () => { sigDrawing = false; };
+
+  sigCanvas.onmousedown = start;
+  sigCanvas.onmousemove = move;
+  window.onmouseup = stop;
+  
+  sigCanvas.ontouchstart = start;
+  sigCanvas.ontouchmove = move;
+  sigCanvas.ontouchend = stop;
 }
+
 async function saveSignature() {
-  var dataUrl = sigCanvas.toDataURL('image/png');
-  try { await api.post('/api/inspections/' + id + '/signature', { signature: dataUrl }); toast('Firma guardada', 'success'); }
+  const nameEl = document.getElementById('sigName');
+  const titleEl = document.getElementById('sigTitle');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const title = titleEl ? titleEl.value.trim() : '';
+  
+  if (!name) {
+    toast('El nombre es obligatorio', 'error');
+    return;
+  }
+
+  const dataUrl = sigCanvas.toDataURL('image/png');
+  try { 
+    await api.post('/api/inspections/' + id + '/signature', { 
+      signature: dataUrl,
+      signerName: name,
+      signerTitle: title
+    }); 
+    ins.signature = dataUrl;
+    ins.signerName = name;
+    ins.signerTitle = title;
+    toast('Firma guardada correctamente', 'success'); 
+    document.getElementById('sigModal').classList.add('hidden');
+    if (ins.status === 'completed') renderReport();
+  }
   catch(e) { toast('Error guardando firma', 'error'); }
-  document.getElementById('sigModal').classList.add('hidden');
 }
-function clearSignature() { if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
 
+function clearSignature() { 
+  if (sigCtx) {
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    sigPoints = [];
+  }
+}
+
+document.getElementById('btnCloseSigModal')?.addEventListener('click', function() {
+  document.getElementById('sigModal').classList.add('hidden');
+});
+document.getElementById('btnClearSignature')?.addEventListener('click', clearSignature);
+document.getElementById('btnSaveSignature')?.addEventListener('click', saveSignature);
 </script>
-
 <!-- Signature Modal -->
 <div class='modal-overlay hidden' id='sigModal'>
   <div class='modal'>
-    <div class='modal-header'><h2>Firma Digital</h2><button class='btn btn-ghost btn-icon ml-auto' onclick="document.getElementById('sigModal').classList.add('hidden')">&#x2715;</button></div>
+    <div class='modal-header'><h2 data-t="inspector.digital_signature">Firma Digital</h2><button class='btn btn-ghost btn-icon ml-auto' id="btnCloseSigModal">&#x2715;</button></div>
     <div class='modal-body'><canvas id='sigPad' width='500' height='200' class='sig-canvas'></canvas></div>
-    <div class='modal-footer'><button class='btn btn-outline' onclick='clearSignature()'>Limpiar</button><button class='btn btn-primary' onclick='saveSignature()'>Guardar Firma</button></div>
+    <div class='modal-footer'><button class='btn btn-outline' id="btnClearSignature">Limpiar</button><button class='btn btn-primary' id="btnSaveSignature">Guardar Firma</button></div>
   </div>
 </div>
 
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(function() {});
-}
-</script>
 </body>
 </html>

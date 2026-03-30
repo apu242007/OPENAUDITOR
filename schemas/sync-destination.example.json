@@ -1,0 +1,11 @@
+{
+  "id": "demo-apps",
+  "name": "Apps Script demo",
+  "kind": "apps_script",
+  "url": "https://script.google.com/macros/s/REEMPLAZAR/exec",
+  "headers": {
+    "X-Workspace": "planta-norte"
+  },
+  "enabled": true,
+  "notes": "Usa una hoja por plantilla en Google Sheets."
+}

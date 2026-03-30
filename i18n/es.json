@@ -1,0 +1,72 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "actions": "Acciones",
+    "status": "Estado",
+    "name": "Nombre",
+    "date": "Fecha",
+    "back": "Volver",
+    "close": "Cerrar"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "home": "Inicio",
+    "settings": "Configuración",
+    "about": "Acerca de",
+    "import_json": "Importar JSON",
+    "corrective_actions": "Acciones Correctivas",
+    "compare": "Comparar",
+    "search": "Búsqueda"
+  },
+  "dashboard": {
+    "templates_title": "Mis Plantillas",
+    "inspections_title": "Inspecciones Recientes",
+    "new_template": "Nueva plantilla",
+    "blank_template": "Plantilla en blanco",
+    "import_from_json": "Importar desde archivo JSON",
+    "import_from_url": "Importar desde URL",
+    "import_package": "Importar paquete .oapack",
+    "search_placeholder": "Buscar por nombre...",
+    "filter_all": "Todos los estados",
+    "filter_draft": "Borrador",
+    "filter_published": "Publicada",
+    "sort_recent": "Más recientes",
+    "sort_oldest": "Más antiguos",
+    "no_templates": "No hay plantillas",
+    "no_inspections": "No hay inspecciones",
+    "pages_count": "{{count}} pág.",
+    "uses_count": "{{count}} usos",
+    "start_inspection": "Iniciar inspección",
+    "qr": "QR",
+    "ver_reporte": "Ver Reporte",
+    "continuar": "Continuar"
+  },
+  "inspector": {
+    "complete_inspection": "Finalizar inspección",
+    "kiosk_mode": "Modo Kiosco",
+    "completed_on": "Completada el",
+    "score": "Puntuación",
+    "digital_signature": "Firma Digital",
+    "send_email": "Enviar por Email",
+    "view_activity": "Ver Actividad ({{count}})",
+    "flagged_item": "Elemento señalado",
+    "response": "Respuesta",
+    "note": "Nota",
+    "action": "Acción",
+    "signature_modal": {
+      "title": "Finalizar con Firma",
+      "signer_name": "Nombre del Firmante",
+      "signer_title": "Cargo / Título (Opcional)",
+      "draw_hint": "Firma sobre la línea",
+      "clear": "Limpiar trazo",
+      "save": "Guardar Firma y Finalizar"
+    }
+  }
+}

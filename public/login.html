@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditor Libre - Acceso abierto</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/api/config/theme.css">
+  <script defer src="/colorized-selects.js"></script>
+</head>
+<body>
+<main class="index-main" style="max-width:520px;min-height:100vh;display:flex;align-items:center;">
+  <div class="card card-padding" style="width:100%;">
+    <h1 style="margin-bottom:8px;">Auditor Libre sin login</h1>
+    <p class="text-sm text-muted" style="margin-bottom:18px;">Esta instancia funciona en modo abierto. No hace falta autenticación interna para usar la app.</p>
+    <div class="flex gap-2">
+      <a class="btn btn-primary" href="/">Entrar a la app</a>
+      <a class="btn btn-outline" href="https://github.com/apu242007/Auditor Libre" target="_blank" rel="noreferrer">Ayuda</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

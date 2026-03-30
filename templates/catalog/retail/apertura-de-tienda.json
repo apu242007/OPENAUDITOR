@@ -1,0 +1,149 @@
+{
+  "name": "Apertura de Tienda",
+  "description": "Plantilla comunitaria para chequeo de apertura diaria en retail.",
+  "tags": ["retail", "apertura", "operaciones", "tienda"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-ret",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-ret",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-store-ret", "text": "Sucursal", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-ret", "text": "Fecha", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-manager-ret", "text": "Responsable de apertura", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-opening-ret",
+      "name": "Apertura",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-front-ret",
+          "title": "Frente y acceso",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            {
+              "id": "q-front-clean-ret",
+              "text": "Frente limpio y presentable",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-lights-ret",
+              "text": "Carteleria e iluminacion operativas",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-sales-ret",
+          "title": "Sala de ventas",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            {
+              "id": "q-gondolas-ret",
+              "text": "Gondolas completas y ordenadas",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-prices-ret",
+              "text": "Precios visibles",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-pos-ret",
+              "text": "POS y cajas listas para operar",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

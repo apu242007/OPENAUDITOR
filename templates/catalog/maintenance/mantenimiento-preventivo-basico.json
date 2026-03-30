@@ -1,0 +1,147 @@
+{
+  "name": "Mantenimiento Preventivo Basico",
+  "description": "Plantilla comunitaria para verificar estado general, limpieza, lubricacion y riesgos visibles en equipos.",
+  "tags": ["maintenance", "preventivo", "equipos"],
+  "settings": {
+    "defaultNotes": true,
+    "defaultMedia": true,
+    "defaultActions": true,
+    "defaultRequired": false
+  },
+  "report": {
+    "pageSize": "A4",
+    "showCover": true,
+    "showTOC": true,
+    "showScore": true,
+    "showFlaggedItems": true,
+    "logoPath": null,
+    "coverImagePath": null
+  },
+  "pages": [
+    {
+      "id": "page-cover-mnt",
+      "name": "Portada",
+      "type": "cover",
+      "sections": [
+        {
+          "id": "sec-cover-mnt",
+          "title": "",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-plant-mnt", "text": "Planta o sitio", "responseType": "site", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-date-mnt", "text": "Fecha", "responseType": "date", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-tech-mnt", "text": "Tecnico", "responseType": "person", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "page-general-mnt",
+      "name": "Chequeo General",
+      "type": "inspection",
+      "sections": [
+        {
+          "id": "sec-equipment-mnt",
+          "title": "Datos del equipo",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            { "id": "q-asset-mnt", "text": "Equipo o activo", "responseType": "text", "required": true, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-serial-mnt", "text": "Serie o identificacion", "responseType": "text", "required": false, "allowNote": false, "allowMedia": false, "allowAction": false, "score": null, "conditionalLogic": null },
+            { "id": "q-area-mnt", "text": "Area", "responseType": "location", "required": false, "allowNote": true, "allowMedia": true, "allowAction": false, "score": null, "conditionalLogic": null }
+          ]
+        },
+        {
+          "id": "sec-checks-mnt",
+          "title": "Puntos de control",
+          "repeatable": false,
+          "minInstances": 1,
+          "maxInstances": null,
+          "addButtonLabel": "",
+          "questions": [
+            {
+              "id": "q-clean-mnt",
+              "text": "Equipo limpio",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-lube-mnt",
+              "text": "Lubricacion correcta",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-guards-mnt",
+              "text": "Guardas y protecciones presentes",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#16a34a", "score": 10 },
+                { "id": "no", "label": "No", "color": "#dc2626", "score": 0 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-abnormal-mnt",
+              "text": "Ruidos o vibraciones anormales",
+              "responseType": "yesno",
+              "required": true,
+              "allowNote": true,
+              "allowMedia": true,
+              "allowAction": true,
+              "score": 10,
+              "conditionalLogic": null,
+              "options": [
+                { "id": "yes", "label": "Si", "color": "#dc2626", "score": 0 },
+                { "id": "no", "label": "No", "color": "#16a34a", "score": 10 },
+                { "id": "na", "label": "N/A", "color": "#6b7280", "score": 0 }
+              ]
+            },
+            {
+              "id": "q-observation-mnt",
+              "text": "Observaciones generales",
+              "responseType": "textarea",
+              "required": false,
+              "allowNote": false,
+              "allowMedia": true,
+              "allowAction": false,
+              "score": null,
+              "conditionalLogic": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

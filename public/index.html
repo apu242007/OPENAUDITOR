@@ -1,69 +1,125 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPEN AUDITOR</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>Auditor Libre</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
+  <link rel="stylesheet" href="/style.css?v=20260319b">
   <link rel="stylesheet" href="/api/config/theme.css">
   <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
+  <script defer src="/colorized-selects.js?v=20260319b"></script>
 </head>
 <body>
 <nav class="topnav">
-  <div class="topnav-logo">OPEN <span>AUDITOR</span></div>
+  <div class="topnav-logo">Auditor <span>Libre</span></div><div class="lang-switcher"><button class="btn btn-ghost btn-sm" type="button" data-lang="es">ES</button><button class="btn btn-ghost btn-sm" type="button" data-lang="en">EN</button></div>
   <div class="topnav-sep"></div>
   <span class="nav-subtitle">Dashboard</span>
   <div class="ml-auto nav-actions">
-    <button class="btn btn-ghost btn-nav-ghost" onclick="importTemplate()">Importar JSON</button>
+    <a class="btn btn-ghost btn-nav-ghost" href="/">Inicio</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/settings">Configuración</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/about">Acerca de</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/catalog">Catálogo</a>
+    <button class="btn btn-ghost btn-nav-ghost" type="button" id="btnImportJsonNav">Importar JSON</button>
     <a class="btn btn-ghost btn-nav-ghost" href="/actions">Acciones Correctivas</a>
     <a class="btn btn-ghost btn-nav-ghost" href="/compare">Comparar</a>
     <a class="btn btn-ghost btn-nav-ghost" href="/search.html">Búsqueda</a>
-    <button class="btn btn-ghost btn-nav-ghost" onclick="openConfig()">⚙️ Configuración</button>
   </div>
 </nav>
 
 <main class="index-main">
   <div id="scheduledAlert" class="scheduled-alert hidden"></div>
+  <section class="dashboard-hero ui-reveal dashboard-hero-delayed">
+    <div class="dashboard-hero-main ui-feature-card">
+      <div class="dashboard-hero-kicker">Open Source Inspection Ops</div>
+      <h1 class="dashboard-hero-title">Diseñá, probá y ejecutá inspecciones sin fricción.</h1>
+      <p class="dashboard-hero-copy">Toda la operación desde un solo dashboard: plantillas, pruebas, inspecciones recientes, catálogo comunitario y trabajo offline listo para desplegar.</p>
+      <div class="dashboard-hero-actions">
+        <button class="btn btn-primary ui-tactile ui-cta-glow" type="button" id="btnHeroCreate">Nueva plantilla</button>
+        <button class="btn btn-outline ui-tactile" type="button" id="btnHeroImport">Importar JSON</button>
+        <a class="btn btn-ghost" href="/catalog">Explorar catálogo</a>
+      </div>
+    </div>
+    <aside class="dashboard-hero-side">
+      <div class="dashboard-stat-grid">
+        <article class="dashboard-stat-card ui-feature-card">
+          <span class="dashboard-stat-label">Plantillas</span>
+          <strong class="dashboard-stat-value" id="dashboardStatTemplates">0</strong>
+          <span class="dashboard-stat-meta" id="dashboardStatTemplatesMeta">Sin datos todavía</span>
+        </article>
+        <article class="dashboard-stat-card ui-feature-card">
+          <span class="dashboard-stat-label">Publicadas</span>
+          <strong class="dashboard-stat-value" id="dashboardStatPublished">0</strong>
+          <span class="dashboard-stat-meta" id="dashboardStatPublishedMeta">Listas para usar</span>
+        </article>
+        <article class="dashboard-stat-card ui-feature-card">
+          <span class="dashboard-stat-label">Inspecciones</span>
+          <strong class="dashboard-stat-value" id="dashboardStatInspections">0</strong>
+          <span class="dashboard-stat-meta" id="dashboardStatInspectionsMeta">Actividad reciente</span>
+        </article>
+        <article class="dashboard-stat-card ui-feature-card">
+          <span class="dashboard-stat-label">Completadas</span>
+          <strong class="dashboard-stat-value" id="dashboardStatCompleted">0</strong>
+          <span class="dashboard-stat-meta" id="dashboardStatCompletedMeta">Reportes disponibles</span>
+        </article>
+      </div>
+    </aside>
+  </section>
   <div class="page-header">
     <h1>Mis Plantillas</h1>
     <div class="ml-auto dropdown-container">
-      <button class="btn btn-primary" id="btnNewDropdown" onclick="toggleDropdown('newTplDropdown')" aria-haspopup="true" aria-expanded="false" title="Crear nueva plantilla">+ Nueva Plantilla ▼</button>
+      <button class="btn btn-primary" id="btnNewDropdown" type="button" aria-haspopup="true" aria-expanded="false" title="Crear nueva plantilla">+ Nueva plantilla ▼</button>
       <div id="newTplDropdown" class="dropdown-menu hidden">
-        <a href="#" onclick="createNew(); return false;" class="dropdown-item" title="Crear plantilla en blanco">📄 Plantilla en blanco</a>
-        <a href="#" onclick="document.getElementById('importInput').click(); return false;" class="dropdown-item" title="Importar plantilla JSON">📥 Importar desde archivo JSON</a>
-        <a href="#" onclick="showImportUrlModal(); return false;" class="dropdown-item" title="Importar plantilla desde URL">🔗 Importar desde URL</a>
-        <a href="#" onclick="document.getElementById('packImport').click(); return false;" class="dropdown-item" title="Importar paquete .oapack">📦 Importar paquete .oapack</a>
+        <a href="#" id="menuCreateBlank" class="dropdown-item" title="Crear plantilla en blanco">Plantilla en blanco</a>
+        <a href="#" id="menuImportJson" class="dropdown-item" title="Importar plantilla JSON">Importar desde JSON</a>
+        <a href="#" id="menuImportUrl" class="dropdown-item" title="Importar plantilla desde URL">Importar desde URL</a>
+        <a href="#" id="menuImportPack" class="dropdown-item" title="Importar paquete .oapack">Importar paquete .oapack</a>
       </div>
-      <input type="file" id="packImport" class="hidden" accept=".oapack" aria-label="Importar paquete .oapack">
+      <input type="file" id="packImport" name="packImport" class="hidden" accept=".oapack" aria-label="Importar paquete .oapack">
     </div>
   </div>
 
   <div class="filter-bar">
     <label for="searchName" class="visually-hidden">Buscar por nombre</label>
-    <input type="text" class="input" id="searchName" placeholder="Buscar por nombre..." title="Buscar por nombre">
+    <input type="text" class="input" id="searchName" name="searchName" placeholder="Buscar por nombre..." title="Buscar por nombre">
     <label for="filterStatus" class="visually-hidden">Filtrar por estado</label>
-    <select class="input w-160" id="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
+    <select class="input w-160" id="filterStatus" name="filterStatus" title="Filtrar por estado" aria-label="Filtrar por estado">
       <option value="all">Todos los estados</option>
       <option value="draft">Borrador</option>
       <option value="published">Publicada</option>
     </select>
     <label for="filterTag" class="visually-hidden">Filtrar por etiqueta</label>
-    <input type="text" class="input w-160" id="filterTag" placeholder="Filtrar por etiqueta..." title="Filtrar por etiqueta">
+    <input type="text" class="input w-160" id="filterTag" name="filterTag" placeholder="Filtrar por etiqueta..." title="Filtrar por etiqueta">
     <label for="sortOrder" class="visually-hidden">Ordenar por</label>
-    <select class="input w-160" id="sortOrder" title="Ordenar por" aria-label="Ordenar por">
+    <select class="input w-160" id="sortOrder" name="sortOrder" title="Ordenar por" aria-label="Ordenar por">
       <option value="desc">Más recientes</option>
       <option value="asc">Más antiguos</option>
       <option value="az">A - Z</option>
     </select>
   </div>
+  <div class="dashboard-subbar ui-filter-surface">
+    <div class="dashboard-results-copy">
+      <strong id="templateResultsCount">0 plantillas</strong>
+      <span id="templateResultsMeta">Sin filtros activos</span>
+    </div>
+    <div class="dashboard-view-toggle" role="group" aria-label="Cambiar vista de plantillas">
+      <button class="dashboard-view-btn active" type="button" data-view-mode="cards" id="btnViewCards">Tarjetas</button>
+      <button class="dashboard-view-btn" type="button" data-view-mode="table" id="btnViewTable">Tabla</button>
+    </div>
+  </div>
 
   <div class="card" id="templateCard">
     <div id="emptyState" class="empty-state hidden">
-      <div class="empty-state-icon" aria-hidden="true">📄</div>
+      <div class="empty-state-icon" aria-hidden="true">+</div>
       <h3>No hay plantillas</h3>
       <p class="empty-state-text">Crea tu primera plantilla o ajusta los filtros.</p>
       <button class="btn btn-primary" id="btnNewEmpty" title="Crear nueva plantilla" aria-label="Crear nueva plantilla">+ Nueva Plantilla</button>
     </div>
+    <div id="templateCards" class="template-card-grid hidden"></div>
     <table class="template-table" id="templateTable" aria-label="Tabla de plantillas">
       <thead>
         <tr>
@@ -101,147 +157,328 @@
 
 <div class="toast-container" id="toastContainer"></div>
 <label for="importInput" class="visually-hidden">Importar plantilla JSON</label>
-<label for="importInput" class="visually-hidden">Importar plantilla JSON</label>
-<input type="file" id="importInput" class="hidden" accept=".json" title="Importar plantilla JSON" aria-label="Importar plantilla JSON">
+<input type="file" id="importInput" name="importInput" class="hidden" accept=".json" title="Importar plantilla JSON" aria-label="Importar plantilla JSON">
+
+<div id="modalJsonImport" class="modal-overlay hidden">
+  <div class="modal modal-json-import">
+    <div class="modal-header">
+      <h2>Importar desde JSON</h2>
+      <button class="btn btn-ghost btn-icon ml-auto" type="button" id="btnCloseJsonImport">×</button>
+    </div>
+    <div class="modal-body modal-json-import-body">
+      <div class="json-import-intro">
+        <p class="json-import-copy">Podés cargar un archivo propio o arrancar desde una plantilla comunitaria real, lista para adaptar.</p>
+        <div class="json-import-note">Las plantillas de ejemplo se importan como borrador para que las ajustes antes de publicarlas. Si querés explorarlas mejor, abrí el <a class="catalog-link-inline" href="/catalog">catálogo comunitario</a>.</div>
+      </div>
+      <div class="json-import-toolbar">
+        <input type="text" class="input json-import-search" id="exampleTemplateSearch" name="exampleTemplateSearch" placeholder="Buscar ejemplo por nombre, rubro o etiqueta..." aria-label="Buscar plantillas de ejemplo">
+        <select class="input json-import-category" id="exampleTemplateCategory" name="exampleTemplateCategory" aria-label="Filtrar por rubro">
+          <option value="all">Todos los rubros</option>
+        </select>
+      </div>
+      <div id="exampleTemplatesList" class="json-import-list">
+        <div class="text-sm text-muted">Cargando ejemplos...</div>
+      </div>
+    </div>
+    <div class="modal-footer modal-json-import-footer">
+      <button class="btn btn-outline" type="button" id="btnCancelJsonImport">Cancelar</button>
+      <button class="btn btn-primary" type="button" id="btnChooseJsonFile">Elegir archivo JSON</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Import URL -->
 <div id="modalImportUrl" class="modal-overlay hidden">
     <div class="modal modal-max-500">
       <div class="modal-header">
-        <h2>🔗 Importar plantilla desde URL</h2>
-        <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('modalImportUrl').classList.add('hidden')">✕</button>
+        <h2>Importar plantilla desde URL</h2>
+        <button class="btn btn-ghost btn-icon ml-auto" type="button" id="btnCloseImportUrl">✕</button>
       </div>
       <div class="modal-body">
         <p class="text-sm text-muted mb-2">Pegá la URL directa al archivo JSON:</p>
-        <input type="text" id="importUrlInput" class="input w-full" placeholder="https://raw.githubusercontent.com/...">
+        <input type="text" id="importUrlInput" name="importUrlInput" class="input w-full" placeholder="https://raw.githubusercontent.com/...">
         <div class="import-url-hint">
-          💡 Funciona con GitHub, GitLab y Gist.<br>
+          Funciona con GitHub, GitLab y Gist.<br>
           La plantilla se importará como borrador.
         </div>
       </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="document.getElementById('modalImportUrl').classList.add('hidden')">Cancelar</button>
+      <button class="btn btn-outline" type="button" id="btnCancelImportUrl">Cancelar</button>
       <button class="btn btn-primary" id="btnImportUrlSubmit">Importar plantilla →</button>
     </div>
   </div>
 </div>
 
-<!-- Config Modal -->
-<div class="modal-overlay hidden" id="configModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Configuración</h2>
-      <button class="btn btn-ghost btn-icon ml-auto close-settings-btn" onclick="document.getElementById('configModal').classList.add('hidden')" title="Cerrar configuración" aria-label="Cerrar configuración">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="report-field">
-        <label for="dataPathInput">Directorio de datos personalizado (opcional)</label>
-        <input type="text" class="input" id="dataPathInput" placeholder="/ruta/absoluta/a/tus/datos" title="Directorio de datos personalizado" aria-label="Directorio de datos personalizado">
-        <p class="text-xs text-muted mt-4">Deja en blanco para usar la ruta por defecto del SO. Requiere reiniciar el servidor.</p>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" onclick="saveConfig()" title="Guardar configuración" aria-label="Guardar configuración">Guardar</button>
-    </div>
-  </div>
-</div>
+<script>
+// Local dev hard-clean: avoid stale SW/cache breaking dashboard rendering.
+(function () {
+  var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!isLocal) return;
+  try {
+    var cleanedFlag = sessionStorage.getItem('oa_local_clean_v1');
+    if (cleanedFlag) return;
+    sessionStorage.setItem('oa_local_clean_v1', '1');
 
-<script src="/app.js"></script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        return Promise.all(regs.map(function(reg) { return reg.unregister(); }));
+      }).catch(function() {});
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+      }).catch(function() {});
+    }
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.indexOf('oa-') === 0 || k.indexOf('oa_') === 0) localStorage.removeItem(k);
+    });
+  } catch (e) {}
+})();
+</script>
+<script src="/app.js?v=20260319b"></script>
 <script>
 
 
 let templates = [];
 let inspections = [];
+let exampleTemplates = [];
+let templateViewMode = localStorage.getItem('oa-template-view') || 'cards';
+const categoryLabels = {
+  safety: 'Seguridad',
+  maintenance: 'Mantenimiento',
+  retail: 'Retail',
+  quality: 'Calidad',
+  operations: 'Operaciones',
+  general: 'General'
+};
 
+function translateUI() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.dataset.t;
+    if (el.tagName === 'INPUT' && el.placeholder) {
+      el.placeholder = t(key);
+    } else {
+      el.textContent = t(key);
+    }
+  });
+  // Manual overrides for elements that are complex or hard to target
+  const sub = document.querySelector('.nav-subtitle');
+  if (sub) sub.textContent = t('nav.dashboard');
+  
+  const h1s = document.querySelectorAll('h1');
+  if (h1s[0]) h1s[0].textContent = t('dashboard.templates_title');
+  if (h1s[1]) h1s[1].textContent = t('dashboard.inspections_title');
+}
 async function loadData() {
   try {
-    templates = await api.get('/api/templates');
-    inspections = await api.get('/api/inspections');
+    await initI18n();
+    translateUI();
+  } catch (err) { console.error('i18n fail:', err); }
+
+  try {
+    const ts = Date.now();
+    templates = await api.get('/api/templates?_=' + ts);
+    inspections = await api.get('/api/inspections?_=' + ts);
+    renderDashboardSummary();
     renderTemplates();
-    // UX: Si no hay plantillas visibles con el filtro actual, mostrar todas automáticamente
-    const tbody = document.getElementById('templateBody');
-    const statusSel = document.getElementById('filterStatus');
-    if (tbody && tbody.children.length === 0 && statusSel && statusSel.value !== 'all') {
-      statusSel.value = 'all';
-      renderTemplates();
-    }
     renderInspections();
     renderScheduledAlert();
+    applyTemplateViewMode();
   } catch (e) {
-    console.error('Error cargando datos:', e);
-    toast('Error cargando datos. Intenta recargar la página.', 'error');
+    console.error('Data loading error:', e);
   }
 }
-
 // Siempre recargar datos al cargar o restaurar la página
 window.addEventListener('pageshow', function() {
   loadData();
 });
 
+function getFilteredTemplatesList() {
+  const search = document.getElementById('searchName').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  const sort = document.getElementById('sortOrder').value;
+  const tagFilter = document.getElementById('filterTag').value.toLowerCase();
+  let filtered = templates.filter(t => String((t && t.name) || '').toLowerCase().includes(search));
+  if (tagFilter) filtered = filtered.filter(t => t.tags && t.tags.some(tg => tg.toLowerCase().includes(tagFilter)));
+  if (status !== 'all') filtered = filtered.filter(t => t.status === status);
+
+  filtered.sort((a, b) => {
+    if (sort === 'az') return String(a && a.name || '').localeCompare(String(b && b.name || ''));
+    const timeA = new Date((a && a.updatedAt) || 0).getTime();
+    const timeB = new Date((b && b.updatedAt) || 0).getTime();
+    return sort === 'desc' ? timeB - timeA : timeA - timeB;
+  });
+  return filtered;
+}
+
+function renderDashboardSummary() {
+  const published = templates.filter(t => t.status === 'published').length;
+  const completed = inspections.filter(i => i.status === 'completed').length;
+  const drafts = templates.filter(t => t.status !== 'published').length;
+  const inProgress = inspections.filter(i => i.status !== 'completed').length;
+  const latestTemplate = [...templates].sort((a, b) => new Date((b && b.updatedAt) || 0) - new Date((a && a.updatedAt) || 0))[0];
+
+  document.getElementById('dashboardStatTemplates').textContent = String(templates.length);
+  document.getElementById('dashboardStatPublished').textContent = String(published);
+  document.getElementById('dashboardStatInspections').textContent = String(inspections.length);
+  document.getElementById('dashboardStatCompleted').textContent = String(completed);
+  document.getElementById('dashboardStatTemplatesMeta').textContent = drafts ? (drafts + ' borrador(es) pendientes') : 'Todo en orden';
+  document.getElementById('dashboardStatPublishedMeta').textContent = published ? 'Listas para salir a campo' : 'Publicá tu primera plantilla';
+  document.getElementById('dashboardStatInspectionsMeta').textContent = inProgress ? (inProgress + ' en curso ahora') : 'Sin actividad en progreso';
+  document.getElementById('dashboardStatCompletedMeta').textContent = latestTemplate ? ('Última plantilla: ' + (latestTemplate.name || 'Sin nombre')) : 'Todavía sin reportes';
+}
+
+function renderTemplateCards(filtered) {
+  const host = document.getElementById('templateCards');
+  if (!host) return;
+  if (!filtered.length) {
+    host.innerHTML = '';
+    return;
+  }
+
+  host.innerHTML = filtered.map(function(t) {
+    const isPub = t.status === 'published';
+    const tags = (t.tags || []).slice(0, 4).map(function(tag) {
+      return '<span class="tag-pill">' + esc(tag) + '</span>';
+    }).join('');
+    const description = isPub
+      ? 'Plantilla publicada y lista para iniciar inspecciones desde campo o QR.'
+      : 'Borrador editable para terminar estructura, branding y lógica antes de publicar.';
+    return '<article class="template-summary-card ui-feature-card">' +
+      '<div class="template-summary-top">' +
+        '<div>' +
+          '<div class="template-summary-name">' + esc(t.name || 'Sin nombre') + '</div>' +
+          '<div class="template-summary-desc">' + esc(description) + '</div>' +
+        '</div>' +
+        '<span class="badge badge-' + esc(t.status || 'draft') + '">' + (isPub ? 'Publicada' : 'Borrador') + '</span>' +
+      '</div>' +
+      '<div class="template-summary-metrics">' +
+        '<span>' + esc(String(t.pageCount || 0)) + ' pág.</span>' +
+        '<span>' + esc(String(t.inspectionCount || 0)) + ' usos</span>' +
+        (tags ? tags : '<span>Sin etiquetas</span>') +
+      '</div>' +
+      '<div class="template-summary-footer">' +
+        '<span class="template-summary-updated">Actualizada ' + esc(formatDate(t.updatedAt)) + '</span>' +
+      '</div>' +
+      '<div class="template-summary-actions">' +
+        '<a class="btn btn-outline btn-sm" href="/editor/' + esc(t.id || '') + '">Editar</a>' +
+        (isPub ? '<button class="btn btn-success btn-sm" type="button" data-start-template="' + esc(t.id || '') + '">Iniciar</button>' : '') +
+        '<button class="btn btn-ghost btn-sm text-red" type="button" data-delete-template="' + esc(t.id || '') + '">Eliminar</button>' +
+      '</div>' +
+    '</article>';
+  }).join('');
+}
+
+function applyTemplateViewMode() {
+  const table = document.getElementById('templateTable');
+  const cards = document.getElementById('templateCards');
+  const isCards = templateViewMode === 'cards';
+  cards?.classList.toggle('hidden', !isCards);
+  table?.classList.toggle('hidden', isCards);
+  document.querySelectorAll('[data-view-mode]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-view-mode') === templateViewMode);
+  });
+}
+
+function updateTemplateResults(filtered) {
+  const status = document.getElementById('filterStatus').value;
+  const tagFilter = document.getElementById('filterTag').value.trim();
+  const search = document.getElementById('searchName').value.trim();
+  const parts = [];
+  if (status !== 'all') parts.push(status === 'published' ? 'solo publicadas' : 'solo borradores');
+  if (tagFilter) parts.push('etiqueta "' + tagFilter + '"');
+  if (search) parts.push('nombre "' + search + '"');
+  document.getElementById('templateResultsCount').textContent = filtered.length + ' plantilla(s)';
+  document.getElementById('templateResultsMeta').textContent = parts.length ? ('Filtrando por ' + parts.join(' · ')) : 'Vista general del espacio de trabajo';
+}
+
 function renderTemplates() {
   const tbody = document.getElementById('templateBody');
   const emptyState = document.getElementById('emptyState');
   const table = document.getElementById('templateTable');
-  const search = document.getElementById('searchName').value.toLowerCase();
-  const status = document.getElementById('filterStatus').value;
-  const sort = document.getElementById('sortOrder').value;
-
-  const tagFilter = document.getElementById('filterTag').value.toLowerCase();
-  let filtered = templates.filter(t => t.name.toLowerCase().includes(search));
-  if (tagFilter) filtered = filtered.filter(t => t.tags && t.tags.some(tg => tg.toLowerCase().includes(tagFilter)));
-  if (status !== 'all') {
-    filtered = filtered.filter(t => t.status === status);
-  }
-
-  filtered.sort((a, b) => {
-    if (sort === 'az') return a.name.localeCompare(b.name);
-    const timeA = new Date(a.updatedAt).getTime();
-    const timeB = new Date(b.updatedAt).getTime();
-    return sort === 'desc' ? timeB - timeA : timeA - timeB;
-  });
+  const cards = document.getElementById('templateCards');
+  const filtered = getFilteredTemplatesList();
+  updateTemplateResults(filtered);
+  renderTemplateCards(filtered);
 
   tbody.innerHTML = '';
   if (!filtered.length) {
     emptyState.classList.remove('hidden');
     table.classList.add('hidden');
+    cards?.classList.add('hidden');
   } else {
     emptyState.classList.add('hidden');
-    table.classList.remove('hidden');
+    if (templateViewMode === 'table') table.classList.remove('hidden');
+    if (templateViewMode === 'cards') cards?.classList.remove('hidden');
     filtered.forEach(t => {
-      const isPub = t.status === 'published';
-      const tr = document.createElement('tr');
-      var expiryBadge = '';
-      if (t.expiryStatus === 'expired') expiryBadge = '<span class="badge" style="background:#ef4444;color:#fff;margin-left:6px">Expirada</span>';
-      else if (t.expiryStatus === 'warning') expiryBadge = '<span class="badge" style="background:#f59e0b;color:#fff;margin-left:6px">Expira pronto</span>';
-      tr.innerHTML = `
-        <td><a class="template-name-link" href="/editor/${t.id}">${esc(t.name)}</a>${expiryBadge}</td>
-        <td class="text-muted text-sm">${t.pageCount} pág</td>
-        <td><span class="badge badge-${t.status}">${isPub ? 'Publicada' : 'Borrador'}</span></td>
-        <td class="text-muted text-sm">${formatDate(t.updatedAt)}</td>
-        <td>
-          <div class="actions-cell">
-            ${isPub ? '<button class="btn btn-success btn-sm" onclick="startInspection(\'' + t.id + '\')">Iniciar Inspección</button>' : ''}
-            ${isPub ? '<button class="btn btn-ghost btn-sm" onclick="showQR(\'' + t.id + '\')">📱 QR</button>' : ''}
-            <a class="btn btn-ghost btn-sm" href="/editor/${t.id}">Editar</a>
-            <button class="btn btn-ghost btn-sm" onclick="duplicateTemplate('${t.id}')">Duplicar</button>
-            <button class="btn btn-ghost btn-sm text-red" onclick="deleteTemplate('${t.id}')">Eliminar</button>
-          </div>
-        </td>
-      `;
-      var tdUsos = document.createElement('td');
-      tdUsos.className = 'text-muted text-sm';
-      tdUsos.textContent = (t.inspectionCount || 0) + ' usos';
-      tr.insertBefore(tdUsos, tr.children[2]);
-      var tdTags = document.createElement('td');
-      tdTags.className = 'tags-row';
-      (t.tags || []).forEach(function(tg) {
-        var sp = document.createElement('span');
-        sp.className = 'tag-pill';
-        sp.textContent = tg;
-        tdTags.appendChild(sp);
-      });
-      tr.insertBefore(tdTags, tr.children[3]);
-      tbody.appendChild(tr);
+      try {
+        const isPub = t.status === 'published';
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        const nameLink = document.createElement('a');
+        nameLink.className = 'template-name-link';
+        nameLink.href = '/editor/' + t.id;
+        nameLink.textContent = t.name || 'Sin nombre';
+        tdName.appendChild(nameLink);
+
+        const tdPages = document.createElement('td');
+        tdPages.className = 'text-muted text-sm';
+        tdPages.textContent = (t.pageCount || 0) + ' pág.';
+
+        const tdUsos = document.createElement('td');
+        tdUsos.className = 'text-muted text-sm';
+        tdUsos.textContent = (t.inspectionCount || 0) + ' usos';
+
+        const tdTags = document.createElement('td');
+        tdTags.className = 'tags-row';
+        (t.tags || []).forEach(function(tg) {
+          const sp = document.createElement('span');
+          sp.className = 'tag-pill';
+          sp.textContent = tg;
+          tdTags.appendChild(sp);
+        });
+
+        const tdStatus = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = 'badge badge-' + t.status;
+        badge.textContent = isPub ? 'Publicada' : 'Borrador';
+        tdStatus.appendChild(badge);
+
+        const tdUpdated = document.createElement('td');
+        tdUpdated.className = 'text-muted text-sm';
+        tdUpdated.textContent = formatDate(t.updatedAt);
+
+        const tdActions = document.createElement('td');
+        const actions = document.createElement('div');
+        actions.className = 'actions-cell';
+        
+        const editLink = document.createElement('a');
+        editLink.className = 'btn btn-ghost btn-sm';
+        editLink.href = '/editor/' + t.id;
+        editLink.textContent = 'Editar';
+        actions.appendChild(editLink);
+
+        if (isPub) {
+          const btnStart = document.createElement('button');
+          btnStart.className = 'btn btn-success btn-sm';
+          btnStart.type = 'button';
+          btnStart.textContent = 'Iniciar';
+          btnStart.addEventListener('click', function() { startInspection(t.id); });
+          actions.appendChild(btnStart);
+        }
+
+        const btnDelete = document.createElement('button');
+        btnDelete.className = 'btn btn-ghost btn-sm text-red';
+        btnDelete.type = 'button';
+        btnDelete.textContent = 'Eliminar';
+        btnDelete.addEventListener('click', function() { deleteTemplate(t.id); });
+        actions.appendChild(btnDelete);
+
+        tdActions.appendChild(actions);
+        tr.append(tdName, tdPages, tdUsos, tdTags, tdStatus, tdUpdated, tdActions);
+        tbody.appendChild(tr);
+      } catch (rowError) { console.error(rowError); }
     });
   }
 }
@@ -250,7 +487,7 @@ function renderInspections() {
   const tbody = document.getElementById('inspectionsBody');
   tbody.innerHTML = '';
   // Sort desc by startedAt
-  const sorted = [...inspections].sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+  const sorted = [...inspections].sort((a,b) => new Date((b && b.startedAt) || 0).getTime() - new Date((a && a.startedAt) || 0).getTime());
   
   if (sorted.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-20">No hay inspecciones</td></tr>';
@@ -258,25 +495,175 @@ function renderInspections() {
   }
   
   sorted.forEach(i => {
-    const isCompleted = i.status === 'completed';
-    const tr = document.createElement('tr');
-    const codeBadge = i.code ? `<span class="badge" style="background:var(--gray-100); color:var(--primary); font-family:monospace; margin-right:8px">${esc(i.code)}</span>` : '';
-    tr.innerHTML = `
-      <td class="fw-600">${codeBadge}${esc(i.templateName)}</td>
-      <td><span class="badge badge-${i.status}">${isCompleted ? 'Completada' : 'En Curso'}</span></td>
-      <td class="text-muted text-sm">${formatDate(i.startedAt)}</td>
-      <td class="text-sm">${isCompleted && i.maxScore > 0 ? `${i.score}/${i.maxScore} (${Math.round(i.score/i.maxScore*100)}%)` : '-'}</td>
-      <td>
-        <div class="actions-cell">
-          <a class="btn btn-primary btn-sm" href="/inspector/${i.id}">${isCompleted ? 'Ver Reporte' : 'Continuar'}</a>
-          ${isCompleted ? `<a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf">PDF</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/pdf-findings">Hallazgos</a><a class="btn btn-outline btn-sm" href="/api/inspections/${i.id}/export/xlsx">Excel</a>` : ''}
-          <button class="btn btn-ghost btn-sm text-red" onclick="deleteInspection('${i.id}')" title="Eliminar inspección" aria-label="Eliminar inspección">Eliminar</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+    try {
+      const isCompleted = i.status === 'completed';
+      const tr = document.createElement('tr');
+
+      const tdName = document.createElement('td');
+      tdName.className = 'fw-600';
+      if (i.code) {
+        const codeBadge = document.createElement('span');
+        codeBadge.className = 'badge';
+        codeBadge.style.background = 'var(--gray-100)';
+        codeBadge.style.color = 'var(--navy)';
+        codeBadge.style.fontFamily = 'monospace';
+        codeBadge.style.marginRight = '8px';
+        codeBadge.textContent = i.code;
+        tdName.appendChild(codeBadge);
+      }
+      if (i.isTest) {
+        const testBadge = document.createElement('span');
+        testBadge.className = 'badge badge-test';
+        testBadge.style.marginRight = '8px';
+        testBadge.textContent = 'Prueba';
+        tdName.appendChild(testBadge);
+      }
+      tdName.appendChild(document.createTextNode(i.templateName || 'Inspección'));
+
+      const tdStatus = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = 'badge badge-' + i.status;
+      badge.textContent = isCompleted ? 'Completada' : 'En Curso';
+      tdStatus.appendChild(badge);
+
+      const tdStarted = document.createElement('td');
+      tdStarted.className = 'text-muted text-sm';
+      tdStarted.textContent = formatDate(i.startedAt);
+
+      const tdScore = document.createElement('td');
+      tdScore.className = 'text-sm';
+      tdScore.textContent = isCompleted && i.maxScore > 0 ? (i.score + '/' + i.maxScore + ' (' + Math.round(i.score / i.maxScore * 100) + '%)') : '-';
+
+      const tdActions = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'actions-cell';
+
+      const openLink = document.createElement('a');
+      openLink.className = 'btn ' + (isCompleted ? 'btn-primary' : 'btn-primary') + ' btn-sm';
+      openLink.href = '/inspector/' + i.id;
+      openLink.textContent = isCompleted ? 'Ver Reporte' : 'Continuar';
+      actions.appendChild(openLink);
+
+      if (isCompleted) {
+        const pdfLink = document.createElement('a');
+        pdfLink.className = 'btn btn-outline btn-sm';
+        pdfLink.href = '/api/inspections/' + i.id + '/export/pdf';
+        pdfLink.textContent = 'PDF';
+        actions.appendChild(pdfLink);
+
+        const findingsLink = document.createElement('a');
+        findingsLink.className = 'btn btn-outline btn-sm';
+        findingsLink.href = '/api/inspections/' + i.id + '/export/pdf-findings';
+        findingsLink.textContent = 'Hallazgos';
+        actions.appendChild(findingsLink);
+
+        const excelLink = document.createElement('a');
+        excelLink.className = 'btn btn-outline btn-sm';
+        excelLink.href = '/api/inspections/' + i.id + '/export/xlsx';
+        excelLink.textContent = 'Excel';
+        actions.appendChild(excelLink);
+      }
+
+      const btnDelete = document.createElement('button');
+      btnDelete.className = 'btn btn-ghost btn-sm text-red';
+      btnDelete.type = 'button';
+      btnDelete.title = 'Eliminar inspección';
+      btnDelete.setAttribute('aria-label', 'Eliminar inspección');
+      btnDelete.textContent = 'Eliminar';
+      btnDelete.addEventListener('click', function() { deleteInspection(i.id); });
+      actions.appendChild(btnDelete);
+
+      tdActions.appendChild(actions);
+      tr.append(tdName, tdStatus, tdStarted, tdScore, tdActions);
+      tbody.appendChild(tr);
+    } catch (rowError) {
+      console.error('Error renderizando inspección:', i, rowError);
+    }
   });
-// Eliminar inspección
+}
+
+function ensureDashboardRowsVisible() {
+  const templateBody = document.getElementById('templateBody');
+  const inspectionsBody = document.getElementById('inspectionsBody');
+
+  if (Array.isArray(templates) && templates.length > 0 && templateBody && templateBody.children.length === 0) {
+    console.warn('Fallback render activado para plantillas');
+    templateBody.innerHTML = templates.map(function(t) {
+      return '<tr>' +
+        '<td><a class="template-name-link" href="/editor/' + (t.id || '') + '">' + esc(t.name || 'Sin nombre') + '</a></td>' +
+        '<td class="text-muted text-sm">' + String(t.pageCount || 0) + ' pág.</td>' +
+        '<td class="text-muted text-sm">' + String(t.inspectionCount || 0) + ' usos</td>' +
+        '<td class="text-muted text-sm">' + esc((t.tags || []).join(', ')) + '</td>' +
+        '<td><span class="badge badge-' + esc(t.status || 'draft') + '">' + (t.status === 'published' ? 'Publicada' : 'Borrador') + '</span></td>' +
+        '<td class="text-muted text-sm">' + formatDate(t.updatedAt) + '</td>' +
+        '<td><div class="actions-cell"><a class="btn btn-ghost btn-sm" href="/editor/' + (t.id || '') + '">Editar</a></div></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  if (Array.isArray(inspections) && inspections.length > 0 && inspectionsBody && inspectionsBody.children.length === 0) {
+    console.warn('Fallback render activado para inspecciones');
+    inspectionsBody.innerHTML = inspections.map(function(i) {
+      const done = i.status === 'completed';
+      const score = done && i.maxScore > 0 ? (i.score + '/' + i.maxScore + ' (' + Math.round(i.score / i.maxScore * 100) + '%)') : '-';
+      return '<tr>' +
+        '<td class="fw-600">' + esc(i.templateName || 'Inspección') + '</td>' +
+        '<td><span class="badge badge-' + esc(i.status || 'in_progress') + '">' + (done ? 'Completada' : 'En Curso') + '</span></td>' +
+        '<td class="text-muted text-sm">' + formatDate(i.startedAt) + '</td>' +
+        '<td class="text-sm">' + esc(score) + '</td>' +
+        '<td><div class="actions-cell"><a class="btn btn-primary btn-sm" href="/inspector/' + (i.id || '') + '">' + (done ? 'Ver Reporte' : 'Continuar') + '</a></div></td>' +
+        '</tr>';
+    }).join('');
+  }
+}
+
+async function emergencyHydrateDashboard() {
+  var templateBody = document.getElementById('templateBody');
+  var inspectionsBody = document.getElementById('inspectionsBody');
+  if (!templateBody || !inspectionsBody) return;
+
+  if (templateBody.children.length > 0 || inspectionsBody.children.length > 0) return;
+
+  try {
+    var ts = Date.now();
+    var tRes = await fetch('/api/templates?_=' + ts, { cache: 'no-store' });
+    var iRes = await fetch('/api/inspections?_=' + ts, { cache: 'no-store' });
+    if (!tRes.ok || !iRes.ok) return;
+    var tList = await tRes.json();
+    var iList = await iRes.json();
+
+    if (Array.isArray(tList) && tList.length && templateBody.children.length === 0) {
+      templateBody.innerHTML = tList.map(function(t) {
+        return '<tr>' +
+          '<td><a class="template-name-link" href="/editor/' + esc(t.id || '') + '">' + esc(t.name || 'Sin nombre') + '</a></td>' +
+          '<td class="text-muted text-sm">' + String(t.pageCount || 0) + ' pág.</td>' +
+          '<td class="text-muted text-sm">' + String(t.inspectionCount || 0) + ' usos</td>' +
+          '<td class="text-muted text-sm">' + esc((t.tags || []).join(', ')) + '</td>' +
+          '<td><span class="badge badge-' + esc(t.status || 'draft') + '">' + (t.status === 'published' ? 'Publicada' : 'Borrador') + '</span></td>' +
+          '<td class="text-muted text-sm">' + formatDate(t.updatedAt) + '</td>' +
+          '<td><div class="actions-cell"><a class="btn btn-ghost btn-sm" href="/editor/' + esc(t.id || '') + '">Editar</a></div></td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('emptyState')?.classList.add('hidden');
+      document.getElementById('templateTable')?.classList.remove('hidden');
+    }
+
+    if (Array.isArray(iList) && iList.length && inspectionsBody.children.length === 0) {
+      inspectionsBody.innerHTML = iList.map(function(i) {
+        var done = i.status === 'completed';
+        var score = done && i.maxScore > 0 ? (i.score + '/' + i.maxScore + ' (' + Math.round(i.score / i.maxScore * 100) + '%)') : '-';
+        return '<tr>' +
+          '<td class="fw-600">' + esc(i.templateName || 'Inspección') + '</td>' +
+          '<td><span class="badge badge-' + esc(i.status || 'in_progress') + '">' + (done ? 'Completada' : 'En Curso') + '</span></td>' +
+          '<td class="text-muted text-sm">' + formatDate(i.startedAt) + '</td>' +
+          '<td class="text-sm">' + esc(score) + '</td>' +
+          '<td><div class="actions-cell"><a class="btn btn-primary btn-sm" href="/inspector/' + esc(i.id || '') + '">' + (done ? 'Ver Reporte' : 'Continuar') + '</a></div></td>' +
+          '</tr>';
+      }).join('');
+    }
+  } catch (e) {}
+}
+
 async function deleteInspection(id) {
   if (!confirm('¿Eliminar esta inspección de forma permanente?')) return;
   try {
@@ -288,12 +675,30 @@ async function deleteInspection(id) {
     console.error(e);
   }
 }
-}
-
 document.getElementById('searchName').addEventListener('input', renderTemplates);
 document.getElementById('filterTag').addEventListener('input', renderTemplates);
 document.getElementById('filterStatus').addEventListener('change', renderTemplates);
 document.getElementById('sortOrder').addEventListener('change', renderTemplates);
+document.getElementById('btnHeroCreate')?.addEventListener('click', createNew);
+document.getElementById('btnHeroImport')?.addEventListener('click', importTemplate);
+document.querySelectorAll('[data-view-mode]').forEach(function(button) {
+  button.addEventListener('click', function() {
+    templateViewMode = button.getAttribute('data-view-mode') || 'cards';
+    localStorage.setItem('oa-template-view', templateViewMode);
+    applyTemplateViewMode();
+  });
+});
+document.getElementById('templateCards')?.addEventListener('click', function(event) {
+  const startButton = event.target.closest('[data-start-template]');
+  if (startButton) {
+    startInspection(startButton.getAttribute('data-start-template'));
+    return;
+  }
+  const deleteButton = event.target.closest('[data-delete-template]');
+  if (deleteButton) {
+    deleteTemplate(deleteButton.getAttribute('data-delete-template'));
+  }
+});
 
 window.toggleDropdown = function(id) {
   const el = document.getElementById(id);
@@ -307,7 +712,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-document.getElementById('btnNewEmpty').onclick = createNew;
+document.getElementById('btnNewEmpty')?.addEventListener('click', createNew);
 
 async function createNew() {
   try {
@@ -339,7 +744,145 @@ async function deleteTemplate(id) {
 }
 
 function importTemplate() {
+  showJsonImportModal();
+}
+
+function hideJsonImportModal() {
+  document.getElementById('modalJsonImport')?.classList.add('hidden');
+}
+
+function openLocalJsonPicker() {
+  hideJsonImportModal();
   document.getElementById('importInput').click();
+}
+
+function getExampleTemplateFilters() {
+  const search = (document.getElementById('exampleTemplateSearch')?.value || '').trim().toLowerCase();
+  const category = document.getElementById('exampleTemplateCategory')?.value || 'all';
+  return { search, category };
+}
+
+function getCategoryLabel(category) {
+  return categoryLabels[category] || String(category || 'general').replace(/[-_]/g, ' ').replace(/\b\w/g, function(char) {
+    return char.toUpperCase();
+  });
+}
+
+function renderExampleCategoryOptions() {
+  const select = document.getElementById('exampleTemplateCategory');
+  if (!select) return;
+  const categories = Array.from(new Set(exampleTemplates.map(function(item) {
+    return item.category || 'general';
+  }))).sort(function(a, b) {
+    return getCategoryLabel(a).localeCompare(getCategoryLabel(b), 'es');
+  });
+  const previousValue = select.value || 'all';
+  select.innerHTML = '<option value="all">Todos los rubros</option>' + categories.map(function(category) {
+    return '<option value="' + esc(category) + '">' + esc(getCategoryLabel(category)) + '</option>';
+  }).join('');
+  select.value = categories.includes(previousValue) ? previousValue : 'all';
+}
+
+function renderExampleTemplates() {
+  const host = document.getElementById('exampleTemplatesList');
+  if (!host) return;
+  if (!Array.isArray(exampleTemplates) || !exampleTemplates.length) {
+    host.innerHTML = '<div class="text-sm text-muted">Todavía no hay plantillas de ejemplo disponibles.</div>';
+    return;
+  }
+
+  const filters = getExampleTemplateFilters();
+  const filteredExamples = exampleTemplates.filter(function(item) {
+    const haystack = [
+      item.name || '',
+      item.description || '',
+      item.category || '',
+      (item.tags || []).join(' ')
+    ].join(' ').toLowerCase();
+    if (filters.category !== 'all' && (item.category || 'general') !== filters.category) return false;
+    if (filters.search && !haystack.includes(filters.search)) return false;
+    return true;
+  });
+
+  if (!filteredExamples.length) {
+    host.innerHTML = '<div class="json-import-empty">No hay plantillas de ejemplo que coincidan con esa búsqueda.</div>';
+    return;
+  }
+
+  const grouped = filteredExamples.reduce(function(acc, item) {
+    const key = item.category || 'general';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  host.innerHTML = Object.keys(grouped).sort(function(a, b) {
+    return getCategoryLabel(a).localeCompare(getCategoryLabel(b), 'es');
+  }).map(function(category) {
+    const items = grouped[category];
+    const cards = items.map(function(item) {
+      const tags = (item.tags || []).slice(0, 4).map(function(tag) {
+        return '<span class="tag-pill">' + esc(tag) + '</span>';
+      }).join(' ');
+
+      return '<article class="json-import-card">' +
+        '<div class="json-import-card-top">' +
+          '<div class="json-import-card-main">' +
+            '<div class="json-import-card-title">' + esc(item.name || 'Plantilla de ejemplo') + '</div>' +
+            '<div class="json-import-card-meta">' + esc(String(item.pageCount || 0)) + ' pág. · ' + esc(String(item.sectionCount || 0)) + ' secciones</div>' +
+          '</div>' +
+          '<button class="btn btn-primary btn-sm json-import-card-btn" type="button" data-import-example="' + esc(item.slug) + '">Usar ejemplo</button>' +
+        '</div>' +
+        '<p class="json-import-card-description">' + esc(item.description || 'Plantilla comunitaria lista para adaptar.') + '</p>' +
+        '<div class="json-import-card-tags">' + tags + '</div>' +
+      '</article>';
+    }).join('');
+
+    return '<section class="json-import-group">' +
+      '<div class="json-import-group-head">' +
+        '<h3 class="json-import-group-title">' + esc(getCategoryLabel(category)) + '</h3>' +
+        '<span class="json-import-group-count">' + esc(String(items.length)) + ' ejemplo(s)</span>' +
+      '</div>' +
+      '<div class="json-import-group-grid">' + cards + '</div>' +
+    '</section>';
+  }).join('');
+}
+
+async function loadExampleTemplates() {
+  const host = document.getElementById('exampleTemplatesList');
+  if (host) host.innerHTML = '<div class="text-sm text-muted">Cargando ejemplos...</div>';
+  try {
+    exampleTemplates = await api.get('/api/templates/examples');
+    renderExampleCategoryOptions();
+    renderExampleTemplates();
+  } catch (err) {
+    if (host) host.innerHTML = '<div class="text-sm text-red">No se pudieron cargar las plantillas de ejemplo.</div>';
+  }
+}
+
+document.getElementById('exampleTemplateSearch')?.addEventListener('input', renderExampleTemplates);
+document.getElementById('exampleTemplateCategory')?.addEventListener('change', renderExampleTemplates);
+
+window.showJsonImportModal = async function() {
+  const modal = document.getElementById('modalJsonImport');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  const searchInput = document.getElementById('exampleTemplateSearch');
+  const categorySelect = document.getElementById('exampleTemplateCategory');
+  if (searchInput) searchInput.value = '';
+  if (categorySelect) categorySelect.value = 'all';
+  await loadExampleTemplates();
+  searchInput?.focus();
+};
+
+async function importExampleTemplate(slug) {
+  try {
+    const imported = await api.post('/api/templates/examples/import', { slug });
+    toast('Plantilla de ejemplo importada', 'success');
+    window.location.href = '/editor/' + imported.id;
+  } catch (err) {
+    toast('Error importando ejemplo: ' + err.message, 'error');
+  }
 }
 
 document.getElementById('importInput').addEventListener('change', async (e) => {
@@ -364,7 +907,7 @@ document.getElementById('packImport')?.addEventListener('change', async (e) => {
     const res = await fetch('/api/templates/import-pack', { method: 'POST', body: fd });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    toast('✅ Plantilla importada exitosamente', 'success');
+    toast('Plantilla importada exitosamente', 'success');
     setTimeout(() => window.location.href = '/editor/' + data.template.id, 1000);
   } catch(err) { toast('Error importando paquete: ' + err.message, 'error'); }
   e.target.value = '';
@@ -388,27 +931,14 @@ document.getElementById('btnImportUrlSubmit')?.addEventListener('click', async (
   try {
     const res = await api.post('/api/templates/import-url', { url });
     document.getElementById('modalImportUrl').classList.add('hidden');
-    toast('✅ Plantilla importada. Revisá el contenido antes de publicarla.', 'success');
+    toast('Plantilla importada. Revisá el contenido antes de publicarla.', 'success');
     setTimeout(() => window.location.href = '/editor/' + res.template.id, 1500);
   } catch(err) {
     toast('Error: ' + err.message, 'error');
     btn.disabled = false;
-    btn.textContent = 'Importar plantilla →';
+    btn.textContent = 'Importar plantilla ->';
   }
 });
-
-async function openConfig() {
-  const cfg = await api.get('/api/config');
-  document.getElementById('dataPathInput').value = cfg.dataPath || '';
-  document.getElementById('configModal').classList.remove('hidden');
-}
-
-async function saveConfig() {
-  const dataPath = document.getElementById('dataPathInput').value;
-  await api.put('/api/config', { dataPath });
-  document.getElementById('configModal').classList.add('hidden');
-  toast('Configuración guardada. Reinicia el servidor si cambiaste la ruta.', 'success');
-}
 
 function renderScheduledAlert() {
   var today = new Date().toISOString().slice(0, 10);
@@ -424,10 +954,18 @@ function showQR(tid) {
   currentQRTemplateId = tid;
   var imgEl = document.getElementById('qrImg');
   var urlEl = document.getElementById('qrUrl');
+  var hintEl = document.getElementById('qrHint');
   imgEl.src = '/api/templates/' + tid + '/qr';
-  var ip = location.hostname;
-  urlEl.textContent = 'http://' + ip + ':3001/inspector/' + tid;
-  document.getElementById('qrModal').classList.remove('hidden');
+  api.get('/api/system/diagnostics').then(function(diag) {
+    var baseUrl = (diag && diag.appUrl) ? diag.appUrl : (location.origin.replace('localhost', location.hostname));
+    urlEl.textContent = baseUrl + '/inspect/' + tid;
+    if (hintEl) hintEl.textContent = 'El celular debe estar en la misma red Wi-Fi que esta PC.';
+    document.getElementById('qrModal').classList.remove('hidden');
+  }).catch(function() {
+    urlEl.textContent = location.origin + '/inspect/' + tid;
+    if (hintEl) hintEl.textContent = 'Si abriste la app con localhost, usa la misma red Wi-Fi para que el QR funcione en el celular.';
+    document.getElementById('qrModal').classList.remove('hidden');
+  });
 }
 function downloadQR() {
   var a = document.createElement('a');
@@ -439,31 +977,78 @@ function copyQRUrl() {
   navigator.clipboard.writeText(document.getElementById('qrUrl').textContent).then(function() { toast('URL copiada', 'success'); });
 }
 
+document.querySelectorAll('[data-lang]').forEach(function(button) {
+  button.addEventListener('click', function() {
+    switchLanguage(button.getAttribute('data-lang'));
+  });
+});
+
+document.getElementById('btnImportJsonNav')?.addEventListener('click', importTemplate);
+document.getElementById('btnNewDropdown')?.addEventListener('click', function() {
+  toggleDropdown('newTplDropdown');
+});
+document.getElementById('menuCreateBlank')?.addEventListener('click', function(event) {
+  event.preventDefault();
+  createNew();
+});
+document.getElementById('menuImportJson')?.addEventListener('click', function(event) {
+  event.preventDefault();
+  showJsonImportModal();
+});
+document.getElementById('menuImportUrl')?.addEventListener('click', function(event) {
+  event.preventDefault();
+  showImportUrlModal();
+});
+document.getElementById('menuImportPack')?.addEventListener('click', function(event) {
+  event.preventDefault();
+  document.getElementById('packImport').click();
+});
+document.getElementById('btnCloseJsonImport')?.addEventListener('click', hideJsonImportModal);
+document.getElementById('btnCancelJsonImport')?.addEventListener('click', hideJsonImportModal);
+document.getElementById('btnChooseJsonFile')?.addEventListener('click', openLocalJsonPicker);
+document.getElementById('btnCloseImportUrl')?.addEventListener('click', function() {
+  document.getElementById('modalImportUrl').classList.add('hidden');
+});
+document.getElementById('btnCancelImportUrl')?.addEventListener('click', function() {
+  document.getElementById('modalImportUrl').classList.add('hidden');
+});
+document.getElementById('btnCloseQrModal')?.addEventListener('click', function() {
+  document.getElementById('qrModal').classList.add('hidden');
+});
+document.getElementById('btnDownloadQr')?.addEventListener('click', downloadQR);
+document.getElementById('btnCopyQrUrl')?.addEventListener('click', copyQRUrl);
+document.getElementById('exampleTemplatesList')?.addEventListener('click', function(event) {
+  var button = event.target.closest('[data-import-example]');
+  if (!button) return;
+  importExampleTemplate(button.getAttribute('data-import-example'));
+});
+
 // Init
 loadData();
+setTimeout(emergencyHydrateDashboard, 3000);
+
+function escJs(value) {
+  return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 </script>
 <!-- QR Modal -->
 <div class="modal-overlay hidden" id="qrModal">
   <div class="modal">
     <div class="modal-header">
       <h2>Codigo QR</h2>
-      <button class="btn btn-ghost btn-icon ml-auto" onclick="document.getElementById('qrModal').classList.add('hidden')">&#x2715;</button>
+      <button class="btn btn-ghost btn-icon ml-auto" type="button" id="btnCloseQrModal">&#x2715;</button>
     </div>
     <div class="modal-body qr-modal-body">
       <img id="qrImg" src="" class="qr-modal-img" alt="QR">
       <p id="qrUrl" class="text-sm text-muted qr-modal-url"></p>
+      <p id="qrHint" class="text-xs text-muted"></p>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="downloadQR()">Descargar</button>
-      <button class="btn btn-outline" onclick="copyQRUrl()">Copiar URL</button>
+      <button class="btn btn-outline" type="button" id="btnDownloadQr">Descargar</button>
+      <button class="btn btn-outline" type="button" id="btnCopyQrUrl">Copiar URL</button>
     </div>
   </div>
 </div>
 
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(function() {});
-}
-</script>
 </body>
 </html>

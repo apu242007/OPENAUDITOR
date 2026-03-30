@@ -1,3 +1,59 @@
-node_modules/  
-data/  
-uploads/  
+node_modules/
+uploads/
+backups/
+data/
+*.log
+
+# User data and local runtime state
+inspections.json
+templates.json
+config.json
+library.json
+inspection_tokens.json
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug and temporary files
+debug_*.txt
+debug_*.js
+file_list.txt
+.edge-dom.*
+.tmp-*
+
+# Logs directory
+logs/
+*.log.*
+
+# Database
+auditorlibre.db
+auditorlibre.db-shm
+auditorlibre.db-wal
+
+# Backup files
+*.backup
+*.migrated.bak
+server.js.backup
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PM2
+.pm2/
+pm2.log
+
+# Docker
+.dockerignore

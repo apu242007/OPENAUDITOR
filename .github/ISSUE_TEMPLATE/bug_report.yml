@@ -1,0 +1,26 @@
+name: Bug report
+description: Reportar un problema de funcionamiento
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Resumen
+      description: Explica el problema de forma clara
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      description: Lista los pasos exactos
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Entorno
+      description: SO, version de Node y navegador
+    validations:
+      required: true

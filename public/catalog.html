@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditor Libre - Catálogo Comunitario</title>
+  <link rel="stylesheet" href="/style.css?v=20260319b">
+  <link rel="stylesheet" href="/api/config/theme.css">
+  <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
+  <style>
+    .catalog-shell { max-width: 1240px; margin: 0 auto; padding: 34px 20px 48px; }
+    .catalog-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 18px; margin-bottom: 22px; }
+    .catalog-hero-main, .catalog-hero-side { background: rgba(255,255,255,.88); border: 1px solid rgba(99,102,241,.10); border-radius: 28px; box-shadow: var(--shadow); }
+    .catalog-hero-main { padding: 26px 28px; background: linear-gradient(135deg, rgba(79,70,229,.10), rgba(14,165,233,.08), rgba(255,255,255,.92)); }
+    .catalog-kicker { font-size: .76rem; font-weight: 800; letter-spacing: .10em; text-transform: uppercase; color: var(--indigo); margin-bottom: 10px; }
+    .catalog-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; line-height: 1.02; letter-spacing: -.04em; color: var(--navy); max-width: 10ch; }
+    .catalog-copy { margin-top: 14px; max-width: 62ch; font-size: .96rem; line-height: 1.6; color: var(--gray-600); }
+    .catalog-hero-side { padding: 22px; display: grid; gap: 14px; align-content: start; }
+    .catalog-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .catalog-stat { padding: 14px; border-radius: 20px; background: linear-gradient(180deg, rgba(247,248,255,.96), rgba(255,255,255,.96)); border: 1px solid rgba(99,102,241,.08); }
+    .catalog-stat-value { font-size: 1.45rem; font-weight: 900; color: var(--navy); line-height: 1; }
+    .catalog-stat-label { margin-top: 6px; font-size: .76rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .06em; }
+    .catalog-hero-note { padding: 14px; border-radius: 18px; background: rgba(79,70,229,.07); color: var(--gray-700); font-size: .84rem; line-height: 1.5; }
+    .catalog-toolbar { display: grid; grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(180px, .6fr)); gap: 12px; margin-bottom: 20px; }
+    .catalog-toolbar .input { min-height: 52px; border-radius: 18px; }
+    .catalog-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 18px; align-items: start; }
+    .catalog-list-panel, .catalog-detail-panel { background: rgba(255,255,255,.88); border: 1px solid rgba(99,102,241,.10); border-radius: 26px; box-shadow: var(--shadow); }
+    .catalog-list-panel { padding: 18px; }
+    .catalog-detail-panel { padding: 20px; position: sticky; top: 92px; }
+    .catalog-section { margin-bottom: 20px; }
+    .catalog-section:last-child { margin-bottom: 0; }
+    .catalog-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid rgba(99,102,241,.10); }
+    .catalog-section-title { font-size: 1.14rem; font-weight: 800; color: var(--navy); letter-spacing: -.02em; }
+    .catalog-section-count { font-size: .78rem; font-weight: 700; color: var(--gray-500); }
+    .catalog-card-grid { display: grid; gap: 12px; }
+    .catalog-card { display: grid; gap: 12px; padding: 18px; border-radius: 24px; border: 1px solid rgba(99,102,241,.08); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,248,255,.96)); box-shadow: 0 14px 28px rgba(17,24,39,.05); cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .catalog-card:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(17,24,39,.08); border-color: rgba(79,70,229,.18); }
+    .catalog-card.active { border-color: rgba(79,70,229,.36); box-shadow: 0 18px 38px rgba(79,70,229,.16); }
+    .catalog-card-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+    .catalog-card-title { font-size: 1rem; font-weight: 800; color: var(--navy); line-height: 1.2; }
+    .catalog-card-meta { margin-top: 6px; font-size: .8rem; color: var(--gray-500); }
+    .catalog-card-copy { font-size: .88rem; color: var(--gray-600); line-height: 1.5; }
+    .catalog-card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .catalog-law-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: rgba(17,24,39,.05); color: var(--gray-700); font-size: .74rem; font-weight: 700; }
+    .catalog-law-chip.legal { background: rgba(79,70,229,.08); color: var(--indigo); }
+    .catalog-detail-kicker { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .10em; color: var(--indigo); margin-bottom: 10px; }
+    .catalog-detail-title { font-size: 1.5rem; font-weight: 900; color: var(--navy); letter-spacing: -.03em; line-height: 1.08; }
+    .catalog-detail-copy { margin-top: 10px; font-size: .92rem; color: var(--gray-600); line-height: 1.6; }
+    .catalog-detail-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+    .catalog-detail-stat { padding: 12px; border-radius: 18px; background: rgba(247,248,255,.95); border: 1px solid rgba(99,102,241,.08); }
+    .catalog-detail-stat strong { display: block; font-size: 1.15rem; color: var(--navy); }
+    .catalog-detail-stat span { display: block; margin-top: 4px; font-size: .74rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .06em; }
+    .catalog-detail-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .catalog-detail-list { margin-top: 20px; display: grid; gap: 10px; }
+    .catalog-page-row { padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.92); border: 1px solid rgba(99,102,241,.08); }
+    .catalog-page-row h4 { font-size: .94rem; color: var(--navy); margin-bottom: 4px; }
+    .catalog-page-row p { font-size: .82rem; color: var(--gray-500); margin-bottom: 8px; }
+    .catalog-section-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .catalog-empty, .catalog-detail-empty { padding: 24px; border-radius: 20px; text-align: center; color: var(--gray-500); background: rgba(247,248,255,.86); border: 1px dashed rgba(148,163,184,.5); }
+    .catalog-detail-actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+    @media (max-width: 1080px) {
+      .catalog-hero,
+      .catalog-layout { grid-template-columns: 1fr; }
+      .catalog-detail-panel { position: static; }
+    }
+    @media (max-width: 640px) {
+      .catalog-shell { padding: 24px 14px 36px; }
+      .catalog-toolbar,
+      .catalog-detail-stats,
+      .catalog-stat-grid { grid-template-columns: 1fr; }
+      .catalog-card-head,
+      .catalog-section-head { flex-direction: column; align-items: start; }
+      .catalog-detail-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<nav class="topnav">
+  <a class="topnav-logo" href="/">Auditor <span>Libre</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Catálogo Comunitario</span>
+  <div class="ml-auto nav-actions">
+    <a class="btn btn-ghost btn-nav-ghost" href="/">Inicio</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/settings">Configuración</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/sync-guide.html">Guía Sync</a>
+  </div>
+</nav>
+
+<main class="catalog-shell">
+  <section class="catalog-hero">
+    <div class="catalog-hero-main">
+      <div class="catalog-kicker">Open Source Inspection Packs</div>
+      <h1 class="catalog-title">Catálogo comunitario listo para usar</h1>
+      <p class="catalog-copy">Explorá plantillas reales por rubro, revisá estructura, alcance legal y metadatos operativos, e importalas como borrador para adaptarlas a tu organización.</p>
+    </div>
+    <aside class="catalog-hero-side">
+      <div class="catalog-stat-grid">
+        <div class="catalog-stat"><div class="catalog-stat-value" id="statTemplates">0</div><div class="catalog-stat-label">Plantillas</div></div>
+        <div class="catalog-stat"><div class="catalog-stat-value" id="statCategories">0</div><div class="catalog-stat-label">Rubros</div></div>
+      </div>
+      <div class="catalog-hero-note">Base sugerida para equipos que quieren empezar rápido, aprender del diseño de plantillas y construir su propia librería open source sobre OPENAUDITOR.</div>
+    </aside>
+  </section>
+
+  <section class="catalog-toolbar">
+    <input class="input" id="catalogSearch" type="text" placeholder="Buscar por nombre, rubro, tag o enfoque legal...">
+    <select class="input" id="catalogCategory">
+      <option value="all">Todos los rubros</option>
+    </select>
+    <select class="input" id="catalogLegal">
+      <option value="all">Todos los enfoques</option>
+      <option value="legal">Con foco legal</option>
+      <option value="general">Sin foco legal</option>
+    </select>
+    <select class="input" id="catalogNormative">
+      <option value="all">Toda normativa</option>
+    </select>
+  </section>
+
+  <section class="catalog-layout">
+    <div class="catalog-list-panel">
+      <div id="catalogList"></div>
+    </div>
+    <aside class="catalog-detail-panel">
+      <div id="catalogDetail" class="catalog-detail-empty">Seleccioná una plantilla para ver estructura, páginas, secciones y datos clave antes de importarla.</div>
+    </aside>
+  </section>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js?v=20260319b"></script>
+<script>
+'use strict';
+
+var catalogTemplates = [];
+var selectedSlug = null;
+var currentDetail = null;
+
+var categoryLabels = {
+  safety: 'Seguridad',
+  maintenance: 'Mantenimiento',
+  retail: 'Retail',
+  quality: 'Calidad',
+  construction: 'Construcción',
+  vehicles: 'Vehículos',
+  general: 'General'
+};
+
+function getCategoryLabel(category) {
+  return categoryLabels[category] || String(category || 'general').replace(/[-_]/g, ' ').replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+}
+
+function formatLegalRef(ref) {
+  return String(ref || '').replace(/-/g, ' ').replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+}
+
+function hasLegalFocus(item) {
+  return !!(item && item.legalFocus);
+}
+
+function renderCategoryOptions() {
+  var select = document.getElementById('catalogCategory');
+  var categories = Array.from(new Set(catalogTemplates.map(function(item) {
+    return item.category || 'general';
+  }))).sort();
+  select.innerHTML = '<option value="all">Todos los rubros</option>' + categories.map(function(category) {
+    return '<option value="' + esc(category) + '">' + esc(getCategoryLabel(category)) + '</option>';
+  }).join('');
+}
+
+function renderNormativeOptions() {
+  var select = document.getElementById('catalogNormative');
+  var refs = Array.from(new Set(catalogTemplates.flatMap(function(item) {
+    return item.legalRefs || [];
+  }))).sort();
+  select.innerHTML = '<option value="all">Toda normativa</option>' + refs.map(function(ref) {
+    return '<option value="' + esc(ref) + '">' + esc(formatLegalRef(ref)) + '</option>';
+  }).join('');
+}
+
+function getFilteredTemplates() {
+  var search = (document.getElementById('catalogSearch').value || '').trim().toLowerCase();
+  var category = document.getElementById('catalogCategory').value || 'all';
+  var legal = document.getElementById('catalogLegal').value || 'all';
+  var normative = document.getElementById('catalogNormative').value || 'all';
+  return catalogTemplates.filter(function(item) {
+    var haystack = [item.name, item.description, item.category, (item.tags || []).join(' '), (item.legalRefs || []).join(' ')].join(' ').toLowerCase();
+    if (category !== 'all' && (item.category || 'general') !== category) return false;
+    if (legal === 'legal' && !hasLegalFocus(item)) return false;
+    if (legal === 'general' && hasLegalFocus(item)) return false;
+    if (normative !== 'all' && !(item.legalRefs || []).includes(normative)) return false;
+    if (search && !haystack.includes(search)) return false;
+    return true;
+  });
+}
+
+function renderStats() {
+  document.getElementById('statTemplates').textContent = String(catalogTemplates.length);
+  document.getElementById('statCategories').textContent = String(new Set(catalogTemplates.map(function(item) {
+    return item.category || 'general';
+  })).size);
+}
+
+function renderCatalogList() {
+  var host = document.getElementById('catalogList');
+  var filtered = getFilteredTemplates();
+  if (!filtered.length) {
+    host.innerHTML = '<div class="catalog-empty">No hay plantillas que coincidan con esa búsqueda.</div>';
+    return;
+  }
+
+  var grouped = filtered.reduce(function(acc, item) {
+    var key = item.category || 'general';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  host.innerHTML = Object.keys(grouped).sort().map(function(category) {
+    var cards = grouped[category].map(function(item) {
+      var lawChip = hasLegalFocus(item)
+        ? '<span class="catalog-law-chip legal">Marco legal</span>'
+        : '<span class="catalog-law-chip">Operativa</span>';
+      var tags = (item.tags || []).slice(0, 5).map(function(tag) {
+        return '<span class="tag-pill">' + esc(tag) + '</span>';
+      }).join('');
+      var legalRefs = (item.legalRefs || []).map(function(ref) {
+        return '<span class="catalog-law-chip legal">' + esc(formatLegalRef(ref)) + '</span>';
+      }).join('');
+      return '<article class="catalog-card' + (selectedSlug === item.slug ? ' active' : '') + '" data-slug="' + esc(item.slug) + '">' +
+        '<div class="catalog-card-head">' +
+          '<div><div class="catalog-card-title">' + esc(item.name) + '</div><div class="catalog-card-meta">' + esc(String(item.pageCount || 0)) + ' páginas · ' + esc(String(item.sectionCount || 0)) + ' secciones</div></div>' +
+          lawChip +
+        '</div>' +
+        '<div class="catalog-card-copy">' + esc(item.description || 'Plantilla comunitaria lista para adaptar.') + '</div>' +
+        '<div class="catalog-card-tags">' + tags + legalRefs + '</div>' +
+      '</article>';
+    }).join('');
+
+    return '<section class="catalog-section">' +
+      '<div class="catalog-section-head"><h2 class="catalog-section-title">' + esc(getCategoryLabel(category)) + '</h2><span class="catalog-section-count">' + esc(String(grouped[category].length)) + ' plantilla(s)</span></div>' +
+      '<div class="catalog-card-grid">' + cards + '</div>' +
+    '</section>';
+  }).join('');
+}
+
+function renderCatalogDetail() {
+  var host = document.getElementById('catalogDetail');
+  if (!currentDetail) {
+    host.className = 'catalog-detail-empty';
+    host.textContent = 'Seleccioná una plantilla para ver estructura, páginas, secciones y datos clave antes de importarla.';
+    return;
+  }
+
+  host.className = '';
+  var tags = (currentDetail.tags || []).map(function(tag) {
+    return '<span class="tag-pill">' + esc(tag) + '</span>';
+  }).join('');
+  var legalRefs = (currentDetail.legalRefs || []).map(function(ref) {
+    return '<span class="catalog-law-chip legal">' + esc(formatLegalRef(ref)) + '</span>';
+  }).join('');
+
+  var pages = (currentDetail.pages || []).map(function(page) {
+    var sections = (page.sections || []).map(function(section) {
+      return '<span class="catalog-law-chip' + (section.repeatable ? ' legal' : '') + '">' +
+        esc(section.title || 'Sección sin título') + ' · ' + esc(String(section.questionCount || 0)) + ' preguntas' + (section.repeatable ? ' · repetible' : '') +
+      '</span>';
+    }).join('');
+
+    return '<div class="catalog-page-row">' +
+      '<h4>' + esc(page.name) + '</h4>' +
+      '<p>' + esc(String(page.questionCount || 0)) + ' preguntas · ' + esc(String(page.sectionCount || 0)) + ' secciones · ' + esc(page.type || 'inspection') + '</p>' +
+      '<div class="catalog-section-pills">' + sections + '</div>' +
+    '</div>';
+  }).join('');
+
+  host.innerHTML = '' +
+    '<div class="catalog-detail-kicker">' + esc(getCategoryLabel(currentDetail.category)) + '</div>' +
+    '<div class="catalog-detail-title">' + esc(currentDetail.name) + '</div>' +
+    '<div class="catalog-detail-copy">' + esc(currentDetail.description || 'Plantilla comunitaria lista para usar.') + '</div>' +
+    '<div class="catalog-detail-stats">' +
+      '<div class="catalog-detail-stat"><strong>' + esc(String(currentDetail.pageCount || 0)) + '</strong><span>Páginas</span></div>' +
+      '<div class="catalog-detail-stat"><strong>' + esc(String(currentDetail.questionCount || 0)) + '</strong><span>Preguntas</span></div>' +
+      '<div class="catalog-detail-stat"><strong>' + esc(String(currentDetail.repeatableSectionCount || 0)) + '</strong><span>Secciones repetibles</span></div>' +
+    '</div>' +
+    (legalRefs ? '<div class="catalog-detail-copy"><strong>Normativa detectada:</strong><br>' + legalRefs + '</div>' : '') +
+    '<div class="catalog-detail-tags">' + tags + '</div>' +
+    '<div class="catalog-detail-actions">' +
+      '<button class="btn btn-primary" id="btnImportSelected">Importar en mi espacio</button>' +
+      '<a class="btn btn-outline" href="/">Volver al dashboard</a>' +
+    '</div>' +
+    '<div class="catalog-detail-list">' + pages + '</div>';
+
+  document.getElementById('btnImportSelected').addEventListener('click', function() {
+    importSelectedTemplate();
+  });
+}
+
+async function loadDetail(slug) {
+  selectedSlug = slug;
+  renderCatalogList();
+  try {
+    currentDetail = await api.get('/api/templates/examples/' + slug);
+    renderCatalogDetail();
+  } catch (error) {
+    currentDetail = null;
+    renderCatalogDetail();
+    toast('No se pudo cargar el detalle de la plantilla', 'error');
+  }
+}
+
+async function importSelectedTemplate() {
+  if (!selectedSlug) return;
+  try {
+    var imported = await api.post('/api/templates/examples/import', { slug: selectedSlug });
+    toast('Plantilla importada en tu espacio', 'success');
+    setTimeout(function() {
+      window.location.href = '/editor/' + imported.id;
+    }, 500);
+  } catch (error) {
+    toast('No se pudo importar la plantilla: ' + error.message, 'error');
+  }
+}
+
+document.getElementById('catalogSearch').addEventListener('input', renderCatalogList);
+document.getElementById('catalogCategory').addEventListener('change', renderCatalogList);
+document.getElementById('catalogLegal').addEventListener('change', renderCatalogList);
+document.getElementById('catalogNormative').addEventListener('change', renderCatalogList);
+document.getElementById('catalogList').addEventListener('click', function(event) {
+  var card = event.target.closest('[data-slug]');
+  if (!card) return;
+  loadDetail(card.getAttribute('data-slug'));
+});
+
+(async function initCatalog() {
+  try {
+    catalogTemplates = await api.get('/api/templates/examples');
+    renderStats();
+    renderCategoryOptions();
+    renderNormativeOptions();
+    renderCatalogList();
+    if (catalogTemplates.length) loadDetail(catalogTemplates[0].slug);
+  } catch (error) {
+    document.getElementById('catalogList').innerHTML = '<div class="catalog-empty">No se pudo cargar el catálogo comunitario.</div>';
+    document.getElementById('catalogDetail').className = 'catalog-detail-empty';
+    document.getElementById('catalogDetail').textContent = 'Revisá que la app esté corriendo y volvé a intentar.';
+  }
+})();
+</script>
+</body>
+</html>

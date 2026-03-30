@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditor Libre - Acerca de</title>
+  <script>
+    if (location.protocol === 'file:') {
+      window.location.replace('http://127.0.0.1:3001/');
+    }
+  </script>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/api/config/theme.css">
+  <script defer src="/colorized-selects.js"></script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="/" class="topnav-logo cursor-pointer">Auditor <span>Libre</span></a>
+  <div class="topnav-sep"></div>
+  <span class="nav-subtitle">Acerca de / Soporte</span>
+  <div class="ml-auto nav-actions">
+    <a class="btn btn-ghost btn-nav-ghost" href="/">Inicio</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/settings">Configuración</a>
+    <a class="btn btn-ghost btn-nav-ghost" href="/about">Acerca de</a>
+  </div>
+</nav>
+
+<main class="index-main">
+  <section class="secondary-hero secondary-hero-about">
+    <div>
+      <div class="secondary-hero-kicker">Proyecto abierto</div>
+      <h1 class="secondary-hero-title">Acerca de Auditor Libre</h1>
+      <p class="secondary-hero-copy">Una base open source para crear tu propia plataforma de inspección sin licencias por usuario ni dependencia de una nube propietaria.</p>
+    </div>
+    <div class="secondary-hero-stats">
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Modo</span>
+        <strong>Acceso abierto</strong>
+      </div>
+      <div class="secondary-hero-stat">
+        <span class="secondary-hero-stat-label">Enfoque</span>
+        <strong>Local-first</strong>
+      </div>
+    </div>
+  </section>
+
+  <div class="card card-padding card-elevated">
+    <h2 class="section-title">Proyecto</h2>
+    <p class="text-sm text-muted">Auditor Libre es una app local-first y open source para crear plantillas, ejecutar inspecciones y exportar reportes sin depender de una nube externa.</p>
+  </div>
+
+  <div class="card card-padding card-elevated">
+    <h2 class="section-title">Diagnóstico</h2>
+    <div id="diagBox" class="diag-grid text-sm text-muted">Cargando...</div>
+  </div>
+
+  <div class="card card-padding card-elevated">
+    <h2 class="section-title">Soporte</h2>
+    <div class="support-actions-grid">
+      <a class="btn btn-outline" href="https://github.com/apu242007/Auditor Libre" target="_blank" rel="noreferrer">Repositorio</a>
+      <a class="btn btn-outline" href="https://github.com/apu242007/Auditor Libre/issues" target="_blank" rel="noreferrer">Reportar problema</a>
+      <a class="btn btn-outline" href="/api/system/backup/export">Descargar backup</a>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="/app.js"></script>
+<script>
+async function loadDiagnostics() {
+  try {
+    const d = await api.get('/api/system/diagnostics');
+    document.getElementById('diagBox').innerHTML =
+      '<div class="diag-item"><b>Versión:</b> ' + esc(d.version) + '</div>' +
+      '<div class="diag-item"><b>Node:</b> ' + esc(d.node) + '</div>' +
+      '<div class="diag-item"><b>Plataforma:</b> ' + esc(d.platform) + '</div>' +
+      '<div class="diag-item"><b>Datos:</b> ' + esc(d.dataDir) + '</div>' +
+      '<div class="diag-item"><b>Uploads:</b> ' + esc(d.uploadsDir) + '</div>' +
+      '<div class="diag-item"><b>Plantillas:</b> ' + d.templates + '</div>' +
+      '<div class="diag-item"><b>Inspecciones:</b> ' + d.inspections + '</div>' +
+      '<div class="diag-item"><b>Backups:</b> ' + d.backups + '</div>' +
+      '<div class="diag-item"><b>Acceso:</b> ' + esc(d.accessMode || 'open') + '</div>';
+  } catch (e) {
+    document.getElementById('diagBox').textContent = 'No se pudo cargar el diagnóstico.';
+  }
+}
+
+loadDiagnostics();
+</script>
+</body>
+</html>
