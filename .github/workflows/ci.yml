@@ -6,11 +6,16 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Lint and test
   test:
     name: Test on Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 12
 
     strategy:
       matrix:
@@ -49,6 +54,7 @@ jobs:
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
     - name: Checkout code
@@ -67,17 +73,23 @@ jobs:
       continue-on-error: true
 
     - name: Run Snyk scan
+      if: ${{ secrets.SNYK_TOKEN != '' }}
       uses: snyk/actions/node@master
       continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    - name: Skip Snyk scan
+      if: ${{ secrets.SNYK_TOKEN == '' }}
+      run: echo "SNYK_TOKEN no configurado. Se omite el escaneo Snyk."
 
   # Build Docker image
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
     needs: [test, security]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    timeout-minutes: 25
 
     steps:
     - name: Checkout code
@@ -87,12 +99,14 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
+      if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Extract metadata
+      if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
       id: meta
       uses: docker/metadata-action@v5
       with:
@@ -104,6 +118,7 @@ jobs:
           type=sha,prefix={{branch}}-
 
     - name: Build and push
+      if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -114,10 +129,15 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
 
+    - name: Skip Docker publish
+      if: ${{ secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PASSWORD == '' }}
+      run: echo "Credenciales Docker no configuradas. Se omite la publicación de imagen."
+
   # Code quality
   quality:
     name: Code Quality Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
     - name: Checkout code
@@ -126,11 +146,16 @@ jobs:
         fetch-depth: 0
 
     - name: SonarCloud Scan
+      if: ${{ secrets.SONAR_TOKEN != '' }}
       uses: SonarSource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       continue-on-error: true
+
+    - name: Skip SonarCloud scan
+      if: ${{ secrets.SONAR_TOKEN == '' }}
+      run: echo "SONAR_TOKEN no configurado. Se omite SonarCloud."
 
   # Dependency review (PRs only)
   dependency-review:
