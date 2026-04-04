@@ -55,10 +55,15 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     steps:
+    - name: Check for Snyk Secret
+      id: secrets_check
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: |
+        if [ -n "$SNYK_TOKEN" ]; then echo "has_snyk=true" >> $GITHUB_OUTPUT; fi
+
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -75,14 +80,14 @@ jobs:
       continue-on-error: true
 
     - name: Run Snyk scan
-      if: env.SNYK_TOKEN != ''
+      if: steps.secrets_check.outputs.has_snyk == 'true'
       uses: snyk/actions/node@master
       continue-on-error: true
       env:
-        SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     - name: Skip Snyk scan
-      if: env.SNYK_TOKEN == ''
+      if: steps.secrets_check.outputs.has_snyk != 'true'
       run: echo "SNYK_TOKEN no configurado. Se omite el escaneo Snyk."
 
   # Build Docker image
@@ -92,11 +97,16 @@ jobs:
     needs: [test, security]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 25
-    env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     steps:
+    - name: Check for Docker Secrets
+      id: secrets_check
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        if [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_PASSWORD" ]; then echo "has_docker=true" >> $GITHUB_OUTPUT; fi
+
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -104,14 +114,14 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
-      if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+      if: steps.secrets_check.outputs.has_docker == 'true'
       uses: docker/login-action@v3
       with:
-        username: ${{ env.DOCKER_USERNAME }}
-        password: ${{ env.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Extract metadata
-      if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+      if: steps.secrets_check.outputs.has_docker == 'true'
       id: meta
       uses: docker/metadata-action@v5
       with:
@@ -123,7 +133,7 @@ jobs:
           type=sha,prefix={{branch}}-
 
     - name: Build and push
-      if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+      if: steps.secrets_check.outputs.has_docker == 'true'
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -135,7 +145,7 @@ jobs:
         platforms: linux/amd64,linux/arm64
 
     - name: Skip Docker publish
-      if: env.DOCKER_USERNAME == '' || env.DOCKER_PASSWORD == ''
+      if: steps.secrets_check.outputs.has_docker != 'true'
       run: echo "Credenciales Docker no configuradas. Se omite la publicación de imagen."
 
   # Code quality
@@ -143,25 +153,30 @@ jobs:
     name: Code Quality Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
+    - name: Check for Sonar Secret
+      id: secrets_check
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        if [ -n "$SONAR_TOKEN" ]; then echo "has_sonar=true" >> $GITHUB_OUTPUT; fi
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: SonarCloud Scan
-      if: env.SONAR_TOKEN != ''
+      if: steps.secrets_check.outputs.has_sonar == 'true'
       uses: SonarSource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       continue-on-error: true
 
     - name: Skip SonarCloud scan
-      if: env.SONAR_TOKEN == ''
+      if: steps.secrets_check.outputs.has_sonar != 'true'
       run: echo "SONAR_TOKEN no configurado. Se omite SonarCloud."
 
   # Dependency review (PRs only)
