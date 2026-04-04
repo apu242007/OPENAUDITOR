@@ -805,21 +805,7 @@ El workflow actual ya omite `Snyk`, `SonarCloud` y `Docker publish` si faltan se
 
 ---
 
-## 21. Qué viene después
-
-OPENAUDITOR ya es útil hoy, pero la visión sigue creciendo.
-
-Las siguientes capas naturales del proyecto son:
-
-1. más plantillas legales y operativas,
-2. mejor experiencia móvil,
-3. más conectores open source,
-4. más analítica,
-5. mejor comunidad y catálogo compartido.
-
----
-
-## 22. Contribuir
+## 21. Contribuir
 
 Si querés sumar mejoras:
 
@@ -837,7 +823,7 @@ Leé también:
 
 ---
 
-## 23. Licencia
+## 22. Licencia
 
 Este proyecto se distribuye bajo la licencia incluida en:
 
@@ -845,7 +831,7 @@ Este proyecto se distribuye bajo la licencia incluida en:
 
 ---
 
-## 24. Resumen final
+## 23. Resumen final
 
 Si querés una herramienta open source para inspecciones que:
 
@@ -860,7 +846,7 @@ Si querés una herramienta open source para inspecciones que:
 
 ---
 
-## 25. Inglés / English
+## 24. Inglés / English
 
 También tenés una versión base en inglés para compartir el proyecto fuera del mercado hispano:
 
