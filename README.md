@@ -1,8 +1,10 @@
-#  ___  ____  _____ _   _    _    _   _ ____ ___ _____ ___  ____
-# / _ \|  _ \| ____| \ | |  / \  | | | |  _ \_ _|_   _/ _ \|  _ \
-#| | | | |_) |  _| |  \| | / _ \ | | | | | | | |  | || | | | |_) |
-#| |_| |  __/| |___| |\  |/ ___ \| |_| | |_| | |  | || |_| |  _ <
-# \___/|_|   |_____|_| \_/_/   \_\\___/|____/___| |_| \___/|_| \_\
+```text
+  ____  ____  _____ _   _    _    _   _ ____ ___ _____ ___  ____
+ / __ \|  _ \| ____| \ | |  / \  | | | |  _ \_ _|_   _/ _ \|  _ \
+| |  | | |_) |  _| |  \| | / _ \ | | | | | | | |  | || | | | |_) |
+| |__| |  __/| |___| |\  |/ ___ \| |_| | |_| | |  | || |_| |  _ <
+ \____/|_|   |_____|_| \_/_/   \_\\___/|____/___| |_| \___/|_| \_\
+```
 
 [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-1f6f43?style=for-the-badge&logo=node.js&logoColor=white)](#7-instalacion-desde-cero-en-windows)
 [![Offline First](https://img.shields.io/badge/offline-first-4f46e5?style=for-the-badge)](#13-trabajo-offline)
@@ -425,10 +427,6 @@ Esta parte está pensada para que cualquier persona entienda el flujo completo d
 9. Configurá scoring si aplica
 10. Guardá el borrador
 
-Vista de referencia:
-
-![Editor de plantilla OPENAUDITOR](docs/images/template-editor-live-preview.png)
-
 ### Flujo 2. Crear una plantilla desde el catálogo comunitario
 
 1. Entrá al dashboard
@@ -437,10 +435,6 @@ Vista de referencia:
 4. Tocá `Usar ejemplo`
 5. Se importa como borrador
 6. Entrás al editor para adaptarla
-
-Vista de referencia:
-
-![Menú de creación e importación](docs/images/template-create-menu.png)
 
 ### Flujo 3. Probar una plantilla antes de publicarla
 
@@ -640,10 +634,6 @@ Hay plantillas enfocadas en:
 4. Importala como borrador
 5. Adaptala a tu operación
 
-Desde el dashboard también podés empezar rápido:
-
-![Dashboard principal](docs/images/dashboard-home.png)
-
 ---
 
 ## 16. Producción paso a paso
@@ -719,10 +709,6 @@ docker compose ps
 3. Serví por HTTPS si la vas a exponer.
 4. Verificá espacio en disco.
 5. Corré `npm run check:prod`.
-
-La pantalla de configuración ya está preparada para una operación open source sin login interno:
-
-![Configuración abierta de OPENAUDITOR](docs/images/settings-open-sync.png)
 
 ### Archivos útiles para deploy
 
@@ -833,23 +819,7 @@ Las siguientes capas naturales del proyecto son:
 
 ---
 
-## 22. Cómo venderlo internamente o a la comunidad
-
-Si querés presentar el proyecto, esta es una frase útil:
-
-**OPENAUDITOR es una plataforma open source para inspecciones y auditorías que empieza local y gratis, funciona offline, genera reportes y te deja evolucionar sin atarte a una nube propietaria.**
-
-### Beneficios concretos
-
-- sin licencias por usuario,
-- sin lock-in,
-- con datos bajo control propio,
-- con despliegue simple,
-- y con capacidad real de adaptación.
-
----
-
-## 23. Contribuir
+## 22. Contribuir
 
 Si querés sumar mejoras:
 
@@ -867,7 +837,7 @@ Leé también:
 
 ---
 
-## 24. Licencia
+## 23. Licencia
 
 Este proyecto se distribuye bajo la licencia incluida en:
 
@@ -875,7 +845,7 @@ Este proyecto se distribuye bajo la licencia incluida en:
 
 ---
 
-## 25. Resumen final
+## 24. Resumen final
 
 Si querés una herramienta open source para inspecciones que:
 
@@ -890,7 +860,7 @@ Si querés una herramienta open source para inspecciones que:
 
 ---
 
-## 26. Inglés / English
+## 25. Inglés / English
 
 También tenés una versión base en inglés para compartir el proyecto fuera del mercado hispano:
 
