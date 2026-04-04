@@ -1,21 +1,17 @@
-```text
-     _   _   _ ____ ___ _____ ___  ____    _     ___ ____  ____  _____ 
-    / \ | | | |  _ \_ _|_   _/ _ \|  _ \  | |   |_ _| __ )|  _ \| ____|
-   / _ \| | | | | | | |  | || | | | |_) | | |    | ||  _ \| |_) |  _|  
-  / ___ \ |_| | |_| | |  | || |_| |  _ <  | |___ | || |_) |  _ <| |___ 
- /_/   \_\___/|____/___| |_| \___/|_| \_\ |_____|___|____/|_| \_\_____|
-```
+<div align="center">
+  <h1>Auditor Libre</h1>
+  <p><b>La alternativa open source, offline-first y sin licencias para inspecciones y auditorías.</b></p>
+  
+  [![CI/CD](https://github.com/apu242007/OPENAUDITOR/actions/workflows/ci.yml/badge.svg)](https://github.com/apu242007/OPENAUDITOR/actions/workflows/ci.yml)
+  [![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-1f6f43?style=for-the-badge&logo=node.js&logoColor=white)](#7-instalacion-desde-cero-en-windows)
+  [![Offline First](https://img.shields.io/badge/offline-first-4f46e5?style=for-the-badge)](#13-trabajo-offline-pwa)
+  [![Open Source](https://img.shields.io/badge/open-source-0f172a?style=for-the-badge)](#4-filosofia-del-producto)
+  [![Docker Ready](https://img.shields.io/badge/docker-ready-0ea5e9?style=for-the-badge&logo=docker&logoColor=white)](#16-produccion-paso-a-paso)
+  [![License](https://img.shields.io/badge/license-see%20license-7c3aed?style=for-the-badge)](#20-licencia)
+</div>
+<br />
 
-[![CI/CD](https://github.com/apu242007/OPENAUDITOR/actions/workflows/ci.yml/badge.svg)](https://github.com/apu242007/OPENAUDITOR/actions/workflows/ci.yml)
-[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-1f6f43?style=for-the-badge&logo=node.js&logoColor=white)](#7-instalacion-desde-cero-en-windows)
-[![Offline First](https://img.shields.io/badge/offline-first-4f46e5?style=for-the-badge)](#13-trabajo-offline-pwa)
-[![Open Source](https://img.shields.io/badge/open-source-0f172a?style=for-the-badge)](#4-filosofia-del-producto)
-[![Docker Ready](https://img.shields.io/badge/docker-ready-0ea5e9?style=for-the-badge&logo=docker&logoColor=white)](#16-produccion-paso-a-paso)
-[![License](https://img.shields.io/badge/license-see%20license-7c3aed?style=for-the-badge)](#20-licencia)
-
-**La alternativa open source, offline-first y sin licencias por usuario para inspecciones, auditorías y checklists operativos.**
-
-Auditor Libre te permite crear plantillas, probarlas, ejecutar inspecciones desde PC o celular, trabajar sin conexión, sincronizar cuando haga falta y exportar reportes sin depender de una nube cerrada.
+Auditor Libre te permite crear plantillas, probarlas, ejecutar inspecciones desde PC o celular, trabajar sin conexión (PWA nativo con IndexedDB), sincronizar en segundo plano cuando haga falta y exportar reportes fotográficos sin depender de una nube cerrada ni pagar por operario.
 
 Si estás buscando algo tipo iAuditor pero:
 
