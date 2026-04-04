@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -13,6 +13,9 @@
   <link rel="stylesheet" href="/api/config/theme.css">
   <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
   <script defer src="/colorized-selects.js?v=20260319b"></script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <nav class="topnav">
@@ -210,31 +213,9 @@
 </div>
 
 <script>
-// Local dev hard-clean: avoid stale SW/cache breaking dashboard rendering.
-(function () {
-  var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (!isLocal) return;
-  try {
-    var cleanedFlag = sessionStorage.getItem('oa_local_clean_v1');
-    if (cleanedFlag) return;
-    sessionStorage.setItem('oa_local_clean_v1', '1');
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        return Promise.all(regs.map(function(reg) { return reg.unregister(); }));
-      }).catch(function() {});
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(keys) {
-        return Promise.all(keys.map(function(k) { return caches.delete(k); }));
-      }).catch(function() {});
-    }
-    Object.keys(localStorage).forEach(function(k) {
-      if (k.indexOf('oa-') === 0 || k.indexOf('oa_') === 0) localStorage.removeItem(k);
-    });
-  } catch (e) {}
-})();
 </script>
+<script src="/js/db.js"></script>
+<script src="/js/compress.js"></script>
 <script src="/app.js?v=20260319b"></script>
 <script>
 
@@ -279,13 +260,35 @@ async function loadData() {
     const ts = Date.now();
     templates = await api.get('/api/templates?_=' + ts);
     inspections = await api.get('/api/inspections?_=' + ts);
+    
+    if (window.auditDb) {
+      if (Array.isArray(templates)) {
+        Promise.all(templates.map(function(t) { return window.auditDb.guardarPlantilla(t); })).catch(function(){});
+      }
+      if (Array.isArray(inspections)) {
+        Promise.all(inspections.map(function(i) { return window.auditDb.guardarInspeccion(i); })).catch(function(){});
+      }
+    }
+  } catch (e) {
+    console.warn('Network load failed, reading from IndexedDB...', e);
+    if (window.auditDb) {
+      try {
+        const localTemplates = await window.auditDb.obtenerPlantillas();
+        const localInspections = await window.auditDb.obtenerInspecciones();
+        if (localTemplates && localTemplates.length > 0) templates = localTemplates;
+        if (localInspections && localInspections.length > 0) inspections = localInspections;
+      } catch (dbErr) { console.error('IDB load failed:', dbErr); }
+    }
+  }
+
+  try {
     renderDashboardSummary();
     renderTemplates();
     renderInspections();
     renderScheduledAlert();
     applyTemplateViewMode();
   } catch (e) {
-    console.error('Data loading error:', e);
+    console.error('Render error:', e);
   }
 }
 // Siempre recargar datos al cargar o restaurar la página

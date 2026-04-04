@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OPENAUDITOR - Guía de Sync</title>
+  <title>Auditor Libre - Guía de Sync</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/api/config/theme.css">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
   <nav class="topnav">
@@ -20,7 +23,7 @@
 
   <main class="index-main">
     <section class="page-header">
-      <h1>Sync Offline para OPENAUDITOR</h1>
+      <h1>Sync Offline para Auditor Libre</h1>
       <p class="text-muted">El HTML autónomo genera un único payload JSON y puede enviarlo por `fetch` al destino que configures. Si falla, siempre puede exportar el JSON manualmente.</p>
     </section>
 
@@ -85,7 +88,7 @@
         <li>Desplegá PocketBase en una VPS o equipo propio.</li>
         <li>Creá una colección `inspections_imports` con campos para `templateId`, `templateName`, `completedAt` y `payload`.</li>
         <li>Usá el ejemplo de <a href="/examples/pocketbase-openauditor.js" target="_blank" rel="noopener">PocketBase</a> como receptor HTTP.</li>
-        <li>Configurá el destino en OPENAUDITOR con el tipo `PocketBase`.</li>
+        <li>Configurá el destino en Auditor Libre con el tipo `PocketBase`.</li>
       </ol>
     </section>
 
@@ -105,7 +108,7 @@
     </section>
 
     <section class="card card-padding" id="openauditor-node">
-      <h2 class="section-title">OPENAUDITOR Remoto</h2>
+      <h2 class="section-title">Auditor Libre Remoto</h2>
       <p class="text-sm text-muted">Podés usar otra instancia como receptor apuntando al endpoint `/api/import/standalone` de esa instalación.</p>
     </section>
   </main>

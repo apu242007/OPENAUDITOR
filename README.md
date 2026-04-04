@@ -15,7 +15,7 @@
 
 **La alternativa open source, offline-first y sin licencias por usuario para inspecciones, auditorías y checklists operativos.**
 
-OPENAUDITOR te permite crear plantillas, probarlas, ejecutar inspecciones desde PC o celular, trabajar sin conexión, sincronizar cuando haga falta y exportar reportes sin depender de una nube cerrada.
+Auditor Libre te permite crear plantillas, probarlas, ejecutar inspecciones desde PC o celular, trabajar sin conexión, sincronizar cuando haga falta y exportar reportes sin depender de una nube cerrada.
 
 Si estás buscando algo tipo iAuditor pero:
 
@@ -29,11 +29,11 @@ este proyecto está hecho para vos.
 
 ---
 
-## -1. Por qué gana OPENAUDITOR
+## -1. Por qué gana Auditor Libre
 
 ### Comparación rápida
 
-| Tema | OPENAUDITOR | Herramienta cerrada típica |
+| Tema | Auditor Libre | Herramienta cerrada típica |
 |---|---|---|
 | Licencias por usuario | No obligatorias | Sí, normalmente |
 | Propiedad de datos | Tuya | Depende del proveedor |
@@ -46,7 +46,7 @@ este proyecto está hecho para vos.
 
 ### Elevator pitch
 
-**OPENAUDITOR convierte checklists, auditorías e inspecciones en una plataforma open source que podés instalar hoy, adaptar mañana y seguir controlando siempre.**
+**Auditor Libre convierte checklists, auditorías e inspecciones en una plataforma open source que podés instalar hoy, adaptar mañana y seguir controlando siempre.**
 
 ---
 
@@ -54,7 +54,7 @@ este proyecto está hecho para vos.
 
 ### Dashboard principal
 
-![Dashboard principal de OPENAUDITOR](docs/images/dashboard-home.png)
+![Dashboard principal de Auditor Libre](docs/images/dashboard-home.png)
 
 ### Menú para crear o importar plantillas
 
@@ -70,9 +70,9 @@ este proyecto está hecho para vos.
 
 ---
 
-## 1. Qué es OPENAUDITOR
+## 1. Qué es Auditor Libre
 
-OPENAUDITOR es una plataforma open source para:
+Auditor Libre es una plataforma open source para:
 
 1. crear plantillas de inspección,
 2. probarlas antes de publicarlas,
@@ -124,7 +124,7 @@ La mayoría de las herramientas de inspección te venden:
 - límites artificiales,
 - y poca capacidad real de personalización.
 
-OPENAUDITOR propone lo contrario:
+Auditor Libre propone lo contrario:
 
 1. empezás local y gratis,
 2. usás tus propias plantillas,
@@ -140,7 +140,7 @@ OPENAUDITOR propone lo contrario:
 
 ## 3. Casos de uso ideales
 
-OPENAUDITOR encaja muy bien en:
+Auditor Libre encaja muy bien en:
 
 - seguridad e higiene,
 - SST / HSE,
@@ -172,7 +172,7 @@ La filosofía del proyecto es simple:
 4. **El despliegue debe ser simple.**
 5. **La comunidad tiene que poder extenderlo sin pedir permiso.**
 
-Por eso OPENAUDITOR prioriza:
+Por eso Auditor Libre prioriza:
 
 - simplicidad,
 - portabilidad,
@@ -278,13 +278,13 @@ Cloná el repo:
 
 ```powershell
 git clone https://github.com/apu242007/OPENAUDITOR.git
-cd OPENAUDITOR
+cd Auditor Libre
 ```
 
 Si ya tenés el proyecto descargado en otra ruta:
 
 ```powershell
-cd "RUTA\A\OPENAUDITOR"
+cd "RUTA\A\Auditor Libre"
 ```
 
 ### Paso 5. Instalar dependencias
@@ -368,7 +368,7 @@ Resultado esperado:
 
 ```bash
 git clone https://github.com/apu242007/OPENAUDITOR.git
-cd OPENAUDITOR
+cd Auditor Libre
 npm install
 npm start
 ```
@@ -531,34 +531,23 @@ El inspector está pensado para trabajo real en campo.
 
 ---
 
-## 13. Trabajo offline
+## 13. Trabajo offline (PWA)
 
-OPENAUDITOR no depende obligatoriamente de una conexión permanente.
+Auditor Libre está diseñado nativamente como una Progressive Web App (PWA) con un enfoque **Offline-First**. No dependés de una conexión permanente para realizar inspecciones en el campo.
 
-### Modo local
+### Instalación PWA (App Móvil / Escritorio)
+Podés instalar Auditor Libre directamente desde el navegador (Ej: Chrome mobile -> "Agregar a la pantalla principal") y funcionará como una app independiente en tu celular o celular de la tropa, con ícono propio y sin barra de direcciones.
 
-1. Corrés la app en tu PC
-2. Todo se guarda localmente
-3. Exportás cuando querés
+### Almacenamiento Local Robusto (IndexedDB)
+Tanto las plantillas en el dashboard como tus procesos actuales y las fotografías tomadas se guardan en tiempo real en la base de datos local de tu navegador (`IndexedDB`). Si recargás o cerrás la aplicación estando sin señal, al re-abrirla cargarás el snapshot completo y exacto del trabajo local y los borradores sin ninguna pérdida.
 
-### Modo offline con HTML standalone
+### Sincronización en Segundo Plano (Background Sync)
+Si finalizás o guardás un relevamiento estando fuera de red, este se encola de forma resiliente. A través del mecanismo nativo y silencioso del Service Worker, la plataforma despachará automáticamente esos cambios (y sus adjuntos pesados) apenas el dispositivo recupere la señal celular inteligente o WiFi (incluso si el usuario minimizó el navegador, dependiendo del soporte del OS).
 
-1. Exportás una plantilla como HTML autónomo
-2. El operario la abre en celular
-3. Completa respuestas aunque no tenga internet
-4. El HTML guarda temporalmente en el navegador
-5. Después exporta JSON o sincroniza cuando haya conexión
-
-### Modo offline + sync
-
-1. El celular trabaja offline
-2. Cuando vuelve la conexión envía datos
-3. El receptor puede ser:
-   - `Apps Script`
-   - `Webhook`
-   - `PocketBase`
-   - `Supabase`
-   - otra instancia de OPENAUDITOR
+El receptor de la sincronización puede ser:
+- Tu propia instancia (servidor base) de Auditor Libre.
+- Un Webhook integrador (`n8n`, `Make`).
+- Bases de Backend directas (`PocketBase`, `Supabase`, `Google Drive`).
 
 ---
 
@@ -639,7 +628,7 @@ Hay plantillas enfocadas en:
 
 ## 16. Producción paso a paso
 
-Si querés publicar OPENAUDITOR para uso serio interno o comunitario, hacelo así.
+Si querés publicar Auditor Libre para uso serio interno o comunitario, hacelo así.
 
 ### Opción A. Producción simple con Node
 
@@ -813,7 +802,7 @@ Dentro del campo `data` JSON de cada plantilla se guardan páginas, secciones, p
 
 ### Modo abierto vs modo protegido
 
-Por defecto OPENAUDITOR corre en **modo abierto** (`isAuthenticated` devuelve `true` siempre). Esto es intencional para uso local y de equipo pequeño.
+Por defecto Auditor Libre corre en **modo abierto** (`isAuthenticated` devuelve `true` siempre). Esto es intencional para uso local y de equipo pequeño.
 
 Si necesitás proteger el acceso:
 
@@ -993,7 +982,7 @@ La app corre migraciones automáticas de schema al iniciar (`runSchemaMigrations
 
 Si tenés inspecciones exportadas como JSON o CSV desde otra herramienta:
 
-1. adaptá el formato al schema de OPENAUDITOR (ver `schemas/`),
+1. adaptá el formato al schema de Auditor Libre (ver `schemas/`),
 2. importá vía `POST /api/templates` o desde la UI con `Importar JSON`,
 3. las plantillas importadas quedan como borrador para revisión.
 
@@ -1046,7 +1035,7 @@ OPENAUDITOR/
 
 ## 27. FAQ
 
-### ¿Necesito internet para usar OPENAUDITOR?
+### ¿Necesito internet para usar Auditor Libre?
 
 No. La app funciona 100% local. Solo necesitás conexión si querés sincronizar con destinos externos o usar el catálogo remoto.
 
@@ -1062,7 +1051,7 @@ Para equipos de hasta 50 usuarios concurrentes, SQLite con WAL funciona muy bien
 
 Desde `Configuración` → activá PIN de seguridad. Las sesiones se crean con token de 32 bytes y cookies HttpOnly.
 
-### ¿Puedo usar OPENAUDITOR con n8n, Zapier o Make?
+### ¿Puedo usar Auditor Libre con n8n, Zapier o Make?
 
 Sí. Configurá un webhook desde `Configuración` y apuntalo a tu flujo de automatización. El payload es JSON estándar con firma HMAC.
 
@@ -1072,7 +1061,7 @@ PDF, CSV, XLSX y JSON. El PDF incluye portada con branding si la plantilla la ti
 
 ### ¿Puedo importar plantillas de iAuditor?
 
-No hay un importador directo todavía, pero si exportás la plantilla como JSON, podés adaptarla al formato de OPENAUDITOR y subirla.
+No hay un importador directo todavía, pero si exportás la plantilla como JSON, podés adaptarla al formato de Auditor Libre y subirla.
 
 ### ¿Dónde reporto bugs o pido features?
 
@@ -1156,7 +1145,7 @@ Si querés una herramienta open source para inspecciones que:
 - se pueda adaptar,
 - y no dependa de licencias por usuario,
 
-**OPENAUDITOR ya está listo para jugar en esa cancha.**
+**Auditor Libre ya está listo para jugar en esa cancha.**
 
 ---
 

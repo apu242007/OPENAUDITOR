@@ -1,6 +1,6 @@
 'use strict';
 
-// Ejemplo mínimo de receptor HTTP para guardar imports de OPENAUDITOR en PocketBase.
+// Ejemplo mínimo de receptor HTTP para guardar imports de Auditor Libre en PocketBase.
 // Usalo como referencia para una API propia, middleware o worker delante de PocketBase.
 
 const PocketBase = require('pocketbase/cjs');
@@ -39,5 +39,5 @@ app.post('/api/openauditor/import', async function(req, res) {
 });
 
 app.listen(process.env.PORT || 8787, function() {
-  console.log('OPENAUDITOR PocketBase receiver listening on port ' + (process.env.PORT || 8787));
+  console.log('Auditor Libre PocketBase receiver listening on port ' + (process.env.PORT || 8787));
 });

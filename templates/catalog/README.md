@@ -1,6 +1,6 @@
 # Community Template Catalog
 
-Este directorio contiene plantillas comunitarias listas para importar y adaptar dentro de OPENAUDITOR.
+Este directorio contiene plantillas comunitarias listas para importar y adaptar dentro de Auditor Libre.
 
 ## Orientación normativa argentina
 

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Esta carpeta reúne recetas de despliegue para que OPENAUDITOR sea fácil de adoptar más allá de `localhost`.
+Esta carpeta reúne recetas de despliegue para que Auditor Libre sea fácil de adoptar más allá de `localhost`.
 
 ## Objetivo
 
@@ -22,18 +22,18 @@ Permitir cuatro caminos oficiales:
 
 Para equipos pequeños:
 
-- OPENAUDITOR local o en Docker
+- Auditor Libre local o en Docker
 - HTML autónomo para captura offline
 - Apps Script o webhook económico para sync gratis
 
 Para equipos que quieren crecer:
 
-- OPENAUDITOR como nodo de administración
+- Auditor Libre como nodo de administración
 - PocketBase o Supabase como capa remota opcional
 
 ## Nota importante sobre producción
 
-OPENAUDITOR usa `SQLite`, así que la recomendación operativa es:
+Auditor Libre usa `SQLite`, así que la recomendación operativa es:
 
 - `1` proceso por instancia
 - `fork` en PM2

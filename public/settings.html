@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="/api/config/theme.css">
   <link rel="icon" href="/api/config/favicon" id="dynamic-favicon">
   <script defer src="/colorized-selects.js"></script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <nav class="topnav">
@@ -105,7 +108,7 @@
       <div class="card card-padding">
         <h2 class="section-title">3. Acceso abierto</h2>
         <div class="report-field">
-          <p class="text-sm text-muted">OPENAUDITOR funciona en modo open source sin login ni PIN internos. La instancia queda abierta para facilitar adopción, pruebas, despliegue local y adaptación por parte de cada equipo.</p>
+          <p class="text-sm text-muted">Auditor Libre funciona en modo open source sin login ni PIN internos. La instancia queda abierta para facilitar adopción, pruebas, despliegue local y adaptación por parte de cada equipo.</p>
         </div>
         <div class="report-field">
           <label for="openAccessNote">Recomendación</label>
@@ -250,7 +253,7 @@
           <option value="github_gist">GitHub / Gist / JSON remoto</option>
           <option value="supabase">Supabase / Edge Function</option>
           <option value="pocketbase">PocketBase / endpoint propio</option>
-          <option value="openauditor_node">OPENAUDITOR remoto</option>
+          <option value="auditorlibre_node">Auditor Libre remoto</option>
         </select>
       </div>
       <div class="report-field">
@@ -420,7 +423,7 @@ function kindLabel(kind) {
     github_gist: 'GitHub / Gist',
     supabase: 'Supabase',
     pocketbase: 'PocketBase',
-    openauditor_node: 'OPENAUDITOR remoto'
+    auditorlibre_node: 'Auditor Libre remoto'
   })[kind] || kind || 'Destino';
 }
 
@@ -461,10 +464,10 @@ function syncKindRecipe(kind) {
         ['/sync-guide.html#pocketbase', 'Pasos de despliegue']
       ]
     },
-    openauditor_node: {
-      text: 'Permite usar otra instancia de OPENAUDITOR como receptor remoto con el mismo endpoint de importación standalone.',
+    auditorlibre_node: {
+      text: 'Permite usar otra instancia de Auditor Libre como receptor remoto con el mismo endpoint de importación standalone.',
       links: [
-        ['/sync-guide.html#openauditor-node', 'Guía OPENAUDITOR remoto'],
+        ['/sync-guide.html#openauditor-node', 'Guía Auditor Libre remoto'],
         ['/sync-guide.html#payload', 'Ver estructura JSON']
       ]
     }

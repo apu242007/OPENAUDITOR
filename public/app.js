@@ -1,4 +1,4 @@
-﻿// Shared API helpers and utilities
+// Shared API helpers and utilities
 
 async function parseApiErrorResponse(response) {
   const contentType = response.headers.get('content-type') || '';
@@ -147,28 +147,14 @@ function isLocalDevHost() {
   return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 }
 
-async function disableServiceWorkersEverywhere() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map((reg) => reg.unregister()));
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
+async function registerPWA() {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+    } catch (e) {
+      console.warn('PWA: Service Worker registration failed', e);
     }
-  } catch (e) {}
-}
-
-async function disableServiceWorkerForLocalDev() {
-  if (!('serviceWorker' in navigator) || !isLocalDevHost()) return;
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map((reg) => reg.unregister()));
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
-    }
-  } catch (e) {}
+  }
 }
 
 function initUiMotion(root = document) {
@@ -383,6 +369,5 @@ function initReportDetailMotion(root = document) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  disableServiceWorkersEverywhere();
-  disableServiceWorkerForLocalDev();
+  registerPWA();
 });

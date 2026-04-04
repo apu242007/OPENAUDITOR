@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -10,6 +10,9 @@
     }
   </script>  <link rel="stylesheet" href="/style.css">
   <script defer src="/colorized-selects.js"></script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 <a href="#insContent" class="skip-link">Saltar al contenido</a>
@@ -215,6 +218,9 @@ async function hydrateLocalMediaPreviews(root) {
 
 window.addEventListener('online', function() {
   setSyncStatus('online', 'En linea');
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'TRIGGER_SYNC' });
+  }
 });
 window.addEventListener('offline', function() {
   setSyncStatus('offline', 'Sin conexion');
@@ -258,6 +264,9 @@ if ('serviceWorker' in navigator) {
   try {
     await initI18n(); translateUI(); ins = await api.get('/api/inspections/' + id);
     persistInspectionCache();
+    if (window.auditDb) {
+      window.auditDb.guardarInspeccion(ins).catch(function(){});
+    }
     if (!ins.repeatableAnswers) ins.repeatableAnswers = {};
     if (!ins.answers) ins.answers = {};
     restoreLocalDraft();
@@ -276,7 +285,14 @@ if ('serviceWorker' in navigator) {
       setInterval(saveSilent, 30000);
     }
   } catch(e) {
-    const cachedInspection = restoreInspectionCache();
+    let cachedInspection = restoreInspectionCache();
+    if (window.auditDb) {
+      try {
+        const idbIns = await window.auditDb.obtenerInspeccion(id);
+        if (idbIns) cachedInspection = idbIns;
+      } catch(err){}
+    }
+    
     if (cachedInspection) {
       ins = cachedInspection;
       if (!ins.repeatableAnswers) ins.repeatableAnswers = {};

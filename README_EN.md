@@ -11,13 +11,13 @@
 
 **The open source, offline-first alternative for inspections, audits, and operational checklists without per-user licensing.**
 
-OPENAUDITOR lets teams build templates, test them before publishing, run inspections from desktop or mobile, work offline, sync when needed, and export reports while keeping full control of their data.
+Auditor Libre lets teams build templates, test them before publishing, run inspections from desktop or mobile, work offline, sync when needed, and export reports while keeping full control of their data.
 
 ---
 
-## -1. Why OPENAUDITOR wins
+## -1. Why Auditor Libre wins
 
-| Topic | OPENAUDITOR | Typical closed product |
+| Topic | Auditor Libre | Typical closed product |
 |---|---|---|
 | Per-user licensing | Not required | Usually required |
 | Data ownership | Yours | Vendor-dependent |
@@ -27,7 +27,7 @@ OPENAUDITOR lets teams build templates, test them before publishing, run inspect
 | Integration freedom | High | Plan-limited |
 | Local-first workflow | Yes | Rare |
 
-**OPENAUDITOR turns inspections into an open platform you can install now, adapt later, and still fully control.**
+**Auditor Libre turns inspections into an open platform you can install now, adapt later, and still fully control.**
 
 ---
 
@@ -35,7 +35,7 @@ OPENAUDITOR lets teams build templates, test them before publishing, run inspect
 
 ### Main dashboard
 
-![OPENAUDITOR dashboard](docs/images/dashboard-home.png)
+![Auditor Libre dashboard](docs/images/dashboard-home.png)
 
 ### Create or import template menu
 
@@ -51,9 +51,9 @@ OPENAUDITOR lets teams build templates, test them before publishing, run inspect
 
 ---
 
-## 1. What OPENAUDITOR is
+## 1. What Auditor Libre is
 
-OPENAUDITOR is an open source platform to:
+Auditor Libre is an open source platform to:
 
 1. build inspection templates,
 2. test them before publishing,
@@ -103,7 +103,7 @@ OPENAUDITOR is an open source platform to:
 
 ## 3. Core product idea
 
-OPENAUDITOR is designed around these principles:
+Auditor Libre is designed around these principles:
 
 1. Your data stays yours.
 2. The tool should work even without internet.
@@ -188,7 +188,7 @@ git --version
 ```powershell
 cd "C:\Users\YOUR_USER\Documents"
 git clone https://github.com/apu242007/OPENAUDITOR.git
-cd OPENAUDITOR
+cd Auditor Libre
 ```
 
 ### Step 5. Install dependencies
@@ -242,7 +242,7 @@ npm test
 
 ```bash
 git clone https://github.com/apu242007/OPENAUDITOR.git
-cd OPENAUDITOR
+cd Auditor Libre
 npm install
 npm start
 ```
@@ -364,7 +364,7 @@ npm run pm2:logs
    - webhook
    - PocketBase
    - Supabase
-   - another OPENAUDITOR node
+   - another Auditor Libre node
 
 ---
 
@@ -495,4 +495,4 @@ If you want an inspection platform that is:
 - adaptable,
 - and not tied to per-user licensing,
 
-**OPENAUDITOR is already a strong foundation to build on.**
+**Auditor Libre is already a strong foundation to build on.**

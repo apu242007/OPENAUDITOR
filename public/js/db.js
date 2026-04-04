@@ -1,6 +1,6 @@
 (function(scope) {
   var DB_NAME = 'auditapp';
-  var DB_VERSION = 1;
+  var DB_VERSION = 2;
 
   function openDb() {
     return new Promise(function(resolve, reject) {
@@ -25,6 +25,14 @@
           var photos = db.createObjectStore('fotos', { keyPath: 'fotoId' });
           photos.createIndex('inspeccionId', 'inspeccionId');
           photos.createIndex('subida', 'subida');
+        }
+
+        if (!db.objectStoreNames.contains('plantillas')) {
+          db.createObjectStore('plantillas', { keyPath: 'id' });
+        }
+
+        if (!db.objectStoreNames.contains('inspecciones')) {
+          db.createObjectStore('inspecciones', { keyPath: 'id' });
         }
       };
       req.onsuccess = function() { resolve(req.result); };
@@ -56,8 +64,47 @@
     });
   }
 
+  function runGetAll(storeName) {
+    return openDb().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(storeName, 'readonly');
+        var req = tx.objectStore(storeName).getAll();
+        req.onsuccess = function() { resolve(req.result || []); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+
   var api = {
     openDb: openDb,
+
+    guardarPlantilla: function(plantilla) {
+      return runTx('plantillas', 'readwrite', function(store) {
+        return store.put(plantilla);
+      });
+    },
+    obtenerPlantilla: function(id) {
+      return runTx('plantillas', 'readonly', function(store) {
+        return store.get(id);
+      });
+    },
+    obtenerPlantillas: function() {
+      return runGetAll('plantillas');
+    },
+
+    guardarInspeccion: function(inspeccion) {
+      return runTx('inspecciones', 'readwrite', function(store) {
+        return store.put(inspeccion);
+      });
+    },
+    obtenerInspeccion: function(id) {
+      return runTx('inspecciones', 'readonly', function(store) {
+        return store.get(id);
+      });
+    },
+    obtenerInspecciones: function() {
+      return runGetAll('inspecciones');
+    },
 
     guardarBorrador: function(inspeccionId, plantillaId, respuestas, repeatableAnswers) {
       return runTx('borradores', 'readwrite', function(store) {
