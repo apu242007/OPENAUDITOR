@@ -10,6 +10,7 @@
     "start": "node server.js",
     "start:prod": "cross-env NODE_ENV=production HOST=0.0.0.0 node server.js",
     "check:prod": "node scripts/check-production.js",
+    "build:prod": "node scripts/build-bundle.js",
     "dev": "nodemon server.js",
     "test": "cross-env NODE_ENV=test mocha --file ./test/setup.js \"test/**/*.test.js\" --exit",
     "test:coverage": "cross-env NODE_ENV=test nyc mocha --file ./test/setup.js \"test/**/*.test.js\" --exit",
